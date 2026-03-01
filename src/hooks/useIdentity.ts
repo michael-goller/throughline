@@ -2,7 +2,7 @@
  * Hook for managing user identity (name/email) in localStorage
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 
 const STORAGE_KEY = 'shine-deck-identity'
 

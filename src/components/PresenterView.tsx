@@ -73,7 +73,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
 
   // Viewer presence (disabled for now - needs InstantDB rooms setup)
   // const { viewerCount } = useViewerPresence(deckId, true)
-  const viewerCount = 0 // placeholder
+  const viewerCount: number = 0 // placeholder
 
   // Theme
   const { theme, toggleTheme } = useTheme()

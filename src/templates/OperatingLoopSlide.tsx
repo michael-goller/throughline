@@ -58,7 +58,7 @@ const cardVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] },
+    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] as const },
   },
 }
 
@@ -67,7 +67,7 @@ const dotVariants = {
   visible: {
     scale: 1,
     opacity: 1,
-    transition: { duration: 0.3, ease: [0, 0, 0.2, 1] },
+    transition: { duration: 0.3, ease: [0, 0, 0.2, 1] as const },
   },
 }
 

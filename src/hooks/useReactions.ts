@@ -19,7 +19,7 @@ interface UseReactionsResult {
   addReaction: (slideId: string, emoji: ReactionEmoji, x: number, y: number) => void
   isConfigured: boolean
   isLoading: boolean
-  error: Error | null
+  error: { message: string } | null
 }
 
 export function useReactions(deckId: string, slideId?: string): UseReactionsResult {

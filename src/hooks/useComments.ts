@@ -20,7 +20,7 @@ interface UseCommentsResult {
   clearAll: () => void
   isConfigured: boolean
   isLoading: boolean
-  error: Error | null
+  error: { message: string } | null
 }
 
 export function useComments(deckId: string, slideId?: string): UseCommentsResult {
