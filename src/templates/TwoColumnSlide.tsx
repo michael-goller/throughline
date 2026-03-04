@@ -48,8 +48,13 @@ function ColumnCardComponent({ card }: { card: ColumnCard }) {
       className="p-8 rounded-xl bg-background-elevated border border-border h-full"
     >
       <div className="flex items-center gap-4 mb-6">
+        {card.icon && !card.number && (
+          <div className="w-12 h-12 rounded-full bg-brand-red flex items-center justify-center flex-shrink-0">
+            <card.icon className="w-6 h-6 text-white" />
+          </div>
+        )}
         {card.number && (
-          <div className="w-12 h-12 rounded-full bg-brand-red flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-brand-red flex items-center justify-center flex-shrink-0">
             <span className="text-white text-h3 font-bold">{card.number}</span>
           </div>
         )}

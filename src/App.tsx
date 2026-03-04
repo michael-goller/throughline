@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, EyeOff } from 'lucide-react'
 import SlideRenderer from './templates'
 import slides from '@deck/slides'
 import { ThemeToggle, SlideSearch } from './components'
@@ -8,6 +8,7 @@ import FeedbackOverlay from './components/FeedbackOverlay'
 import PresenterView from './components/PresenterView'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
+import { useSlideState } from './hooks/useSlideState'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
 
@@ -127,8 +128,20 @@ function MainPresentation({ deckId }: { deckId: string }) {
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const [feedbackMode, setFeedbackMode] = useState(false)
   const [animationsComplete, setAnimationsComplete] = useState(false)
+  const [toast, setToast] = useState<{ message: string; icon: 'star' | 'hide' } | null>(null)
   const lastKeyTime = useRef(0)
   const lastKey = useRef('')
+
+  // Slide state (starred/hidden)
+  const {
+    isStarred,
+    isHidden,
+    toggleStar,
+    toggleHidden,
+    starredSlideIds,
+    hiddenSlideIds,
+    hiddenCount,
+  } = useSlideState(deckId)
 
   // Listen for navigation commands from presenter view
   usePresenterSync(currentSlide, slides.length, {
@@ -138,15 +151,26 @@ function MainPresentation({ deckId }: { deckId: string }) {
     },
   })
 
+  // Show toast notification
+  const showToast = useCallback((message: string, icon: 'star' | 'hide') => {
+    setToast({ message, icon })
+    setTimeout(() => setToast(null), 1500)
+  }, [])
+
   // Track viewer presence (disabled for now - needs InstantDB rooms setup)
   // useViewerPresence(deckId, false)
 
   const paginate = useCallback((newDirection: number) => {
-    const newSlide = currentSlide + newDirection
-    if (newSlide >= 0 && newSlide < slides.length) {
-      setSlide([newSlide, newDirection])
+    // Find next visible slide in the given direction
+    let newSlide = currentSlide + newDirection
+    while (newSlide >= 0 && newSlide < slides.length) {
+      if (!isHidden(slides[newSlide].id)) {
+        setSlide([newSlide, newDirection])
+        return
+      }
+      newSlide += newDirection
     }
-  }, [currentSlide])
+  }, [currentSlide, isHidden])
 
   const goToSlide = useCallback((index: number) => {
     if (index < 0 || index >= slides.length) return
@@ -193,7 +217,21 @@ function MainPresentation({ deckId }: { deckId: string }) {
       const now = Date.now()
 
       // Vim-style navigation
-      if (e.key === 'i') {
+      if (e.key === 's') {
+        // Toggle star on current slide
+        e.preventDefault()
+        const slideId = slides[currentSlide].id
+        toggleStar(slideId)
+        const nowStarred = !isStarred(slideId)
+        showToast(nowStarred ? 'Slide starred' : 'Star removed', 'star')
+      } else if (e.key === 'h') {
+        // Toggle hidden on current slide
+        e.preventDefault()
+        const slideId = slides[currentSlide].id
+        toggleHidden(slideId)
+        const nowHidden = !isHidden(slideId)
+        showToast(nowHidden ? 'Slide hidden' : 'Slide visible', 'hide')
+      } else if (e.key === 'i') {
         // Enter feedback mode (like vim's insert mode)
         e.preventDefault()
         setFeedbackMode(true)
@@ -238,7 +276,7 @@ function MainPresentation({ deckId }: { deckId: string }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginate, goToFirst, goToLast, showHelp, showSearch, feedbackMode])
+  }, [paginate, goToFirst, goToLast, showHelp, showSearch, feedbackMode, currentSlide, toggleStar, toggleHidden, isStarred, isHidden, showToast])
 
   const currentSlideConfig = slides[currentSlide]
   const visibleDots = getVisibleDots(currentSlide, slides.length)
@@ -314,19 +352,29 @@ function MainPresentation({ deckId }: { deckId: string }) {
               )
             }
             const index = item as number
+            const slideId = slides[index]?.id
+            const slideIsStarred = slideId && isStarred(slideId)
+            const slideIsHidden = slideId && isHidden(slideId)
+
+            if (slideIsHidden) {
+              return null // Don't show dots for hidden slides
+            }
+
             return (
               <motion.button
                 key={idx}
                 onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
+                className={`w-3 h-3 rounded-full transition-colors relative ${
                   index === currentSlide
                     ? 'bg-brand-red'
-                    : 'bg-nav-bg hover:bg-nav-bg-hover'
+                    : slideIsStarred
+                      ? 'bg-yellow-500'
+                      : 'bg-nav-bg hover:bg-nav-bg-hover'
                 }`}
                 whileHover={{ scale: 1.3 }}
                 whileTap={{ scale: 0.9 }}
                 animate={index === currentSlide ? { scale: 1.2 } : { scale: 1 }}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Go to slide ${index + 1}${slideIsStarred ? ' (starred)' : ''}`}
               />
             )
           })}
@@ -347,8 +395,19 @@ function MainPresentation({ deckId }: { deckId: string }) {
         </motion.button>
 
         {/* Slide Counter */}
-        <div className="text-text-muted text-caption ml-2">
-          {currentSlide + 1} / {slides.length}
+        <div className="text-text-muted text-caption ml-2 flex items-center gap-1.5">
+          {isStarred(currentSlideConfig.id) && (
+            <Star size={12} className="text-yellow-500 fill-current" />
+          )}
+          {isHidden(currentSlideConfig.id) && (
+            <EyeOff size={12} className="text-text-muted" />
+          )}
+          <span>
+            {currentSlide + 1} / {slides.length}
+            {hiddenCount > 0 && (
+              <span className="text-text-muted/60"> ({hiddenCount} hidden)</span>
+            )}
+          </span>
         </div>
       </div>
 
@@ -363,6 +422,8 @@ function MainPresentation({ deckId }: { deckId: string }) {
           <SlideSearch
             slides={slides}
             initialQuery={searchInitialQuery}
+            starredSlideIds={starredSlideIds}
+            hiddenSlideIds={hiddenSlideIds}
             onSelect={(index) => {
               // Navigate first, then close
               const targetSlide = index
@@ -415,6 +476,14 @@ function MainPresentation({ deckId }: { deckId: string }) {
                   <span>Jump to slide N</span>
                 </div>
                 <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">s</span>
+                  <span>Star / unstar slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">h</span>
+                  <span>Hide / show slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">i</span>
                   <span>Feedback mode (add reactions)</span>
                 </div>
@@ -425,6 +494,25 @@ function MainPresentation({ deckId }: { deckId: string }) {
               </div>
               <p className="text-text-muted/60 text-sm mt-6">Press any key to close</p>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-nav-bg rounded-lg shadow-lg border border-border"
+          >
+            {toast.icon === 'star' ? (
+              <Star size={16} className="text-yellow-500 fill-current" />
+            ) : (
+              <EyeOff size={16} className="text-text-muted" />
+            )}
+            <span className="text-text text-sm">{toast.message}</span>
           </motion.div>
         )}
       </AnimatePresence>

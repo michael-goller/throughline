@@ -39,6 +39,7 @@ export interface StepsSlideConfig extends BaseSlide {
 // Two column slide - 50/50 split layout
 export interface ColumnCard {
   number?: string | number
+  icon?: LucideIcon
   title: string
   body: string
   bullets?: string[]
@@ -227,8 +228,10 @@ export interface FeatureGridRow {
 export interface FeatureGridSlideConfig extends BaseSlide {
   type: 'feature-grid'
   title?: string
+  subtitle?: string
   columns: FeatureGridColumn[]
   rows: FeatureGridRow[]
+  columnWidths?: string  // Custom CSS grid-template-columns override
 }
 
 // Fishbone/Tree diagram slide

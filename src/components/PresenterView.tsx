@@ -35,6 +35,7 @@ import { useComments } from '../hooks/useComments'
 import { usePresenterSync } from '../hooks/usePresenterSync'
 import { useTheme } from '../hooks/useTheme'
 import { useIdentity } from '../hooks/useIdentity'
+import { useSlideState } from '../hooks/useSlideState'
 // import { useViewerPresence } from '../hooks/useViewerPresence'
 import SlideThumbnail from './SlideThumbnail'
 import SlideSearch from './SlideSearch'
@@ -77,6 +78,9 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
 
   // Theme
   const { theme, toggleTheme } = useTheme()
+
+  // Slide state (starred/hidden)
+  const { starredSlideIds, hiddenSlideIds } = useSlideState(deckId)
 
   // Presenter sync
   const { goToSlide: syncGoToSlide, requestSync } = usePresenterSync(
@@ -462,6 +466,8 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
           <SlideSearch
             slides={slides}
             initialQuery={searchInitialQuery}
+            starredSlideIds={starredSlideIds}
+            hiddenSlideIds={hiddenSlideIds}
             onSelect={(index) => {
               goToSlide(index)
               setShowSearch(false)

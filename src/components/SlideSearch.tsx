@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search } from 'lucide-react'
+import { Search, Star } from 'lucide-react'
 import Fuse from 'fuse.js'
 import type { SlideConfig } from '../types'
+
+type TabType = 'all' | 'starred'
 
 interface SlideSearchProps {
   slides: SlideConfig[]
   initialQuery?: string
+  starredSlideIds: string[]
+  hiddenSlideIds: string[]
   onSelect: (index: number) => void
   onClose: () => void
 }
 
 interface SearchableSlide {
   index: number
+  id: string
   type: string
   title: string
   content: string
@@ -169,16 +174,28 @@ function getSlideTitle(slide: SlideConfig): string {
   return slide.type
 }
 
-export default function SlideSearch({ slides, initialQuery = '', onSelect, onClose }: SlideSearchProps) {
+export default function SlideSearch({
+  slides,
+  initialQuery = '',
+  starredSlideIds,
+  hiddenSlideIds,
+  onSelect,
+  onClose,
+}: SlideSearchProps) {
   const [query, setQuery] = useState(initialQuery)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [activeTab, setActiveTab] = useState<TabType>('all')
   const inputRef = useRef<HTMLInputElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
+
+  const starredSet = useMemo(() => new Set(starredSlideIds), [starredSlideIds])
+  const hiddenSet = useMemo(() => new Set(hiddenSlideIds), [hiddenSlideIds])
 
   // Build searchable index
   const searchableSlides = useMemo<SearchableSlide[]>(() => {
     return slides.map((slide, index) => ({
       index,
+      id: slide.id,
       type: slide.type,
       title: getSlideTitle(slide),
       content: extractSlideContent(slide),
@@ -218,33 +235,39 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
   // Search results
   const results = useMemo(() => {
     const trimmed = query.trim()
+    let baseResults: { item: SearchableSlide; isJumpOption: boolean }[]
 
     if (!trimmed) {
       // Show all slides when no query
-      return searchableSlides.map(s => ({ item: s, isJumpOption: false }))
-    }
-
-    // If it's a :N command, return just the jump option
-    if (trimmed.startsWith(':') && directJumpSlide !== null) {
-      return [{
+      baseResults = searchableSlides.map(s => ({ item: s, isJumpOption: false }))
+    } else if (trimmed.startsWith(':') && directJumpSlide !== null) {
+      // If it's a :N command, return just the jump option
+      baseResults = [{
         item: searchableSlides[directJumpSlide],
         isJumpOption: true,
       }]
+    } else {
+      // Get fuzzy search results
+      const searchResults = fuse.search(trimmed).map(r => ({ item: r.item, isJumpOption: false }))
+
+      // If input is a valid slide number, prepend jump option
+      if (directJumpSlide !== null) {
+        baseResults = [
+          { item: searchableSlides[directJumpSlide], isJumpOption: true },
+          ...searchResults.filter(r => r.item.index !== directJumpSlide), // Avoid duplicate
+        ]
+      } else {
+        baseResults = searchResults
+      }
     }
 
-    // Get fuzzy search results
-    const searchResults = fuse.search(trimmed).map(r => ({ ...r, isJumpOption: false }))
-
-    // If input is a valid slide number, prepend jump option
-    if (directJumpSlide !== null) {
-      return [
-        { item: searchableSlides[directJumpSlide], isJumpOption: true },
-        ...searchResults.filter(r => r.item.index !== directJumpSlide), // Avoid duplicate
-      ]
+    // Filter by tab
+    if (activeTab === 'starred') {
+      baseResults = baseResults.filter(r => starredSet.has(r.item.id))
     }
 
-    return searchResults
-  }, [query, fuse, searchableSlides, directJumpSlide])
+    return baseResults
+  }, [query, fuse, searchableSlides, directJumpSlide, activeTab, starredSet])
 
   // Reset selection when results change
   useEffect(() => {
@@ -266,6 +289,10 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
+      case 'Tab':
+        e.preventDefault()
+        setActiveTab(prev => prev === 'all' ? 'starred' : 'all')
+        break
       case 'ArrowDown':
         e.preventDefault()
         setSelectedIndex(i => Math.min(i + 1, results.length - 1))
@@ -288,6 +315,8 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
     }
   }
 
+  const starredCount = starredSlideIds.length
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -304,6 +333,39 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
         className="w-full max-w-xl bg-background-elevated border border-border rounded-xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
+        {/* Tabs */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'all'
+                ? 'text-text border-b-2 border-brand-red -mb-px'
+                : 'text-text-muted hover:text-text'
+            }`}
+          >
+            <Search size={16} />
+            All Slides
+          </button>
+          <button
+            onClick={() => setActiveTab('starred')}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'starred'
+                ? 'text-text border-b-2 border-brand-red -mb-px'
+                : 'text-text-muted hover:text-text'
+            }`}
+          >
+            <Star size={16} className={activeTab === 'starred' ? 'fill-current' : ''} />
+            Starred
+            {starredCount > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                activeTab === 'starred' ? 'bg-brand-red/20 text-brand-red' : 'bg-nav-bg text-text-muted'
+              }`}>
+                {starredCount}
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search size={20} className="text-text-muted" />
@@ -313,7 +375,7 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search slides..."
+            placeholder={activeTab === 'starred' ? 'Search starred slides...' : 'Search slides...'}
             className="flex-1 bg-transparent text-text text-lg outline-none placeholder:text-text-muted/50"
           />
           <span className="text-text-muted text-sm">
@@ -325,12 +387,17 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
         <div ref={resultsRef} className="max-h-[50vh] overflow-y-auto">
           {results.length === 0 ? (
             <div className="px-4 py-8 text-center text-text-muted">
-              No slides found
+              {activeTab === 'starred' && starredCount === 0
+                ? 'No starred slides yet. Press S on any slide to star it.'
+                : 'No slides found'
+              }
             </div>
           ) : (
             results.map((result, idx) => {
               const isSection = result.item.type === 'title' || result.item.type === 'divider'
               const isTitle = result.item.type === 'title'
+              const isStarred = starredSet.has(result.item.id)
+              const isHidden = hiddenSet.has(result.item.id)
 
               return (
                 <button
@@ -342,11 +409,13 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
                   } ${
                     idx === selectedIndex
                       ? 'bg-[#21215C] text-white'
-                      : isSection
-                        ? 'bg-[#21215C]/5 hover:bg-[#21215C]/10'
-                        : idx % 2 === 0
-                          ? 'bg-background hover:bg-[#21215C]/10'
-                          : 'bg-background-elevated hover:bg-[#21215C]/10'
+                      : isHidden
+                        ? 'bg-background/50 opacity-50 hover:opacity-75'
+                        : isSection
+                          ? 'bg-[#21215C]/5 hover:bg-[#21215C]/10'
+                          : idx % 2 === 0
+                            ? 'bg-background hover:bg-[#21215C]/10'
+                            : 'bg-background-elevated hover:bg-[#21215C]/10'
                   }`}
                 >
                   {/* Slide number or jump icon */}
@@ -362,6 +431,16 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
                     {result.item.index + 1}
                   </span>
 
+                  {/* Star indicator */}
+                  {isStarred && (
+                    <Star
+                      size={14}
+                      className={`flex-shrink-0 fill-current ${
+                        idx === selectedIndex ? 'text-yellow-300' : 'text-yellow-500'
+                      }`}
+                    />
+                  )}
+
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className={`truncate ${
@@ -370,11 +449,14 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
                         : isSection
                           ? 'text-[#21215C]'
                           : 'text-text'
-                    } ${isTitle ? 'font-semibold text-base' : isSection ? 'font-medium' : 'font-normal'}`}>
+                    } ${isTitle ? 'font-semibold text-base' : isSection ? 'font-medium' : 'font-normal'} ${
+                      isHidden ? 'line-through' : ''
+                    }`}>
                       {result.isJumpOption ? `Jump to slide ${result.item.index + 1}` : result.item.title}
                     </div>
                     <div className={`text-sm truncate ${idx === selectedIndex ? 'text-white/70' : 'text-text-muted'}`}>
                       {result.isJumpOption ? result.item.title : result.item.type}
+                      {isHidden && ' (hidden)'}
                     </div>
                   </div>
 
@@ -392,6 +474,7 @@ export default function SlideSearch({ slides, initialQuery = '', onSelect, onClo
 
         {/* Footer */}
         <div className="px-4 py-2 border-t border-border flex gap-4 text-text-muted text-xs">
+          <span><kbd className="font-mono">tab</kbd> switch tabs</span>
           <span><kbd className="font-mono">↑↓</kbd> navigate</span>
           <span><kbd className="font-mono">:N</kbd> jump to slide</span>
           <span><kbd className="font-mono">enter</kbd> select</span>
