@@ -1,0 +1,38 @@
+{
+  "name": "shine-deck",
+  "version": "0.1.0",
+  "description": "Beautiful slide decks made simple",
+  "type": "module",
+  "bin": {
+    "shine": "./bin/shine.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node bin/shine.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "template"
+  ],
+  "keywords": [
+    "slides",
+    "presentation",
+    "deck",
+    "react",
+    "vite"
+  ],
+  "author": "Michael Goller",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "execa": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
