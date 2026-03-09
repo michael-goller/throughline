@@ -3,7 +3,7 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'fs'
-import { createServer } from 'net'
+import { createServer, createConnection } from 'net'
 import { REGISTRY_FILE, ensureShineDir, getPortRange } from './config.js'
 
 export interface DeckEntry {
@@ -126,29 +126,59 @@ export function listDecks(): Array<[string, DeckEntry]> {
 }
 
 /**
- * Check if a port is in use on a specific host.
+ * Check if we can connect to a port (something is listening).
  */
-function checkPort(port: number, host: string): Promise<boolean> {
+function canConnect(port: number, host: string, timeout = 1000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = createConnection({ port, host, timeout })
+    socket.once('connect', () => {
+      socket.destroy()
+      resolve(true)
+    })
+    socket.once('error', () => {
+      socket.destroy()
+      resolve(false)
+    })
+    socket.once('timeout', () => {
+      socket.destroy()
+      resolve(false)
+    })
+  })
+}
+
+/**
+ * Check if we can bind to a port (nothing is using it).
+ */
+function canBind(port: number, host: string): Promise<boolean> {
   return new Promise((resolve) => {
     const server = createServer()
-    server.once('error', () => resolve(true))
+    server.once('error', () => resolve(false))
     server.once('listening', () => {
       server.close()
-      resolve(false)
+      resolve(true)
     })
     server.listen(port, host)
   })
 }
 
 /**
- * Check if a port is in use (checks both IPv4 and IPv6).
+ * Check if a port is in use.
+ * Uses multiple methods: try connecting and try binding on different interfaces.
  */
 export async function isPortInUse(port: number): Promise<boolean> {
-  const ipv4InUse = await checkPort(port, '127.0.0.1')
-  if (ipv4InUse) return true
+  // First, try to connect - if successful, something is listening
+  const canConnectLocal = await canConnect(port, '127.0.0.1', 500)
+  if (canConnectLocal) return true
 
-  const ipv6InUse = await checkPort(port, '::1')
-  return ipv6InUse
+  // Try binding on 0.0.0.0 - this will fail if ANY interface has the port in use
+  const canBindAll = await canBind(port, '0.0.0.0')
+  if (!canBindAll) return true
+
+  // Also verify we can bind on IPv6
+  const canBindIPv6 = await canBind(port, '::')
+  if (!canBindIPv6) return true
+
+  return false
 }
 
 /**
