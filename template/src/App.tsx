@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Star, EyeOff } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, EyeOff, Sun, Moon, Loader2, AlertCircle, FileQuestion } from 'lucide-react'
 import SlideRenderer from './templates'
-import slides from '@deck/slides'
-import { ThemeToggle, SlideSearch } from './components'
+import staticSlides from '@deck/slides'
+import type { SlideConfig } from './types'
+import { SlideSearch } from './components'
+import SlideOverview from './components/SlideOverview'
 import FeedbackOverlay from './components/FeedbackOverlay'
+import LaserPointer from './components/LaserPointer'
 import PresenterView from './components/PresenterView'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { useSlideState } from './hooks/useSlideState'
+import { useDeck } from './hooks/useDeck'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
 
@@ -18,69 +22,49 @@ function isPresenterMode(): boolean {
   return params.has('presenter')
 }
 
-// Get deck ID from URL path or use a default
-function getDeckId(): string {
+/**
+ * Parse the URL to determine deck loading mode.
+ *
+ * - `/decks/:deckId` → dynamic mode (load from API/JSON at runtime)
+ * - anything else     → static mode (use compile-time @deck/slides import)
+ */
+function parseDeckRoute(): { mode: 'static' | 'dynamic'; deckId: string } {
   const path = window.location.pathname
-  // Extract deck name from path like /deck-name or /deck-name/
+
+  // Match /decks/:deckId (with optional trailing slash and presenter query)
+  const dynamicMatch = path.match(/^\/decks\/([^/]+)\/?$/)
+  if (dynamicMatch) {
+    return { mode: 'dynamic', deckId: decodeURIComponent(dynamicMatch[1]) }
+  }
+
+  // Static mode: extract deck name from path for identity (starred/hidden state, etc.)
   const match = path.match(/\/([^/]+)/)
-  return match ? match[1] : 'default-deck'
+  return { mode: 'static', deckId: match ? match[1] : 'default-deck' }
 }
 
 const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 100 : -100,
-    opacity: 0,
-  }),
+  enter: (direction: number) => direction === 0
+    ? { x: 0, opacity: 1, scale: 1 }
+    : { x: direction > 0 ? '100%' : '-60%', opacity: 0, scale: 0.97 },
   center: {
     x: 0,
     opacity: 1,
+    scale: 1,
   },
-  exit: (direction: number) => ({
-    x: direction < 0 ? 100 : -100,
-    opacity: 0,
-    scale: 0.98,
-  }),
+  exit: (direction: number) => direction === 0
+    ? { x: 0, opacity: 1, scale: 1 }
+    : { x: direction < 0 ? '60%' : '-60%', opacity: 0, scale: 0.95 },
 }
 
 const transition = {
-  x: { type: 'tween' as const, duration: 0.4, ease: [0, 0, 0.2, 1] as const },
-  opacity: { duration: 0.3 },
-  scale: { duration: 0.3 },
+  x: { type: 'spring' as const, stiffness: 500, damping: 38, mass: 0.8 },
+  opacity: { duration: 0.15 },
+  scale: { type: 'spring' as const, stiffness: 500, damping: 38, mass: 0.8 },
 }
 
-// Generate windowed dots with ellipsis for many slides
-function getVisibleDots(current: number, total: number, windowSize: number = 3) {
-  if (total <= windowSize * 2 + 1) {
-    // Show all dots if not too many
-    return Array.from({ length: total }, (_, i) => i)
-  }
-
-  const dots: (number | 'ellipsis-start' | 'ellipsis-end')[] = []
-  const start = Math.max(0, current - windowSize)
-  const end = Math.min(total - 1, current + windowSize)
-
-  // Always show first dot
-  if (start > 0) {
-    dots.push(0)
-    if (start > 1) dots.push('ellipsis-start')
-  }
-
-  // Window around current
-  for (let i = start; i <= end; i++) {
-    if (i !== 0 && i !== total - 1) dots.push(i)
-  }
-
-  // Always show last dot
-  if (end < total - 1) {
-    if (end < total - 2) dots.push('ellipsis-end')
-    dots.push(total - 1)
-  }
-
-  return dots
-}
 
 // Calculate animation delay based on slide type and content
-function getAnimationDelay(slide: typeof slides[number]): number {
+function getAnimationDelay(slide: SlideConfig): number {
   const baseDelay = 1000 // Base transition time
   const buffer = 500 // Extra buffer for rendering
 
@@ -109,18 +93,82 @@ function getAnimationDelay(slide: typeof slides[number]): number {
 }
 
 function App() {
-  const deckId = useMemo(() => getDeckId(), [])
+  const route = useMemo(() => parseDeckRoute(), [])
   const presenterMode = useMemo(() => isPresenterMode(), [])
 
-  // If in presenter mode, render the presenter view
+  if (route.mode === 'dynamic') {
+    return <DynamicDeckLoader deckId={route.deckId} presenterMode={presenterMode} />
+  }
+
+  // Static mode: use compile-time slides from @deck/slides
+  if (presenterMode) {
+    return <PresenterView slides={staticSlides} deckId={route.deckId} />
+  }
+
+  return <MainPresentation slides={staticSlides} deckId={route.deckId} />
+}
+
+/**
+ * Dynamic deck loader — fetches deck JSON at runtime and renders once ready.
+ */
+function DynamicDeckLoader({ deckId, presenterMode }: { deckId: string; presenterMode: boolean }) {
+  const { status, slides, deck, error } = useDeck(deckId)
+
+  // Update page title when deck loads
+  useEffect(() => {
+    if (deck?.title) {
+      document.title = deck.title
+    }
+  }, [deck?.title])
+
+  if (status === 'loading') {
+    return (
+      <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-4">
+        <Loader2 size={32} className="text-brand-red animate-spin" />
+        <p className="text-text-muted text-sm">Loading deck...</p>
+      </div>
+    )
+  }
+
+  if (status === 'not-found') {
+    return (
+      <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-4">
+        <FileQuestion size={48} className="text-text-muted" />
+        <h1 className="text-text text-xl font-semibold">Deck not found</h1>
+        <p className="text-text-muted text-sm max-w-md text-center">
+          No deck with ID "<span className="font-mono text-brand-red">{deckId}</span>" exists.
+        </p>
+        <a href="/" className="mt-4 text-brand-red hover:underline text-sm">
+          Go home
+        </a>
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-4">
+        <AlertCircle size={48} className="text-red-500" />
+        <h1 className="text-text text-xl font-semibold">Failed to load deck</h1>
+        <p className="text-text-muted text-sm max-w-md text-center">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-brand-red-dark text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   if (presenterMode) {
     return <PresenterView slides={slides} deckId={deckId} />
   }
 
-  return <MainPresentation deckId={deckId} />
+  return <MainPresentation slides={slides} deckId={deckId} />
 }
 
-function MainPresentation({ deckId }: { deckId: string }) {
+function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: string }) {
   const [[currentSlide, direction], setSlide] = useState([0, 0])
   const { theme, toggleTheme } = useTheme()
   const [showHelp, setShowHelp] = useState(false)
@@ -128,6 +176,10 @@ function MainPresentation({ deckId }: { deckId: string }) {
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const [feedbackMode, setFeedbackMode] = useState(false)
   const [animationsComplete, setAnimationsComplete] = useState(false)
+  const [laserActive, setLaserActive] = useState(false)
+  const [showOverview, setShowOverview] = useState(false)
+  const [materialize, setMaterialize] = useState(false)
+  const overviewSelected = useRef(false)
   const [toast, setToast] = useState<{ message: string; icon: 'star' | 'hide' } | null>(null)
   const lastKeyTime = useRef(0)
   const lastKey = useRef('')
@@ -140,7 +192,6 @@ function MainPresentation({ deckId }: { deckId: string }) {
     toggleHidden,
     starredSlideIds,
     hiddenSlideIds,
-    hiddenCount,
   } = useSlideState(deckId)
 
   // Listen for navigation commands from presenter view
@@ -170,14 +221,7 @@ function MainPresentation({ deckId }: { deckId: string }) {
       }
       newSlide += newDirection
     }
-  }, [currentSlide, isHidden])
-
-  const goToSlide = useCallback((index: number) => {
-    if (index < 0 || index >= slides.length) return
-    if (index === currentSlide) return  // Already on this slide
-    const dir = index > currentSlide ? 1 : -1
-    setSlide([index, dir])
-  }, [currentSlide])
+  }, [currentSlide, slides, isHidden])
 
   const goToFirst = useCallback(() => {
     if (currentSlide !== 0) {
@@ -190,12 +234,12 @@ function MainPresentation({ deckId }: { deckId: string }) {
     if (currentSlide !== last) {
       setSlide([last, 1])
     }
-  }, [currentSlide])
+  }, [currentSlide, slides.length])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Search handles its own keyboard events
-      if (showSearch) {
+      // Search and overview handle their own keyboard events
+      if (showSearch || showOverview) {
         return
       }
 
@@ -231,6 +275,12 @@ function MainPresentation({ deckId }: { deckId: string }) {
         toggleHidden(slideId)
         const nowHidden = !isHidden(slideId)
         showToast(nowHidden ? 'Slide hidden' : 'Slide visible', 'hide')
+      } else if (e.key === 'p') {
+        e.preventDefault()
+        setLaserActive((prev) => !prev)
+      } else if (e.key === 'o') {
+        e.preventDefault()
+        setShowOverview(true)
       } else if (e.key === 'i') {
         // Enter feedback mode (like vim's insert mode)
         e.preventDefault()
@@ -276,10 +326,9 @@ function MainPresentation({ deckId }: { deckId: string }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginate, goToFirst, goToLast, showHelp, showSearch, feedbackMode, currentSlide, toggleStar, toggleHidden, isStarred, isHidden, showToast])
+  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast])
 
   const currentSlideConfig = slides[currentSlide]
-  const visibleDots = getVisibleDots(currentSlide, slides.length)
 
   // Track animation completion for export
   const animationDelay = useMemo(
@@ -311,11 +360,33 @@ function MainPresentation({ deckId }: { deckId: string }) {
           initial="enter"
           animate="center"
           exit="exit"
-          transition={transition}
+          transition={direction === 0 ? { duration: 0 } : transition}
           className="absolute inset-0 flex items-center justify-center"
         >
           <SlideRenderer slide={currentSlideConfig} />
         </motion.div>
+      </AnimatePresence>
+
+      {/* Pixel-materialize effect after overview zoom-dive */}
+      <AnimatePresence>
+        {materialize && (
+          <motion.div
+            className="absolute inset-0 z-20 pointer-events-none"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            onAnimationComplete={() => setMaterialize(false)}
+            style={{
+              backdropFilter: 'blur(14px) brightness(1.08)',
+              WebkitBackdropFilter: 'blur(14px) brightness(1.08)',
+              backgroundImage: [
+                'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px)',
+                'repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px)',
+              ].join(', '),
+            }}
+          />
+        )}
       </AnimatePresence>
 
       {/* Feedback Overlay (reactions, comments, questions) */}
@@ -325,96 +396,84 @@ function MainPresentation({ deckId }: { deckId: string }) {
         feedbackMode={feedbackMode}
       />
 
-      {/* Bottom Navigation Bar */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex items-center gap-4">
-        {/* Left Arrow */}
-        <motion.button
-          initial={{ opacity: 0.3 }}
-          animate={{ opacity: currentSlide > 0 ? 0.3 : 0.1 }}
-          whileHover={currentSlide > 0 ? { opacity: 1, scale: 1.1 } : {}}
-          whileTap={currentSlide > 0 ? { scale: 0.95 } : {}}
-          onClick={() => paginate(-1)}
-          disabled={currentSlide === 0}
-          className="p-2 rounded-full bg-nav-bg text-nav-text transition-colors hover:bg-nav-bg-hover disabled:cursor-not-allowed"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={20} />
-        </motion.button>
+      {/* Laser Pointer */}
+      <LaserPointer
+        active={laserActive}
+        onDeactivate={() => setLaserActive(false)}
+      />
 
-        {/* Progress Dots */}
-        <div className="flex items-center gap-2">
-          {visibleDots.map((item, idx) => {
-            if (item === 'ellipsis-start' || item === 'ellipsis-end') {
-              return (
-                <span key={item} className="text-text-muted text-sm px-1">
-                  ...
-                </span>
-              )
-            }
-            const index = item as number
-            const slideId = slides[index]?.id
-            const slideIsStarred = slideId && isStarred(slideId)
-            const slideIsHidden = slideId && isHidden(slideId)
-
-            if (slideIsHidden) {
-              return null // Don't show dots for hidden slides
-            }
-
-            return (
-              <motion.button
-                key={idx}
-                onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-colors relative ${
-                  index === currentSlide
-                    ? 'bg-brand-red'
-                    : slideIsStarred
-                      ? 'bg-yellow-500'
-                      : 'bg-nav-bg hover:bg-nav-bg-hover'
-                }`}
-                whileHover={{ scale: 1.3 }}
-                whileTap={{ scale: 0.9 }}
-                animate={index === currentSlide ? { scale: 1.2 } : { scale: 1 }}
-                aria-label={`Go to slide ${index + 1}${slideIsStarred ? ' (starred)' : ''}`}
-              />
-            )
-          })}
+      {/* Bottom-left Navigation Pill */}
+      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
+        {/* Progress bar track */}
+        <div className="relative h-1 w-full bg-border/50">
+          <motion.div
+            className="absolute inset-y-0 left-0 right-0 origin-left"
+            style={{
+              background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
+              boxShadow: '0 0 8px var(--brand-red)',
+            }}
+            animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
+            transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+          />
         </div>
+        {/* Controls row */}
+        <div className="flex items-center gap-1 px-1.5 py-1">
+          {/* Left Arrow */}
+          <motion.button
+            animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}
+            whileHover={currentSlide > 0 ? { opacity: 1 } : {}}
+            whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
+            onClick={() => paginate(-1)}
+            disabled={currentSlide === 0}
+            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={14} />
+          </motion.button>
 
-        {/* Right Arrow */}
-        <motion.button
-          initial={{ opacity: 0.3 }}
-          animate={{ opacity: currentSlide < slides.length - 1 ? 0.3 : 0.1 }}
-          whileHover={currentSlide < slides.length - 1 ? { opacity: 1, scale: 1.1 } : {}}
-          whileTap={currentSlide < slides.length - 1 ? { scale: 0.95 } : {}}
-          onClick={() => paginate(1)}
-          disabled={currentSlide === slides.length - 1}
-          className="p-2 rounded-full bg-nav-bg text-nav-text transition-colors hover:bg-nav-bg-hover disabled:cursor-not-allowed"
-          aria-label="Next slide"
-        >
-          <ChevronRight size={20} />
-        </motion.button>
-
-        {/* Slide Counter */}
-        <div className="text-text-muted text-caption ml-2 flex items-center gap-1.5">
-          {isStarred(currentSlideConfig.id) && (
-            <Star size={12} className="text-yellow-500 fill-current" />
-          )}
-          {isHidden(currentSlideConfig.id) && (
-            <EyeOff size={12} className="text-text-muted" />
-          )}
-          <span>
-            {currentSlide + 1} / {slides.length}
-            {hiddenCount > 0 && (
-              <span className="text-text-muted/60"> ({hiddenCount} hidden)</span>
+          {/* Slide Counter */}
+          <div className="text-nav-text text-tiny font-medium px-1.5 flex items-center gap-1 select-none tabular-nums">
+            {isStarred(currentSlideConfig.id) && (
+              <Star size={10} className="text-yellow-500 fill-current" />
             )}
-          </span>
+            {isHidden(currentSlideConfig.id) && (
+              <EyeOff size={10} className="text-text-muted" />
+            )}
+            <span className="inline-flex">
+              <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
+            </span>
+          </div>
+
+          {/* Right Arrow */}
+          <motion.button
+            animate={{ opacity: currentSlide < slides.length - 1 ? 0.6 : 0.2 }}
+            whileHover={currentSlide < slides.length - 1 ? { opacity: 1 } : {}}
+            whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
+            onClick={() => paginate(1)}
+            disabled={currentSlide === slides.length - 1}
+            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={14} />
+          </motion.button>
+
+          {/* Divider */}
+          <div className="w-px h-3.5 bg-border mx-0.5" />
+
+          {/* Theme Toggle */}
+          <motion.button
+            animate={{ opacity: 0.6 }}
+            whileHover={{ opacity: 1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleTheme}
+            className="p-1 rounded text-nav-text"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+          </motion.button>
         </div>
       </div>
 
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-8 z-10">
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      </div>
 
       {/* Search Modal */}
       <AnimatePresence>
@@ -438,6 +497,30 @@ function MainPresentation({ deckId }: { deckId: string }) {
         )}
       </AnimatePresence>
 
+      {/* Slide Overview */}
+      <AnimatePresence>
+        {showOverview && (
+          <SlideOverview
+            slides={slides}
+            currentSlide={currentSlide}
+            starredSlideIds={starredSlideIds}
+            hiddenSlideIds={hiddenSlideIds}
+            onSelect={(index) => {
+              // Direction 0 = instant swap (zoom-dive replaces the transition)
+              if (index !== currentSlide) setSlide([index, 0])
+              overviewSelected.current = true
+            }}
+            onClose={() => {
+              setShowOverview(false)
+              if (overviewSelected.current) {
+                overviewSelected.current = false
+                setMaterialize(true)
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Help Overlay */}
       <AnimatePresence>
         {showHelp && (
@@ -445,18 +528,18 @@ function MainPresentation({ deckId }: { deckId: string }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex items-center justify-center bg-background/90"
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/95 backdrop-blur-sm"
             onClick={() => setShowHelp(false)}
           >
-            <div className="bg-nav-bg rounded-xl p-8 shadow-2xl max-w-md">
-              <h2 className="text-text text-xl font-semibold mb-6">Keyboard Shortcuts</h2>
+            <div className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border">
+              <h2 className="font-display text-text text-xl font-semibold mb-6">Keyboard Shortcuts</h2>
               <div className="space-y-3 text-text-muted">
                 <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">j / k</span>
                   <span>Next / Previous slide</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">→ / ←</span>
+                  <span className="font-mono text-brand-red">&rarr; / &larr;</span>
                   <span>Next / Previous slide</span>
                 </div>
                 <div className="flex justify-between gap-8">
@@ -488,6 +571,14 @@ function MainPresentation({ deckId }: { deckId: string }) {
                   <span>Feedback mode (add reactions)</span>
                 </div>
                 <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">o</span>
+                  <span>Slide overview</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">p</span>
+                  <span>Laser pointer</span>
+                </div>
+                <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">?</span>
                   <span>Show this help</span>
                 </div>
@@ -505,7 +596,7 @@ function MainPresentation({ deckId }: { deckId: string }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-nav-bg rounded-lg shadow-lg border border-border"
+            className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-nav-bg rounded-lg shadow-lg border border-border"
           >
             {toast.icon === 'star' ? (
               <Star size={16} className="text-yellow-500 fill-current" />

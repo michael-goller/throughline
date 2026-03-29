@@ -40,5 +40,9 @@ export default defineConfig(() => {
         ],
       },
     },
+
+    // SPA fallback: serve index.html for /decks/* routes so dynamic
+    // deck loading works on page refresh and direct navigation.
+    appType: 'spa',
   }
 })

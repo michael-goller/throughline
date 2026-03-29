@@ -1,0 +1,82 @@
+{
+  "id": "demo",
+  "title": "Shine Demo Deck",
+  "description": "A sample deck loaded dynamically at runtime.",
+  "author": "Shine Team",
+  "slides": [
+    {
+      "id": "title",
+      "type": "title-digital",
+      "title": "Dynamic Deck Loading",
+      "subtitle": "Loaded at runtime from JSON",
+      "tagline": "Shine Platform"
+    },
+    {
+      "id": "how-it-works",
+      "type": "steps",
+      "title": "How It Works",
+      "steps": [
+        {
+          "icon": "Globe",
+          "title": "Fetch",
+          "description": "Deck config is fetched as JSON from an API endpoint or static file."
+        },
+        {
+          "icon": "FileJson",
+          "title": "Parse",
+          "description": "The JSON is validated and parsed into SlideConfig objects."
+        },
+        {
+          "icon": "Monitor",
+          "title": "Render",
+          "description": "The Shine runtime renders slides with full animation support."
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "type": "icon-grid",
+      "title": "Key Capabilities",
+      "columns": 3,
+      "items": [
+        { "icon": "Zap", "title": "Runtime Loading", "description": "No rebuild needed to show new decks" },
+        { "icon": "Link", "title": "URL-based Access", "description": "Share decks via /decks/:id links" },
+        { "icon": "Database", "title": "API or Static", "description": "Load from REST API or static JSON files" },
+        { "icon": "Shield", "title": "Validation", "description": "Deck configs are validated on load" },
+        { "icon": "Palette", "title": "Full Template Support", "description": "All 28 slide types work with JSON configs" },
+        { "icon": "ArrowLeft", "title": "Backward Compatible", "description": "Thin deck compile-time workflow still works" }
+      ]
+    },
+    {
+      "id": "architecture",
+      "type": "two-column",
+      "title": "One Runtime, Many Decks",
+      "left": {
+        "icon": "Server",
+        "title": "Before",
+        "body": "Each deck required a separate build with Vite aliases.",
+        "bullets": [
+          "Compile-time imports only",
+          "One server per deck",
+          "TypeScript config files"
+        ]
+      },
+      "right": {
+        "icon": "Cloud",
+        "title": "After",
+        "body": "A single runtime serves any number of decks dynamically.",
+        "bullets": [
+          "Runtime JSON loading",
+          "One server, many decks",
+          "JSON configs via API"
+        ]
+      }
+    },
+    {
+      "id": "closing",
+      "type": "qa",
+      "text": "Questions?",
+      "subtitle": "Visit /decks/manifest.json to see available decks"
+    }
+  ]
+}
