@@ -1,17 +1,3 @@
-import {
-  PenLine,
-  Target,
-  CheckCircle,
-  Lightbulb,
-  Rocket,
-  TrendingUp,
-  Shield,
-  Zap,
-  Users,
-  Globe,
-  Lock,
-  BarChart3,
-} from 'lucide-react'
 import type { SlideConfig } from './types'
 
 /**
@@ -22,7 +8,7 @@ import type { SlideConfig } from './types'
  *
  * - 'title': Red gradient background with title/subtitle/tagline
  * - 'title-digital': Title with neural network animation and terminal prompt
- * - 'steps': Dark background with numbered step cards (requires icons from lucide-react)
+ * - 'steps': Dark background with numbered step cards (uses icon string names)
  * - 'two-column': 50/50 split layout with two content cards
  * - 'content': Single column with title, body text, and optional bullets
  * - 'divider': Full red background section divider with optional section number
@@ -43,7 +29,7 @@ import type { SlideConfig } from './types'
  * - 'qa': Large "Q+A" text on red background
  * - 'closing': Closing slide with logo, tagline, and social links
  *
- * Icons: Import from 'lucide-react' - see https://lucide.dev/icons
+ * Icons: Use string names from Lucide (e.g. 'Target', 'Users') - see https://lucide.dev/icons
  */
 
 export const slides: SlideConfig[] = [
@@ -72,19 +58,19 @@ export const slides: SlideConfig[] = [
     title: 'Agenda',
     steps: [
       {
-        icon: Target,
+        icon: 'Target',
         title: 'First Topic',
         duration: '10 min',
         description: 'Brief description of this section',
       },
       {
-        icon: PenLine,
+        icon: 'PenLine',
         title: 'Second Topic',
         duration: '15 min',
         description: 'What we will cover here',
       },
       {
-        icon: CheckCircle,
+        icon: 'CheckCircle',
         title: 'Wrap Up',
         duration: '5 min',
         description: 'Summary and next steps',
@@ -131,17 +117,17 @@ export const slides: SlideConfig[] = [
     title: 'Our Approach',
     columns: [
       {
-        icon: Lightbulb,
+        icon: 'Lightbulb',
         title: 'Ideate',
         description: 'Generate innovative solutions through collaborative brainstorming and research.',
       },
       {
-        icon: Rocket,
+        icon: 'Rocket',
         title: 'Execute',
         description: 'Implement strategies with precision and agility to deliver results.',
       },
       {
-        icon: TrendingUp,
+        icon: 'TrendingUp',
         title: 'Measure',
         description: 'Track outcomes and iterate based on data-driven insights.',
       },
@@ -433,12 +419,12 @@ export const slides: SlideConfig[] = [
     title: 'Our Capabilities',
     columns: 3,
     items: [
-      { icon: Shield, title: 'Security First', description: 'Enterprise-grade protection for your data' },
-      { icon: Zap, title: 'Lightning Fast', description: 'Optimized performance at every level' },
-      { icon: Users, title: 'Team Collaboration', description: 'Built for seamless teamwork' },
-      { icon: Globe, title: 'Global Scale', description: 'Deploy anywhere in the world' },
-      { icon: Lock, title: 'Compliance', description: 'SOC 2, GDPR, and HIPAA ready' },
-      { icon: BarChart3, title: 'Analytics', description: 'Deep insights into your operations' },
+      { icon: 'Shield', title: 'Security First', description: 'Enterprise-grade protection for your data' },
+      { icon: 'Zap', title: 'Lightning Fast', description: 'Optimized performance at every level' },
+      { icon: 'Users', title: 'Team Collaboration', description: 'Built for seamless teamwork' },
+      { icon: 'Globe', title: 'Global Scale', description: 'Deploy anywhere in the world' },
+      { icon: 'Lock', title: 'Compliance', description: 'SOC 2, GDPR, and HIPAA ready' },
+      { icon: 'BarChart3', title: 'Analytics', description: 'Deep insights into your operations' },
     ],
   },
 

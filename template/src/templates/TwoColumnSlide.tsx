@@ -1,56 +1,24 @@
 import { motion } from 'framer-motion'
 import type { TwoColumnSlideConfig, ColumnCard } from '../types'
-import { ClassificationMark } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { ClassificationMark, SlideBackground } from '../components'
+import { containerVariants, itemFadeUpVariants, cardFadeUpVariants, accentBarAnimation } from '../utils/animations'
+import { resolveIcon } from '../utils/iconResolver'
 
 interface Props {
   slide: TwoColumnSlideConfig
 }
 
 function ColumnCardComponent({ card }: { card: ColumnCard }) {
+  const Icon = card.icon ? resolveIcon(card.icon) : undefined
   return (
     <motion.div
-      variants={cardVariants}
+      variants={cardFadeUpVariants}
       className="p-8 rounded-xl bg-background-elevated border border-border h-full"
     >
       <div className="flex items-center gap-4 mb-6">
-        {card.icon && !card.number && (
+        {Icon && !card.number && (
           <div className="w-12 h-12 rounded-full bg-brand-red flex items-center justify-center flex-shrink-0">
-            <card.icon className="w-6 h-6 text-white" />
+            <Icon className="w-6 h-6 text-white" />
           </div>
         )}
         {card.number && (
@@ -58,7 +26,7 @@ function ColumnCardComponent({ card }: { card: ColumnCard }) {
             <span className="text-white text-h3 font-bold">{card.number}</span>
           </div>
         )}
-        <h3 className="text-h3 font-semibold text-text-primary">
+        <h3 className="font-display text-h3 font-semibold text-text-primary">
           {card.title}
         </h3>
       </div>
@@ -80,12 +48,11 @@ function ColumnCardComponent({ card }: { card: ColumnCard }) {
 
 export default function TwoColumnSlide({ slide }: Props) {
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+    <SlideBackground variant="gradient-subtle">
+      <div className="relative w-full h-full flex items-center justify-center">
       {/* Red accent bar at top */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        {...accentBarAnimation}
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
@@ -97,8 +64,8 @@ export default function TwoColumnSlide({ slide }: Props) {
         className="relative z-10 px-16 max-w-[1400px] w-full"
       >
         {/* Title */}
-        <motion.div variants={itemVariants} className="mb-12">
-          <h2 className="text-brand-red text-h2 md:text-h1 font-bold">
+        <motion.div variants={itemFadeUpVariants} className="mb-12">
+          <h2 className="font-display text-brand-red text-h2 md:text-h1 font-bold">
             {slide.title}
           </h2>
           {slide.subtitle && (
@@ -115,6 +82,7 @@ export default function TwoColumnSlide({ slide }: Props) {
 
       {/* Classification mark */}
       <ClassificationMark />
-    </div>
+      </div>
+    </SlideBackground>
   )
 }

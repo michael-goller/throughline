@@ -1,25 +1,7 @@
 import { motion } from 'framer-motion'
 import type { IconGridSlideConfig } from '../types'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] as const },
-  },
-}
+import { containerVariants, itemScaleVariants } from '../utils/animations'
+import { resolveIcon } from '../utils/iconResolver'
 
 interface Props {
   slide: IconGridSlideConfig
@@ -41,7 +23,7 @@ export default function IconGridSlide({ slide }: Props) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-text mb-12"
+          className="font-display text-4xl font-bold text-text mb-12"
         >
           {title}
         </motion.h1>
@@ -54,17 +36,18 @@ export default function IconGridSlide({ slide }: Props) {
         className={`grid ${gridCols} gap-8 w-full`}
       >
         {items.map((item, i) => {
-          const Icon = item.icon
+          const Icon = resolveIcon(item.icon)
+          if (!Icon) return null
           return (
             <motion.div
               key={i}
-              variants={itemVariants}
+              variants={itemScaleVariants}
               className="flex flex-col items-center text-center p-6 rounded-xl bg-nav-bg/50 border border-text-muted/10 hover:border-brand-red/30 transition-colors"
             >
               <div className="w-14 h-14 rounded-xl bg-brand-red/20 flex items-center justify-center mb-4">
                 <Icon className="w-7 h-7 text-brand-red" />
               </div>
-              <h3 className="text-lg font-semibold text-text mb-2">{item.title}</h3>
+              <h3 className="font-display text-lg font-semibold text-text mb-2">{item.title}</h3>
               {item.description && (
                 <p className="text-text-muted text-sm leading-relaxed">
                   {item.description}

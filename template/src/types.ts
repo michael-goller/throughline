@@ -1,6 +1,9 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+/** Icon reference: either a Lucide component or a string name resolved at runtime */
+export type IconRef = LucideIcon | string
+
 // Base slide type
 interface BaseSlide {
   id: string
@@ -24,7 +27,7 @@ export interface TitleSlideDigitalConfig extends BaseSlide {
 
 // Steps slide - dark background with numbered step cards
 export interface StepItem {
-  icon: LucideIcon
+  icon: IconRef
   title: string
   duration?: string
   description: string
@@ -39,7 +42,7 @@ export interface StepsSlideConfig extends BaseSlide {
 // Two column slide - 50/50 split layout
 export interface ColumnCard {
   number?: string | number
-  icon?: LucideIcon
+  icon?: IconRef
   title: string
   body: string
   bullets?: string[]
@@ -81,7 +84,7 @@ export interface DividerSlideConfig extends BaseSlide {
 
 // Three column slide
 export interface ThreeColumnItem {
-  icon: LucideIcon
+  icon: IconRef
   title: string
   description: string
 }
@@ -153,7 +156,7 @@ export interface QASlideConfig extends BaseSlide {
 export interface SocialLink {
   platform: string
   url: string
-  icon?: LucideIcon | ReactNode
+  icon?: IconRef | ReactNode
 }
 
 export interface ClosingSlideConfig extends BaseSlide {
@@ -179,7 +182,7 @@ export interface GanttSlideConfig extends BaseSlide {
   title?: string
   tasks?: GanttTask[]           // Option A: inline data
   source?: string               // Option B: path to .md file (in public/gantt/)
-  dateFormat?: 'month' | 'quarter' | 'week'
+  dateFormat?: 'month' | 'quarter' | 'week' | 'relative-month'
 }
 
 // Matrix/Quadrant slide (2x2 grid for prioritization, risk, SWOT)
@@ -280,7 +283,7 @@ export interface PricingSlideConfig extends BaseSlide {
 
 // Icon Grid slide (capabilities, values, features)
 export interface IconGridItem {
-  icon: LucideIcon
+  icon: IconRef
   title: string
   description?: string
 }
@@ -315,7 +318,7 @@ export interface TeamKR {
 }
 
 export interface TeamObjectiveGroup {
-  icon: LucideIcon
+  icon: IconRef
   objective: string
   primary?: boolean
   keyResults: TeamKR[]
@@ -324,7 +327,7 @@ export interface TeamObjectiveGroup {
 export interface TeamObjectivesSlideConfig extends BaseSlide {
   type: 'team-objectives'
   teamName: string
-  teamIcon: LucideIcon
+  teamIcon: IconRef
   subtitle?: string
   objectives: TeamObjectiveGroup[]
 }
@@ -344,7 +347,7 @@ export interface OKRScoreItem {
 }
 
 export interface OKRScoreObjective {
-  icon: LucideIcon
+  icon: IconRef
   objective: string
   tagline?: string
   keyResults: OKRScoreItem[]

@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import type { TeamObjectivesSlideConfig } from '../types'
 import { ClassificationMark } from '../components'
+import { resolveIcon } from '../utils/iconResolver'
 
 // ─── Bezier helpers ─────────────────────────────────────────────────
 
@@ -38,7 +39,8 @@ interface Props {
 }
 
 export default function TeamObjectivesSlide({ slide }: Props) {
-  const { teamName, teamIcon: TeamIcon, subtitle, objectives } = slide
+  const { teamName, teamIcon, subtitle, objectives } = slide
+  const TeamIcon = resolveIcon(teamIcon)
 
   const diagramRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -227,9 +229,9 @@ export default function TeamObjectivesSlide({ slide }: Props) {
               className="w-full p-8 rounded-2xl bg-brand-red text-white text-center shadow-lg"
             >
               <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-                <TeamIcon className="w-9 h-9" />
+                {TeamIcon && <TeamIcon className="w-9 h-9" />}
               </div>
-              <h3 className="text-h2 font-bold leading-tight">{teamName}</h3>
+              <h3 className="font-display text-h2 font-bold leading-tight">{teamName}</h3>
               {subtitle && (
                 <p className="text-body-sm text-white/70 mt-2">{subtitle}</p>
               )}
@@ -242,7 +244,7 @@ export default function TeamObjectivesSlide({ slide }: Props) {
           {/* Right: objective cards */}
           <div ref={objectivesRef} className="flex flex-col gap-3 w-[60%] relative z-20">
             {objectives.map((obj, i) => {
-              const ObjIcon = obj.icon
+              const ObjIcon = resolveIcon(obj.icon)
               return (
                 <motion.div
                   key={obj.objective}
@@ -258,7 +260,7 @@ export default function TeamObjectivesSlide({ slide }: Props) {
                 >
                   {/* Objective header */}
                   <div className="flex items-center gap-2 mb-2">
-                    <ObjIcon className={`w-4 h-4 shrink-0 ${obj.primary ? 'text-brand-red' : 'text-text-muted'}`} />
+                    {ObjIcon && <ObjIcon className={`w-4 h-4 shrink-0 ${obj.primary ? 'text-brand-red' : 'text-text-muted'}`} />}
                     <span className={`text-body-sm font-bold ${obj.primary ? 'text-brand-red' : 'text-text'}`}>
                       {obj.objective}
                     </span>

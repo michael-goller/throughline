@@ -1,41 +1,8 @@
 import { motion } from 'framer-motion'
 import type { ThreeColumnSlideConfig } from '../types'
-import { ClassificationMark } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { ClassificationMark, SlideBackground } from '../components'
+import { containerVariants, itemFadeUpVariants, itemScaleVariants, accentBarAnimation } from '../utils/animations'
+import { resolveIcon } from '../utils/iconResolver'
 
 interface Props {
   slide: ThreeColumnSlideConfig
@@ -43,12 +10,11 @@ interface Props {
 
 export default function ThreeColumnSlide({ slide }: Props) {
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+    <SlideBackground variant="gradient-radial">
+      <div className="relative w-full h-full flex items-center justify-center">
       {/* Red accent bar at top */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        {...accentBarAnimation}
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
@@ -62,8 +28,8 @@ export default function ThreeColumnSlide({ slide }: Props) {
         {/* Title */}
         {slide.title && (
           <motion.h2
-            variants={itemVariants}
-            className="text-brand-red text-h2 md:text-h1 font-bold mb-16 text-center"
+            variants={itemFadeUpVariants}
+            className="font-display text-brand-red text-h2 md:text-h1 font-bold mb-16 text-center"
           >
             {slide.title}
           </motion.h2>
@@ -72,11 +38,12 @@ export default function ThreeColumnSlide({ slide }: Props) {
         {/* Three columns */}
         <div className="grid grid-cols-3 gap-8">
           {slide.columns.map((column, index) => {
-            const Icon = column.icon
+            const Icon = resolveIcon(column.icon)
+            if (!Icon) return null
             return (
               <motion.div
                 key={index}
-                variants={cardVariants}
+                variants={itemScaleVariants}
                 className="p-8 rounded-xl bg-background-elevated border border-border text-center"
               >
                 {/* Icon */}
@@ -89,7 +56,7 @@ export default function ThreeColumnSlide({ slide }: Props) {
                 </motion.div>
 
                 {/* Title */}
-                <h3 className="text-h3 font-semibold text-text-primary mb-4">
+                <h3 className="font-display text-h3 font-semibold text-text-primary mb-4">
                   {column.title}
                 </h3>
 
@@ -105,6 +72,7 @@ export default function ThreeColumnSlide({ slide }: Props) {
 
       {/* Classification mark */}
       <ClassificationMark />
-    </div>
+      </div>
+    </SlideBackground>
   )
 }

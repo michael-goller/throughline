@@ -8,29 +8,8 @@ import {
   RoundedTriangle,
   NeuralNetwork,
 } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { containerSlowVariants, itemFadeUpHeroVariants } from '../utils/animations'
+import { resolveIcon } from '../utils/iconResolver'
 
 // Default icon mapping for common platforms
 const platformIcons: Record<string, LucideIcon> = {
@@ -42,13 +21,17 @@ const platformIcons: Record<string, LucideIcon> = {
 }
 
 function getSocialIcon(link: SocialLink): ReactNode {
-  // If custom icon is provided, use it
+  // If custom icon is provided, try to resolve it
   if (link.icon) {
-    if (typeof link.icon === 'function') {
+    if (typeof link.icon === 'string') {
+      const Resolved = resolveIcon(link.icon)
+      if (Resolved) return <Resolved className="w-6 h-6" />
+    } else if (typeof link.icon === 'function') {
       const Icon = link.icon as LucideIcon
       return <Icon className="w-6 h-6" />
+    } else {
+      return link.icon as ReactNode
     }
-    return link.icon
   }
 
   // Otherwise, try to match platform name to default icons
@@ -102,14 +85,14 @@ export default function ClosingSlide({ slide }: Props) {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerSlowVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 text-center px-16 max-w-[900px]"
       >
         {/* Logo */}
         {slide.logoSrc && (
-          <motion.div variants={itemVariants} className="mb-12">
+          <motion.div variants={itemFadeUpHeroVariants} className="mb-12">
             <img
               src={slide.logoSrc}
               alt=""
@@ -121,30 +104,33 @@ export default function ClosingSlide({ slide }: Props) {
         {/* Tagline */}
         {slide.tagline && (
           <motion.h1
-            variants={itemVariants}
-            className="text-h1 md:text-hero font-bold text-white leading-tight mb-12"
+            variants={itemFadeUpHeroVariants}
+            className="font-display text-h1 md:text-hero font-bold text-white leading-tight mb-12"
           >
             {slide.tagline}
           </motion.h1>
         )}
 
-        {/* Contact Email */}
+        {/* Contact Email(s) */}
         {slide.contactEmail && (
-          <motion.div variants={itemVariants} className="mb-8">
-            <a
-              href={`mailto:${slide.contactEmail}`}
-              className="inline-flex items-center gap-3 text-white/90 hover:text-white text-h3 transition-colors"
-            >
-              <Mail className="w-6 h-6" />
-              <span>{slide.contactEmail}</span>
-            </a>
+          <motion.div variants={itemFadeUpHeroVariants} className="mb-8 flex flex-col items-center gap-3">
+            {slide.contactEmail.split('\n').map((email, i) => (
+              <a
+                key={i}
+                href={`mailto:${email.trim()}`}
+                className="font-display inline-flex items-center gap-3 text-white/90 hover:text-white text-h3 transition-colors"
+              >
+                <Mail className="w-6 h-6" />
+                <span>{email.trim()}</span>
+              </a>
+            ))}
           </motion.div>
         )}
 
         {/* Social Links */}
         {slide.socialLinks && slide.socialLinks.length > 0 && (
           <motion.div
-            variants={itemVariants}
+            variants={itemFadeUpHeroVariants}
             className="flex justify-center gap-6"
           >
             {slide.socialLinks.map((link, index) => (

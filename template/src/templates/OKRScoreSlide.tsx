@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
 import type { OKRScoreSlideConfig, OKRScoreItem } from '../types'
+import { EASE_OUT, accentBarAnimation } from '../utils/animations'
+import { resolveIcon } from '../utils/iconResolver'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,7 +21,7 @@ const columnVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
+      ease: EASE_OUT,
       staggerChildren: 0.06,
       delayChildren: 0.1,
     },
@@ -31,7 +33,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.3, ease: [0, 0, 0.2, 1] as const },
+    transition: { duration: 0.3, ease: EASE_OUT },
   },
 }
 
@@ -60,7 +62,7 @@ export default function OKRScoreSlide({ slide }: Props) {
           transition={{ duration: 0.5 }}
           className="mb-5 shrink-0"
         >
-          <h2 className="text-brand-red text-h2 font-bold">{title}</h2>
+          <h2 className="font-display text-brand-red text-h2 font-bold">{title}</h2>
           {subtitle && (
             <p className="text-text-muted text-body mt-1">{subtitle}</p>
           )}
@@ -69,9 +71,7 @@ export default function OKRScoreSlide({ slide }: Props) {
 
       {/* Red accent bar */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] }}
+        {...accentBarAnimation}
         className="h-0.5 bg-brand-red/30 mb-5 origin-left shrink-0"
       />
 
@@ -84,7 +84,7 @@ export default function OKRScoreSlide({ slide }: Props) {
         style={{ gridTemplateColumns: `repeat(${objectives.length}, 1fr)` }}
       >
         {objectives.map((obj, i) => {
-          const Icon = obj.icon
+          const Icon = resolveIcon(obj.icon)
           return (
             <motion.div
               key={i}
@@ -95,17 +95,15 @@ export default function OKRScoreSlide({ slide }: Props) {
               <div className="px-4 py-3 border-b border-border shrink-0">
                 <div className="flex items-center gap-2.5 mb-1">
                   <div className="w-7 h-7 rounded-lg bg-brand-red/20 flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4 text-brand-red" />
+                    {Icon && <Icon className="w-4 h-4 text-brand-red" />}
                   </div>
                   <h3 className="text-sm font-bold text-text uppercase tracking-wide leading-tight">
                     {obj.objective}
                   </h3>
                 </div>
-                {obj.tagline && (
-                  <p className="text-text-muted text-xs leading-snug mt-1 pl-[38px]">
-                    {obj.tagline}
-                  </p>
-                )}
+                <p className={`text-text-muted text-xs leading-snug mt-1 pl-[38px] ${obj.tagline ? '' : 'invisible'}`}>
+                  {obj.tagline || '\u00A0'}
+                </p>
               </div>
 
               {/* Key Results list */}
