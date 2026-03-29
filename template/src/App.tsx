@@ -9,6 +9,7 @@ import SlideOverview from './components/SlideOverview'
 import FeedbackOverlay from './components/FeedbackOverlay'
 import LaserPointer from './components/LaserPointer'
 import PresenterView from './components/PresenterView'
+import SlideEditor from './editor/SlideEditor'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { useSlideState } from './hooks/useSlideState'
@@ -168,7 +169,8 @@ function DynamicDeckLoader({ deckId, presenterMode }: { deckId: string; presente
   return <MainPresentation slides={slides} deckId={deckId} />
 }
 
-function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: string }) {
+function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConfig[]; deckId: string }) {
+  const [slides, setSlides] = useState(initialSlides)
   const [[currentSlide, direction], setSlide] = useState([0, 0])
   const { theme, toggleTheme } = useTheme()
   const [showHelp, setShowHelp] = useState(false)
@@ -178,6 +180,7 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
   const [animationsComplete, setAnimationsComplete] = useState(false)
   const [laserActive, setLaserActive] = useState(false)
   const [showOverview, setShowOverview] = useState(false)
+  const [showEditor, setShowEditor] = useState(false)
   const [materialize, setMaterialize] = useState(false)
   const overviewSelected = useRef(false)
   const [toast, setToast] = useState<{ message: string; icon: 'star' | 'hide' } | null>(null)
@@ -238,8 +241,8 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Search and overview handle their own keyboard events
-      if (showSearch || showOverview) {
+      // Search, overview, and editor handle their own keyboard events
+      if (showSearch || showOverview || showEditor) {
         return
       }
 
@@ -281,6 +284,9 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
       } else if (e.key === 'o') {
         e.preventDefault()
         setShowOverview(true)
+      } else if (e.key === 'e') {
+        e.preventDefault()
+        setShowEditor(true)
       } else if (e.key === 'i') {
         // Enter feedback mode (like vim's insert mode)
         e.preventDefault()
@@ -326,7 +332,7 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast])
+  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, showEditor, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast])
 
   const currentSlideConfig = slides[currentSlide]
 
@@ -521,6 +527,22 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
         )}
       </AnimatePresence>
 
+      {/* Slide Editor */}
+      {showEditor && (
+        <SlideEditor
+          slides={slides}
+          deckId={deckId}
+          onClose={() => setShowEditor(false)}
+          onSave={(updatedSlides) => {
+            setSlides(updatedSlides)
+            // Clamp current slide index if slides were removed
+            if (currentSlide >= updatedSlides.length) {
+              setSlide([Math.max(0, updatedSlides.length - 1), 0])
+            }
+          }}
+        />
+      )}
+
       {/* Help Overlay */}
       <AnimatePresence>
         {showHelp && (
@@ -573,6 +595,10 @@ function MainPresentation({ slides, deckId }: { slides: SlideConfig[]; deckId: s
                 <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">o</span>
                   <span>Slide overview</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">e</span>
+                  <span>Visual slide editor</span>
                 </div>
                 <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">p</span>
