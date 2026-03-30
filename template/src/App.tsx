@@ -15,6 +15,8 @@ import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { useSlideState } from './hooks/useSlideState'
 import { useDeck } from './hooks/useDeck'
+import { useViewportScale } from './hooks/useViewportScale'
+import { useSwipe } from './hooks/useSwipe'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
 
@@ -198,6 +200,9 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
   const lastKeyTime = useRef(0)
   const lastKey = useRef('')
 
+  // Mobile viewport scaling
+  const { scale, isMobile } = useViewportScale()
+
   // Slide state (starred/hidden)
   const {
     isStarred,
@@ -249,6 +254,12 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
       setSlide([last, 1])
     }
   }, [currentSlide, slides.length])
+
+  // Touch swipe navigation (mobile/tablet)
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: useCallback(() => paginate(1), [paginate]),
+    onSwipeRight: useCallback(() => paginate(-1), [paginate]),
+  })
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -367,22 +378,52 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
       data-slide-current={currentSlide + 1}
       data-slide-total={slides.length}
       data-animations-complete={animationsComplete}
+      {...swipeHandlers}
     >
-      {/* Slide Container */}
-      <AnimatePresence initial={false} custom={direction} mode="wait">
-        <motion.div
-          key={currentSlide}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={direction === 0 ? { duration: 0 } : transition}
-          className="absolute inset-0 flex items-center justify-center"
-        >
-          <SlideRenderer slide={currentSlideConfig} />
-        </motion.div>
-      </AnimatePresence>
+      {/* Slide Container — on mobile, render at design resolution and scale to fit */}
+      {isMobile ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            style={{
+              width: 1280,
+              height: 720,
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
+            }}
+            className="relative flex-shrink-0"
+          >
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={currentSlide}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={direction === 0 ? { duration: 0 } : transition}
+                className="absolute inset-0"
+              >
+                <SlideRenderer slide={currentSlideConfig} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentSlide}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={direction === 0 ? { duration: 0 } : transition}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <SlideRenderer slide={currentSlideConfig} />
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       {/* Pixel-materialize effect after overview zoom-dive */}
       <AnimatePresence>
@@ -406,93 +447,146 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
         )}
       </AnimatePresence>
 
-      {/* Feedback Overlay (reactions, comments, questions) */}
-      <FeedbackOverlay
-        deckId={deckId}
-        slideId={currentSlideConfig.id}
-        feedbackMode={feedbackMode}
-      />
+      {/* Feedback Overlay — hidden on mobile */}
+      {!isMobile && (
+        <FeedbackOverlay
+          deckId={deckId}
+          slideId={currentSlideConfig.id}
+          feedbackMode={feedbackMode}
+        />
+      )}
 
-      {/* Laser Pointer */}
-      <LaserPointer
-        active={laserActive}
-        onDeactivate={() => setLaserActive(false)}
-      />
+      {/* Laser Pointer — hidden on mobile */}
+      {!isMobile && (
+        <LaserPointer
+          active={laserActive}
+          onDeactivate={() => setLaserActive(false)}
+        />
+      )}
 
-      {/* Bottom-left Navigation Pill */}
-      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
-        {/* Progress bar track */}
-        <div className="relative h-1 w-full bg-border/50">
-          <motion.div
-            className="absolute inset-y-0 left-0 right-0 origin-left"
-            style={{
-              background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
-              boxShadow: '0 0 8px var(--brand-red)',
-            }}
-            animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
-            transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
-          />
-        </div>
-        {/* Controls row */}
-        <div className="flex items-center gap-1 px-1.5 py-1">
-          {/* Left Arrow */}
-          <motion.button
-            animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}
-            whileHover={currentSlide > 0 ? { opacity: 1 } : {}}
-            whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
-            onClick={() => paginate(-1)}
-            disabled={currentSlide === 0}
-            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={14} />
-          </motion.button>
-
-          {/* Slide Counter */}
-          <div className="text-nav-text text-tiny font-medium px-1.5 flex items-center gap-1 select-none tabular-nums">
-            {isStarred(currentSlideConfig.id) && (
-              <Star size={10} className="text-yellow-500 fill-current" />
-            )}
-            {isHidden(currentSlideConfig.id) && (
-              <EyeOff size={10} className="text-text-muted" />
-            )}
-            {currentSlideConfig.notes && (
-              <StickyNote size={10} className="text-amber-400" />
-            )}
-            <span className="inline-flex">
-              <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
-            </span>
+      {/* Bottom Navigation — simplified on mobile, full on desktop */}
+      {isMobile ? (
+        /* Mobile: centered bottom nav with larger touch targets */
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex flex-col gap-0 rounded-xl overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
+          {/* Progress bar track */}
+          <div className="relative h-1 w-full bg-border/50">
+            <motion.div
+              className="absolute inset-y-0 left-0 right-0 origin-left"
+              style={{
+                background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
+                boxShadow: '0 0 8px var(--brand-red)',
+              }}
+              animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
+              transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+            />
           </div>
+          {/* Controls row — larger touch targets */}
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <motion.button
+              animate={{ opacity: currentSlide > 0 ? 0.8 : 0.3 }}
+              whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
+              onClick={() => paginate(-1)}
+              disabled={currentSlide === 0}
+              className="p-2 rounded text-nav-text disabled:cursor-not-allowed"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={20} />
+            </motion.button>
 
-          {/* Right Arrow */}
-          <motion.button
-            animate={{ opacity: currentSlide < slides.length - 1 ? 0.6 : 0.2 }}
-            whileHover={currentSlide < slides.length - 1 ? { opacity: 1 } : {}}
-            whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
-            onClick={() => paginate(1)}
-            disabled={currentSlide === slides.length - 1}
-            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
-            aria-label="Next slide"
-          >
-            <ChevronRight size={14} />
-          </motion.button>
+            <div className="text-nav-text text-caption font-medium px-2 flex items-center gap-1 select-none tabular-nums">
+              <span className="inline-flex">
+                <span className="inline-block w-[1.2em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
+              </span>
+            </div>
 
-          {/* Divider */}
-          <div className="w-px h-3.5 bg-border mx-0.5" />
-
-          {/* Theme Toggle */}
-          <motion.button
-            animate={{ opacity: 0.6 }}
-            whileHover={{ opacity: 1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={toggleTheme}
-            className="p-1 rounded text-nav-text"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
-          </motion.button>
+            <motion.button
+              animate={{ opacity: currentSlide < slides.length - 1 ? 0.8 : 0.3 }}
+              whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
+              onClick={() => paginate(1)}
+              disabled={currentSlide === slides.length - 1}
+              className="p-2 rounded text-nav-text disabled:cursor-not-allowed"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={20} />
+            </motion.button>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Desktop: original bottom-left navigation pill */
+        <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
+          {/* Progress bar track */}
+          <div className="relative h-1 w-full bg-border/50">
+            <motion.div
+              className="absolute inset-y-0 left-0 right-0 origin-left"
+              style={{
+                background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
+                boxShadow: '0 0 8px var(--brand-red)',
+              }}
+              animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
+              transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+            />
+          </div>
+          {/* Controls row */}
+          <div className="flex items-center gap-1 px-1.5 py-1">
+            {/* Left Arrow */}
+            <motion.button
+              animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}
+              whileHover={currentSlide > 0 ? { opacity: 1 } : {}}
+              whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
+              onClick={() => paginate(-1)}
+              disabled={currentSlide === 0}
+              className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={14} />
+            </motion.button>
+
+            {/* Slide Counter */}
+            <div className="text-nav-text text-tiny font-medium px-1.5 flex items-center gap-1 select-none tabular-nums">
+              {isStarred(currentSlideConfig.id) && (
+                <Star size={10} className="text-yellow-500 fill-current" />
+              )}
+              {isHidden(currentSlideConfig.id) && (
+                <EyeOff size={10} className="text-text-muted" />
+              )}
+              {currentSlideConfig.notes && (
+                <StickyNote size={10} className="text-amber-400" />
+              )}
+              <span className="inline-flex">
+                <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
+              </span>
+            </div>
+
+            {/* Right Arrow */}
+            <motion.button
+              animate={{ opacity: currentSlide < slides.length - 1 ? 0.6 : 0.2 }}
+              whileHover={currentSlide < slides.length - 1 ? { opacity: 1 } : {}}
+              whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
+              onClick={() => paginate(1)}
+              disabled={currentSlide === slides.length - 1}
+              className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={14} />
+            </motion.button>
+
+            {/* Divider */}
+            <div className="w-px h-3.5 bg-border mx-0.5" />
+
+            {/* Theme Toggle */}
+            <motion.button
+              animate={{ opacity: 0.6 }}
+              whileHover={{ opacity: 1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleTheme}
+              className="p-1 rounded text-nav-text"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+            </motion.button>
+          </div>
+        </div>
+      )}
 
 
       {/* Search Modal */}
@@ -541,8 +635,8 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
         )}
       </AnimatePresence>
 
-      {/* Slide Editor */}
-      {showEditor && (
+      {/* Slide Editor — hidden on mobile */}
+      {!isMobile && showEditor && (
         <SlideEditor
           slides={slides}
           deckId={deckId}
