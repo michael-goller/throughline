@@ -10,6 +10,7 @@ import FeedbackOverlay from './components/FeedbackOverlay'
 import LaserPointer from './components/LaserPointer'
 import PresenterView from './components/PresenterView'
 import SlideEditor from './editor/SlideEditor'
+import DeckDashboard from './components/DeckDashboard'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { useSlideState } from './hooks/useSlideState'
@@ -26,11 +27,17 @@ function isPresenterMode(): boolean {
 /**
  * Parse the URL to determine deck loading mode.
  *
+ * - `/`              → dashboard (deck gallery)
  * - `/decks/:deckId` → dynamic mode (load from API/JSON at runtime)
- * - anything else     → static mode (use compile-time @deck/slides import)
+ * - anything else    → static mode (use compile-time @deck/slides import)
  */
-function parseDeckRoute(): { mode: 'static' | 'dynamic'; deckId: string } {
+function parseDeckRoute(): { mode: 'static' | 'dynamic' | 'dashboard'; deckId: string } {
   const path = window.location.pathname
+
+  // Root path → dashboard
+  if (path === '/' || path === '') {
+    return { mode: 'dashboard', deckId: '' }
+  }
 
   // Match /decks/:deckId (with optional trailing slash and presenter query)
   const dynamicMatch = path.match(/^\/decks\/([^/]+)\/?$/)
@@ -96,6 +103,10 @@ function getAnimationDelay(slide: SlideConfig): number {
 function App() {
   const route = useMemo(() => parseDeckRoute(), [])
   const presenterMode = useMemo(() => isPresenterMode(), [])
+
+  if (route.mode === 'dashboard') {
+    return <DeckDashboard />
+  }
 
   if (route.mode === 'dynamic') {
     return <DynamicDeckLoader deckId={route.deckId} presenterMode={presenterMode} />
