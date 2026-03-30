@@ -268,6 +268,13 @@ const barometerGridItem = {
 
 const baseSlideProps = {
   id: { type: 'string' as const, description: 'Unique slide identifier (kebab-case recommended)' },
+  notes: {
+    oneOf: [
+      { type: 'string' as const },
+      { type: 'array' as const, items: { type: 'string' as const } },
+    ],
+    description: 'Speaker notes for this slide (shown in presenter view). Supports markdown. Use a string or array of strings.',
+  },
 }
 
 const slideSchemas = {

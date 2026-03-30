@@ -29,6 +29,7 @@ import {
   X,
   Sun,
   Moon,
+  StickyNote,
 } from 'lucide-react'
 import { useReactions } from '../hooks/useReactions'
 import { useComments } from '../hooks/useComments'
@@ -53,6 +54,35 @@ function getSlideTitle(slide: SlideConfig): string {
   if ('title' in slide && slide.title) return slide.title
   if (slide.type === 'qa') return 'Q&A'
   return slide.type
+}
+
+/** Normalize notes to a single string */
+function getSlideNotes(slide: SlideConfig): string {
+  if (!slide.notes) return ''
+  return Array.isArray(slide.notes) ? slide.notes.join('\n') : slide.notes
+}
+
+/** Minimal markdown → HTML for speaker notes (bold, italic, code, bullets, line breaks) */
+function renderNotesMarkdown(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      // Bullet list items
+      const bulletMatch = line.match(/^[-*]\s+(.*)/)
+      const content = bulletMatch ? bulletMatch[1] : line
+      // Inline formatting
+      let html = content
+        .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-gray-700 rounded text-xs">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      if (bulletMatch) {
+        html = `<li class="ml-4 list-disc">${html}</li>`
+      }
+      return html
+    })
+    .join('<br/>')
+    .replace(/<br\/><li/g, '<li')
+    .replace(/<\/li><br\/>/g, '</li>')
 }
 
 export default function PresenterView({ slides, deckId, initialSlide = 0 }: PresenterViewProps) {
@@ -234,12 +264,17 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* Left: Slide previews */}
+        {/* Left: Slide previews + notes */}
         <div className="flex-1 flex flex-col p-4 gap-4 min-w-0">
           {/* Current slide */}
-          <div className="flex-1 bg-gray-800 rounded-xl overflow-hidden flex flex-col min-h-0">
+          <div className="flex-[2] bg-gray-800 rounded-xl overflow-hidden flex flex-col min-h-0">
             <div className="px-4 py-2 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
-              <span className="text-sm text-gray-400">Current Slide</span>
+              <span className="text-sm text-gray-400 flex items-center gap-1.5">
+                Current Slide
+                {getSlideNotes(currentSlideConfig) && (
+                  <StickyNote size={14} className="text-amber-400" />
+                )}
+              </span>
               <span className="text-sm font-medium truncate ml-4">{getSlideTitle(currentSlideConfig)}</span>
             </div>
             <div className="flex-1 flex items-center justify-center p-4 bg-gray-900/50 overflow-hidden">
@@ -254,46 +289,63 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
             </div>
           </div>
 
-          {/* Next slide */}
-          <div className="h-40 bg-gray-800 rounded-xl overflow-hidden flex flex-col flex-shrink-0">
-            <div className="px-4 py-2 border-b border-gray-700 flex items-center justify-between">
-              <span className="text-sm text-gray-400">Next Slide</span>
-              {nextSlideConfig && (
-                <span className="text-sm font-medium truncate ml-4">{getSlideTitle(nextSlideConfig)}</span>
-              )}
+          {/* Speaker Notes */}
+          {getSlideNotes(currentSlideConfig) && (
+            <div className="flex-1 bg-gray-800 rounded-xl overflow-hidden flex flex-col min-h-[120px] max-h-[200px] flex-shrink-0">
+              <div className="px-4 py-2 border-b border-gray-700 flex items-center gap-2 flex-shrink-0">
+                <StickyNote size={14} className="text-amber-400" />
+                <span className="text-sm text-gray-400">Speaker Notes</span>
+              </div>
+              <div
+                className="flex-1 overflow-y-auto p-4 text-sm text-gray-200 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderNotesMarkdown(getSlideNotes(currentSlideConfig)) }}
+              />
             </div>
-            <div className="flex-1 flex items-center justify-center p-2 bg-gray-900/50">
-              {nextSlideConfig ? (
-                <SlideThumbnail
-                  slide={nextSlideConfig}
-                  width={240}
-                  height={135}
-                  className="rounded border border-gray-700"
-                />
-              ) : (
-                <span className="text-gray-500 text-sm">End of presentation</span>
-              )}
-            </div>
-          </div>
+          )}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-center gap-4 flex-shrink-0">
-            <button
-              onClick={prevSlide}
-              disabled={currentSlide === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
-              <ChevronLeft size={20} />
-              Previous
-            </button>
-            <button
-              onClick={nextSlide}
-              disabled={currentSlide === slides.length - 1}
-              className="flex items-center gap-2 px-4 py-2 bg-[#21215C] hover:bg-[#2d2d7a] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-            >
-              Next
-              <ChevronRight size={20} />
-            </button>
+          {/* Next slide + Navigation row */}
+          <div className="flex gap-4 flex-shrink-0">
+            {/* Next slide thumbnail */}
+            <div className="flex-1 h-32 bg-gray-800 rounded-xl overflow-hidden flex flex-col">
+              <div className="px-3 py-1.5 border-b border-gray-700 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Next</span>
+                {nextSlideConfig && (
+                  <span className="text-xs font-medium truncate ml-2">{getSlideTitle(nextSlideConfig)}</span>
+                )}
+              </div>
+              <div className="flex-1 flex items-center justify-center p-2 bg-gray-900/50">
+                {nextSlideConfig ? (
+                  <SlideThumbnail
+                    slide={nextSlideConfig}
+                    width={200}
+                    height={112}
+                    className="rounded border border-gray-700"
+                  />
+                ) : (
+                  <span className="text-gray-500 text-xs">End of presentation</span>
+                )}
+              </div>
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="flex flex-col items-center justify-center gap-2">
+              <button
+                onClick={prevSlide}
+                disabled={currentSlide === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm"
+              >
+                <ChevronLeft size={18} />
+                Prev
+              </button>
+              <button
+                onClick={nextSlide}
+                disabled={currentSlide === slides.length - 1}
+                className="flex items-center gap-2 px-4 py-2 bg-accent-indigo hover:bg-accent-indigo-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm"
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -342,7 +394,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     className={`px-4 py-3 border-b border-gray-700/50 ${
-                      item.slideId === currentSlideConfig.id ? 'bg-[#21215C]/10' : ''
+                      item.slideId === currentSlideConfig.id ? 'bg-accent-indigo/10' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -351,7 +403,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                         item.feedbackType === 'reaction'
                           ? 'bg-gray-700'
                           : item.feedbackType === 'comment'
-                            ? 'bg-[#21215C]'
+                            ? 'bg-accent-indigo'
                             : (item as any).resolved
                               ? 'bg-green-600'
                               : 'bg-amber-500'
@@ -400,7 +452,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                                     if (e.key === 'Escape') { setReplyingTo(null); setReplyText('') }
                                   }}
                                   placeholder="Type your reply..."
-                                  className="flex-1 px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-[#21215C]"
+                                  className="flex-1 px-2 py-1 text-sm bg-gray-700 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-indigo"
                                   autoFocus
                                 />
                                 <button
@@ -427,7 +479,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                           {/* Reply button - always show for comments and questions */}
                           <button
                             onClick={() => { setReplyingTo(item as Comment); setReplyText('') }}
-                            className="px-2 py-1 text-xs text-gray-400 hover:text-[#21215C] hover:bg-[#21215C]/10 rounded transition-colors"
+                            className="px-2 py-1 text-xs text-gray-400 hover:text-accent-indigo hover:bg-accent-indigo/10 rounded transition-colors"
                             title="Reply"
                           >
                             Reply

@@ -7,6 +7,8 @@ export type IconRef = LucideIcon | string
 // Base slide type
 interface BaseSlide {
   id: string
+  /** Speaker notes shown in PresenterView. Supports markdown formatting. */
+  notes?: string | string[]
 }
 
 // Title slide - red gradient background with title/subtitle

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Star, EyeOff, Sun, Moon, Loader2, AlertCircle, FileQuestion } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, EyeOff, Sun, Moon, Loader2, AlertCircle, FileQuestion, StickyNote } from 'lucide-react'
 import SlideRenderer from './templates'
 import staticSlides from '@deck/slides'
 import type { SlideConfig } from './types'
@@ -444,6 +444,9 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
             )}
             {isHidden(currentSlideConfig.id) && (
               <EyeOff size={10} className="text-text-muted" />
+            )}
+            {currentSlideConfig.notes && (
+              <StickyNote size={10} className="text-amber-400" />
             )}
             <span className="inline-flex">
               <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
