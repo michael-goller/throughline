@@ -20,6 +20,7 @@ import { useViewportScale } from './hooks/useViewportScale'
 import { useSwipe } from './hooks/useSwipe'
 import { useAnalytics } from './hooks/useAnalytics'
 import { useAuth } from './hooks/useAuth'
+import ViewerPage from './components/ViewerPage'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
 
@@ -38,10 +39,24 @@ const IS_VERCEL = typeof window !== 'undefined' && (
  *
  * Presenter mode is also triggered by `?presenter` query param on any route.
  */
-function parseDeckRoute(): { mode: 'static' | 'dynamic' | 'dashboard'; deckId: string; presenter: boolean } {
+interface RouteInfo {
+  mode: 'static' | 'dynamic' | 'dashboard' | 'viewer'
+  deckId: string
+  presenter: boolean
+  viewerSlug?: string
+  viewerTokenId?: string
+}
+
+function parseDeckRoute(): RouteInfo {
   const pathname = window.location.pathname
   const params = new URLSearchParams(window.location.search)
   const queryPresenter = params.has('presenter')
+
+  // Match /view/:slug/:tokenId (viewer sharing)
+  const viewerMatch = pathname.match(/^\/view\/([^/]+)\/([^/]+)\/?$/)
+  if (viewerMatch) {
+    return { mode: 'viewer', deckId: '', presenter: false, viewerSlug: decodeURIComponent(viewerMatch[1]), viewerTokenId: decodeURIComponent(viewerMatch[2]) }
+  }
 
   // Root path → dashboard
   if (pathname === '/' || pathname === '') {
@@ -118,6 +133,10 @@ function getAnimationDelay(slide: SlideConfig): number {
 function AppRouter() {
   const route = useMemo(() => parseDeckRoute(), [])
 
+  if (route.mode === 'viewer') {
+    return <ViewerPage slug={route.viewerSlug!} tokenId={route.viewerTokenId!} />
+  }
+
   if (route.mode === 'dashboard') {
     return <DeckDashboard />
   }
@@ -136,6 +155,12 @@ function AppRouter() {
 
 function App() {
   const { user, loading, login, signup } = useAuth()
+
+  // Viewer routes bypass auth entirely — they have their own password auth
+  const isViewer = useMemo(() => window.location.pathname.startsWith('/view/'), [])
+  if (isViewer) {
+    return <AppRouter />
+  }
 
   if (IS_VERCEL) {
     if (loading) {
