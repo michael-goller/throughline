@@ -32,7 +32,7 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
   async function checkSession() {
     // First get metadata (public)
     try {
-      const metaRes = await fetch(`/api/view/${slug}/meta?tokenId=${tokenId}`)
+      const metaRes = await fetch(`/api/view/${slug}/meta?shareToken=${tokenId}`)
       if (metaRes.ok) {
         const meta = await metaRes.json()
         setTitle(meta.title)

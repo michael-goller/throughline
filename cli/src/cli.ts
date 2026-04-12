@@ -22,7 +22,7 @@ import {
 } from './lib/deck.js'
 import { pickDeck } from './lib/picker.js'
 import { addDeck, getDeck, getGalleryState, listDecks, removeDeck, renameDeck, updateDeckPublished } from './lib/registry.js'
-import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish as cloudPublish, unpublish as cloudUnpublish, loadCredentials, getApiUrl, setApiUrl } from './lib/cloud.js'
+import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish as cloudPublish, unpublish as cloudUnpublish, loadCredentials, getApiUrl, setApiUrl, createShare, listShares, deleteShare } from './lib/cloud.js'
 import { createInterface } from 'readline'
 
 program
@@ -580,6 +580,114 @@ program
       await cloudUnpublish(name)
       updateDeckPublished(name, null)
       console.log(chalk.green(`✓ Deck '${name}' unpublished`))
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine share <name>
+// ─────────────────────────────────────────────────────────────
+program
+  .command('share [name]')
+  .description('Create a password-protected viewer link for a published deck')
+  .requiredOption('--password <password>', 'Viewer password (min 4 characters)')
+  .option('--label <label>', 'Label for tracking (e.g. "Board meeting")')
+  .option('--expires <duration>', 'Expiry (e.g. "7d", "24h", "2026-04-30")')
+  .action(async (name: string | undefined, options: { password: string; label?: string; expires?: string }) => {
+    try {
+      if (!name) {
+        name = pickDeck('Share deck') ?? undefined
+        if (!name) return
+      }
+
+      // Parse expiry
+      let expiresAt: string | undefined
+      if (options.expires) {
+        const match = options.expires.match(/^(\d+)([dhm])$/)
+        if (match) {
+          const amount = parseInt(match[1])
+          const unit = match[2]
+          const ms = unit === 'd' ? amount * 86400000 : unit === 'h' ? amount * 3600000 : amount * 60000
+          expiresAt = new Date(Date.now() + ms).toISOString()
+        } else {
+          // Try as date string
+          expiresAt = new Date(options.expires).toISOString()
+        }
+      }
+
+      const result = await createShare(name, options.password, { label: options.label, expiresAt })
+      console.log(chalk.green(`✓ Share link created`))
+      console.log(`→ URL: ${result.viewUrl}`)
+      console.log(`→ Password: ${options.password}`)
+      if (result.label) console.log(`→ Label: ${result.label}`)
+      if (result.expiresAt) console.log(`→ Expires: ${new Date(result.expiresAt).toLocaleString()}`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine shares [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('shares [name]')
+  .description('List share links for a deck')
+  .action(async (name?: string) => {
+    try {
+      if (!name) {
+        name = pickDeck('List shares for') ?? undefined
+        if (!name) return
+      }
+
+      const tokens = await listShares(name)
+      if (tokens.length === 0) {
+        console.log(`No share links for '${name}'. Create one with: shine share ${name} --password <pw>`)
+        return
+      }
+
+      console.log(`Share links for '${name}':\n`)
+      for (const t of tokens) {
+        const label = t.label ? ` (${t.label})` : ''
+        const expires = t.expiresAt ? ` expires ${new Date(t.expiresAt).toLocaleString()}` : ''
+        console.log(`  ${t.shortId}${label}${expires}`)
+        console.log(`  ${chalk.dim(t.viewUrl)}`)
+        console.log()
+      }
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine unshare [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('unshare [name]')
+  .description('Revoke share links for a deck')
+  .option('--all', 'Revoke all share links')
+  .option('--token <id>', 'Revoke a specific share token')
+  .action(async (name: string | undefined, options: { all?: boolean; token?: string }) => {
+    try {
+      if (!name) {
+        name = pickDeck('Unshare deck') ?? undefined
+        if (!name) return
+      }
+
+      if (!options.all && !options.token) {
+        console.log(chalk.red('✗ Specify --all or --token <id>'))
+        process.exit(1)
+      }
+
+      await deleteShare(name, { all: options.all, tokenId: options.token })
+      if (options.all) {
+        console.log(chalk.green(`✓ All share links for '${name}' revoked`))
+      } else {
+        console.log(chalk.green(`✓ Share token '${options.token}' revoked`))
+      }
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)

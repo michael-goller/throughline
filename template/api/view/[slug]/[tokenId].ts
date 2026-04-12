@@ -15,14 +15,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slug = req.query.slug as string;
   const tokenId = req.query.tokenId as string;
 
-  if (!slug || !tokenId) {
-    return res.status(400).json({ error: 'Missing slug or tokenId' });
+  if (!slug) return res.status(400).json({ error: 'Missing slug' });
+
+  // Handle meta requests (tokenId = "meta" or ?meta=true)
+  if (tokenId === 'meta' || req.query.meta === 'true') {
+    return handleMeta(req, res, slug, typeof req.query.shareToken === 'string' ? req.query.shareToken : undefined);
   }
+
+  if (!tokenId) return res.status(400).json({ error: 'Missing tokenId' });
 
   if (req.method === 'POST') return handleVerify(req, res, slug, tokenId);
   if (req.method === 'GET') return handleGetDeck(req, res, slug, tokenId);
 
   return res.status(405).json({ error: 'Method not allowed' });
+}
+
+/** GET meta — returns deck title + share token validity (public, no auth) */
+async function handleMeta(req: VercelRequest, res: VercelResponse, slug: string, tokenId?: string) {
+  try {
+    await ensureTables();
+    const db = getDb();
+
+    const [deck] = await db.select({ title: decks.title, id: decks.id })
+      .from(decks).where(eq(decks.slug, slug)).limit(1);
+
+    if (!deck) return res.status(404).json({ error: 'Deck not found' });
+
+    if (tokenId) {
+      const tokens = await db.select({ id: shareTokens.id, expiresAt: shareTokens.expiresAt })
+        .from(shareTokens)
+        .where(and(eq(shareTokens.deckId, deck.id), like(shareTokens.id, `${tokenId}%`)));
+
+      const token = tokens[0];
+      if (!token) return res.status(404).json({ error: 'Share link not found' });
+      if (token.expiresAt && new Date(token.expiresAt) < new Date()) {
+        return res.status(410).json({ error: 'Share link expired', title: deck.title });
+      }
+    }
+
+    return res.status(200).json({ title: deck.title });
+  } catch (err) {
+    console.error('View meta error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 /** POST — verify password, issue viewer JWT */

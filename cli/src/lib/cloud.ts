@@ -248,3 +248,70 @@ export async function unpublish(slug: string): Promise<void> {
     throw new Error(body.error || `Unpublish failed: ${res.statusText}`)
   }
 }
+
+export interface ShareToken {
+  tokenId: string
+  shortId: string
+  label: string | null
+  expiresAt: string | null
+  viewUrl: string
+}
+
+export async function createShare(slug: string, password: string, options?: { label?: string; expiresAt?: string }): Promise<ShareToken> {
+  const creds = loadCredentials()
+  if (!creds) throw new Error('Not logged in. Run: shine login')
+
+  const apiUrl = getApiUrl()
+  const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${creds.token}`,
+    },
+    body: JSON.stringify({ password, label: options?.label, expiresAt: options?.expiresAt }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as Record<string, string>
+    throw new Error(body.error || `Share failed: ${res.statusText}`)
+  }
+
+  return await res.json() as ShareToken
+}
+
+export async function listShares(slug: string): Promise<ShareToken[]> {
+  const creds = loadCredentials()
+  if (!creds) throw new Error('Not logged in. Run: shine login')
+
+  const apiUrl = getApiUrl()
+  const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {
+    headers: { 'Authorization': `Bearer ${creds.token}` },
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as Record<string, string>
+    throw new Error(body.error || `List shares failed: ${res.statusText}`)
+  }
+
+  return await res.json() as ShareToken[]
+}
+
+export async function deleteShare(slug: string, options: { tokenId?: string; all?: boolean }): Promise<void> {
+  const creds = loadCredentials()
+  if (!creds) throw new Error('Not logged in. Run: shine login')
+
+  const apiUrl = getApiUrl()
+  const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${creds.token}`,
+    },
+    body: JSON.stringify(options),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as Record<string, string>
+    throw new Error(body.error || `Unshare failed: ${res.statusText}`)
+  }
+}
