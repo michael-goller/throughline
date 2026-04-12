@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Search, Star } from 'lucide-react'
 import Fuse from 'fuse.js'
 import type { SlideConfig } from '../types'
+import SlideThumbnail from './SlideThumbnail'
 
 type TabType = 'all' | 'starred'
 
@@ -384,7 +385,7 @@ export default function SlideSearch({
         </div>
 
         {/* Results */}
-        <div ref={resultsRef} className="max-h-[50vh] overflow-y-auto">
+        <div ref={resultsRef} className="max-h-[60vh] overflow-y-auto">
           {results.length === 0 ? (
             <div className="px-4 py-8 text-center text-text-muted">
               {activeTab === 'starred' && starredCount === 0
@@ -408,24 +409,35 @@ export default function SlideSearch({
                     isSection ? 'px-4' : 'px-4 pl-8'
                   } ${
                     idx === selectedIndex
-                      ? 'bg-[#21215C] text-white'
+                      ? 'bg-accent-indigo text-white'
                       : isHidden
                         ? 'bg-background/50 opacity-50 hover:opacity-75'
                         : isSection
-                          ? 'bg-[#21215C]/5 hover:bg-[#21215C]/10'
+                          ? 'bg-accent-indigo/5 hover:bg-accent-indigo/10'
                           : idx % 2 === 0
-                            ? 'bg-background hover:bg-[#21215C]/10'
-                            : 'bg-background-elevated hover:bg-[#21215C]/10'
+                            ? 'bg-background hover:bg-accent-indigo/10'
+                            : 'bg-background-elevated hover:bg-accent-indigo/10'
                   }`}
                 >
+                  {/* Thumbnail for selected and neighbors */}
+                  {Math.abs(idx - selectedIndex) <= 1 && (
+                    <div className="flex-shrink-0 rounded overflow-hidden border border-border">
+                      <SlideThumbnail
+                        slide={slides[result.item.index]}
+                        width={128}
+                        height={72}
+                      />
+                    </div>
+                  )}
+
                   {/* Slide number or jump icon */}
                   <span className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-mono ${
                     idx === selectedIndex
                       ? 'bg-white/20 text-white'
                       : result.isJumpOption
-                        ? 'bg-[#21215C] text-white'
+                        ? 'bg-accent-indigo text-white'
                         : isSection
-                          ? 'bg-[#21215C]/20 text-[#21215C]'
+                          ? 'bg-accent-indigo/20 text-accent-indigo'
                           : 'bg-nav-bg text-text-muted'
                   }`}>
                     {result.item.index + 1}
@@ -447,7 +459,7 @@ export default function SlideSearch({
                       idx === selectedIndex
                         ? 'text-white'
                         : isSection
-                          ? 'text-[#21215C]'
+                          ? 'text-accent-indigo'
                           : 'text-text'
                     } ${isTitle ? 'font-semibold text-base' : isSection ? 'font-medium' : 'font-normal'} ${
                       isHidden ? 'line-through' : ''

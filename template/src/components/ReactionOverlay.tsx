@@ -160,7 +160,7 @@ export default function ReactionOverlay({ deckId, slideId, feedbackMode }: React
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#21215C] text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+          className="absolute top-4 left-1/2 -translate-x-1/2 bg-accent-indigo text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
         >
           Feedback Mode - Click to react • Press <kbd className="font-mono bg-white/20 px-1.5 py-0.5 rounded">Esc</kbd> to exit
         </motion.div>

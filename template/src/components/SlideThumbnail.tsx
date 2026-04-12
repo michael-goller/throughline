@@ -21,9 +21,9 @@ export default function SlideThumbnail({
   height = 180,
   className = '',
 }: SlideThumbnailProps) {
-  // Original slide dimensions (assuming 16:9 at 1920x1080)
-  const originalWidth = 1920
-  const originalHeight = 1080
+  // Match the actual viewport so thumbnails render identically to full-screen
+  const originalWidth = window.innerWidth
+  const originalHeight = window.innerHeight
 
   const scale = useMemo(() => {
     const scaleX = width / originalWidth
@@ -37,7 +37,7 @@ export default function SlideThumbnail({
       style={{ width, height }}
     >
       <div
-        className="origin-top-left pointer-events-none"
+        className="origin-top-left pointer-events-none [&_canvas[data-neural-network]]:hidden"
         style={{
           width: originalWidth,
           height: originalHeight,

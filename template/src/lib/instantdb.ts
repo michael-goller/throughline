@@ -46,7 +46,7 @@ const APP_ID = import.meta.env.VITE_INSTANTDB_APP_ID as string | undefined
 
 // Only initialize if we have an app ID
 export const db = APP_ID
-  ? init({ appId: APP_ID })
+  ? init({ appId: APP_ID, devtool: false })
   : null
 
 export const isInstantDBConfigured = !!APP_ID

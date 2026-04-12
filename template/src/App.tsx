@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Star, EyeOff, Sun, Moon, Loader2, AlertCircle, FileQuestion, StickyNote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, EyeOff, Sun, Moon, Loader2, AlertCircle, FileQuestion, StickyNote, Home } from 'lucide-react'
 import SlideRenderer from './templates'
-import staticSlides from '@deck/slides'
+import { slides as staticSlides } from '@deck/slides'
 import type { SlideConfig } from './types'
 import { SlideSearch } from './components'
 import SlideOverview from './components/SlideOverview'
@@ -11,45 +11,58 @@ import LaserPointer from './components/LaserPointer'
 import PresenterView from './components/PresenterView'
 import SlideEditor from './editor/SlideEditor'
 import DeckDashboard from './components/DeckDashboard'
+import AuthPage from './components/AuthPage'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { useSlideState } from './hooks/useSlideState'
 import { useDeck } from './hooks/useDeck'
 import { useViewportScale } from './hooks/useViewportScale'
 import { useSwipe } from './hooks/useSwipe'
+import { useAnalytics } from './hooks/useAnalytics'
+import { useAuth } from './hooks/useAuth'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
 
-// Check if we're in presenter mode
-function isPresenterMode(): boolean {
-  const params = new URLSearchParams(window.location.search)
-  return params.has('presenter')
-}
+const IS_VERCEL = typeof window !== 'undefined' && (
+  window.location.hostname.endsWith('.vercel.app') ||
+  import.meta.env.VITE_REQUIRE_AUTH === 'true'
+)
 
 /**
- * Parse the URL to determine deck loading mode.
+ * Parse the URL to determine deck loading mode and presenter state.
  *
- * - `/`              → dashboard (deck gallery)
- * - `/decks/:deckId` → dynamic mode (load from API/JSON at runtime)
- * - anything else    → static mode (use compile-time @deck/slides import)
+ * - `/`                          → dashboard (deck gallery)
+ * - `/decks/:deckId`             → dynamic mode (load from API/JSON at runtime)
+ * - `/decks/:deckId/presenter`   → dynamic mode + presenter
+ * - anything else                → static mode (use compile-time @deck/slides import)
+ *
+ * Presenter mode is also triggered by `?presenter` query param on any route.
  */
-function parseDeckRoute(): { mode: 'static' | 'dynamic' | 'dashboard'; deckId: string } {
-  const path = window.location.pathname
+function parseDeckRoute(): { mode: 'static' | 'dynamic' | 'dashboard'; deckId: string; presenter: boolean } {
+  const pathname = window.location.pathname
+  const params = new URLSearchParams(window.location.search)
+  const queryPresenter = params.has('presenter')
 
   // Root path → dashboard
-  if (path === '/' || path === '') {
-    return { mode: 'dashboard', deckId: '' }
+  if (pathname === '/' || pathname === '') {
+    return { mode: 'dashboard', deckId: '', presenter: false }
   }
 
-  // Match /decks/:deckId (with optional trailing slash and presenter query)
-  const dynamicMatch = path.match(/^\/decks\/([^/]+)\/?$/)
+  // Match /decks/:deckId/presenter (path-based presenter mode)
+  const presenterMatch = pathname.match(/^\/decks\/([^/]+)\/presenter\/?$/)
+  if (presenterMatch) {
+    return { mode: 'dynamic', deckId: decodeURIComponent(presenterMatch[1]), presenter: true }
+  }
+
+  // Match /decks/:deckId (with optional trailing slash)
+  const dynamicMatch = pathname.match(/^\/decks\/([^/]+)\/?$/)
   if (dynamicMatch) {
-    return { mode: 'dynamic', deckId: decodeURIComponent(dynamicMatch[1]) }
+    return { mode: 'dynamic', deckId: decodeURIComponent(dynamicMatch[1]), presenter: queryPresenter }
   }
 
   // Static mode: extract deck name from path for identity (starred/hidden state, etc.)
-  const match = path.match(/\/([^/]+)/)
-  return { mode: 'static', deckId: match ? match[1] : 'default-deck' }
+  const match = pathname.match(/\/([^/]+)/)
+  return { mode: 'static', deckId: match ? match[1] : 'default-deck', presenter: queryPresenter }
 }
 
 const slideVariants = {
@@ -102,24 +115,43 @@ function getAnimationDelay(slide: SlideConfig): number {
   return baseDelay + 1000 + buffer
 }
 
-function App() {
+function AppRouter() {
   const route = useMemo(() => parseDeckRoute(), [])
-  const presenterMode = useMemo(() => isPresenterMode(), [])
 
   if (route.mode === 'dashboard') {
     return <DeckDashboard />
   }
 
   if (route.mode === 'dynamic') {
-    return <DynamicDeckLoader deckId={route.deckId} presenterMode={presenterMode} />
+    return <DynamicDeckLoader deckId={route.deckId} presenterMode={route.presenter} />
   }
 
   // Static mode: use compile-time slides from @deck/slides
-  if (presenterMode) {
+  if (route.presenter) {
     return <PresenterView slides={staticSlides} deckId={route.deckId} />
   }
 
   return <MainPresentation slides={staticSlides} deckId={route.deckId} />
+}
+
+function App() {
+  const { user, loading, login, signup } = useAuth()
+
+  if (IS_VERCEL) {
+    if (loading) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
+          <Loader2 size={32} className="animate-spin" style={{ color: 'var(--text-muted)' }} />
+        </div>
+      )
+    }
+
+    if (!user) {
+      return <AuthPage onLogin={login} onSignup={signup} />
+    }
+  }
+
+  return <AppRouter />
 }
 
 /**
@@ -179,10 +211,10 @@ function DynamicDeckLoader({ deckId, presenterMode }: { deckId: string; presente
     return <PresenterView slides={slides} deckId={deckId} />
   }
 
-  return <MainPresentation slides={slides} deckId={deckId} />
+  return <MainPresentation slides={slides} deckId={deckId} showGalleryLink />
 }
 
-function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConfig[]; deckId: string }) {
+function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = false }: { slides: SlideConfig[]; deckId: string; showGalleryLink?: boolean }) {
   const [slides, setSlides] = useState(initialSlides)
   const [[currentSlide, direction], setSlide] = useState([0, 0])
   const { theme, toggleTheme } = useTheme()
@@ -226,6 +258,9 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
     setToast({ message, icon })
     setTimeout(() => setToast(null), 1500)
   }, [])
+
+  // Track view analytics (who viewed, when, duration)
+  useAnalytics(deckId)
 
   // Track viewer presence (disabled for now - needs InstantDB rooms setup)
   // useViewerPresence(deckId, false)
@@ -528,6 +563,23 @@ function MainPresentation({ slides: initialSlides, deckId }: { slides: SlideConf
           </div>
           {/* Controls row */}
           <div className="flex items-center gap-1 px-1.5 py-1">
+            {/* Back to gallery */}
+            {showGalleryLink && (
+              <>
+                <motion.button
+                  animate={{ opacity: 0.6 }}
+                  whileHover={{ opacity: 1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => { window.location.href = '/' }}
+                  className="p-1 rounded text-nav-text"
+                  aria-label="Back to gallery"
+                >
+                  <Home size={14} />
+                </motion.button>
+                <div className="w-px h-3.5 bg-border mx-0.5" />
+              </>
+            )}
+
             {/* Left Arrow */}
             <motion.button
               animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}

@@ -109,7 +109,7 @@ export default function FeedbackForm({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={isQuestion ? 'What would you like to ask?' : 'Share your thoughts...'}
-              className="w-full h-24 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#21215C] text-gray-900 dark:text-white placeholder:text-gray-400"
+              className="w-full h-24 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-accent-indigo text-gray-900 dark:text-white placeholder:text-gray-400"
             />
 
             {/* Identity fields - only show if not identified */}
@@ -124,7 +124,7 @@ export default function FeedbackForm({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
-                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#21215C] text-gray-900 dark:text-white placeholder:text-gray-400"
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo text-gray-900 dark:text-white placeholder:text-gray-400"
                   />
                 </div>
                 <div>
@@ -136,7 +136,7 @@ export default function FeedbackForm({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#21215C] text-gray-900 dark:text-white placeholder:text-gray-400"
+                    className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo text-gray-900 dark:text-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function FeedbackForm({
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-[#21215C] focus:ring-[#21215C]"
+                  className="w-4 h-4 rounded border-gray-300 text-accent-indigo focus:ring-accent-indigo"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   Ask anonymously
@@ -177,7 +177,7 @@ export default function FeedbackForm({
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-[#21215C] text-white rounded-lg hover:bg-[#2d2d7a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-accent-indigo text-white rounded-lg hover:bg-accent-indigo-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send size={14} />
               {isQuestion ? 'Ask' : 'Comment'}

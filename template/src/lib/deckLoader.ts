@@ -24,6 +24,7 @@ export interface DeckManifestEntry {
   updatedAt?: string
   slideCount?: number
   thumbnail?: string
+  sourcePath?: string
 }
 
 /** Deck manifest — lists all available decks */
@@ -111,11 +112,29 @@ export async function fetchDeck(deckId: string): Promise<DeckConfig> {
 
 /**
  * Fetch the deck manifest (list of available decks).
+ * Tries the API endpoint first (published decks from DB),
+ * then falls back to the static manifest (local dev).
  */
 export async function fetchDeckManifest(): Promise<DeckManifest> {
-  const url = getManifestUrl()
+  const apiBase = getApiBase()
+  const manifestUrl = getManifestUrl()
+
+  // Try API endpoint first (serves published decks from database)
   try {
-    const res = await fetch(url)
+    const res = await fetch(apiBase, { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.decks && Array.isArray(data.decks) && data.decks.length > 0) {
+        return data as DeckManifest
+      }
+    }
+  } catch {
+    // API not available — fall through to static manifest
+  }
+
+  // Fallback: static manifest (local dev server generates this)
+  try {
+    const res = await fetch(manifestUrl)
     if (!res.ok) {
       throw new Error(`Manifest fetch failed: ${res.status}`)
     }

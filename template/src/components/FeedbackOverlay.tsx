@@ -183,7 +183,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
           onClick={(e) => openReplyModal(comment, e)}
         >
           <div className={`flex items-center justify-center w-7 h-7 rounded-full shadow-md ${
-            comment.resolved ? 'bg-green-500' : 'bg-[#21215C]'
+            comment.resolved ? 'bg-green-500' : 'bg-accent-indigo'
           } text-white`}>
             <MessageCircle size={14} />
           </div>
@@ -195,7 +195,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
             <p className="text-[10px] text-gray-500 mt-1">— {comment.authorName}</p>
             {comment.replies?.length ? (
               <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                <p className="text-[10px] text-[#21215C] dark:text-blue-400 font-medium">
+                <p className="text-[10px] text-accent-indigo dark:text-blue-400 font-medium">
                   {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}:
                 </p>
                 {comment.replies.slice(-2).map((reply) => (
@@ -209,7 +209,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                 )}
               </div>
             ) : (
-              <p className="text-[10px] text-[#21215C] dark:text-blue-400 mt-2 italic">Click to reply</p>
+              <p className="text-[10px] text-accent-indigo dark:text-blue-400 mt-2 italic">Click to reply</p>
             )}
           </div>
         </motion.div>
@@ -366,7 +366,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
               <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   {replyingTo.type === 'comment' ? (
-                    <MessageCircle size={14} className="text-[#21215C]" />
+                    <MessageCircle size={14} className="text-accent-indigo" />
                   ) : (
                     <HelpCircle size={14} className="text-amber-500" />
                   )}
@@ -399,7 +399,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                   <input
                     type="text"
                     placeholder="Your name"
-                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#21215C]"
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         setIdentity({ name: e.currentTarget.value.trim(), email: '' })
@@ -423,7 +423,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                       if (e.key === 'Escape') closeModal()
                     }}
                     placeholder="Write your reply..."
-                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#21215C] resize-none"
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo resize-none"
                     rows={3}
                     autoFocus
                   />
@@ -439,7 +439,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                       <button
                         onClick={handleReplySubmit}
                         disabled={!replyText.trim()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#21215C] text-white rounded-lg hover:bg-[#2d2d7a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-accent-indigo text-white rounded-lg hover:bg-accent-indigo-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         <Send size={14} />
                         Reply
@@ -458,7 +458,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#21215C] text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+          className="absolute top-4 left-1/2 -translate-x-1/2 bg-accent-indigo text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
         >
           Feedback Mode • Click to react • Right-click for more • <kbd className="font-mono bg-white/20 px-1.5 py-0.5 rounded">Esc</kbd> to exit
         </motion.div>
