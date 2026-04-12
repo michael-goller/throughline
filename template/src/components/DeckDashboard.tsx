@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Fuse from 'fuse.js'
 import {
   Search,
   SortAsc,
@@ -18,15 +19,35 @@ import {
   MoreVertical,
   User,
   Calendar,
+  Eye,
+  BarChart3,
+  BookTemplate,
+  RefreshCw,
+  FolderOpen,
+  LogOut,
 } from 'lucide-react'
 import { fetchDeckManifest, type DeckManifestEntry } from '../lib/deckLoader'
+import { getAllDeckStats } from '../lib/analytics'
 import { useTheme } from '../hooks/useTheme'
+import { useAuth } from '../hooks/useAuth'
+import DeckAnalytics from './DeckAnalytics'
+import TemplateGallery from './TemplateGallery'
 
-type SortMode = 'recent' | 'alpha' | 'slides'
+type SortMode = 'recent' | 'alpha' | 'slides' | 'views'
 
 interface DeckCardProps {
   deck: DeckManifestEntry
   index: number
+  viewCount?: number
+  lastViewedAt?: string | null
+  focused?: boolean
+  onShowAnalytics: (deckId: string, title: string) => void
+}
+
+/** Shorten a path for display — show ~/ for home dir, last 2 segments otherwise */
+function shortenPath(p: string): string {
+  const shortened = p.replace(/^\/Users\/[^/]+/, '~').replace(/^\/home\/[^/]+/, '~')
+  return shortened
 }
 
 function formatDate(dateStr?: string): string {
@@ -43,8 +64,15 @@ function formatDate(dateStr?: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
 }
 
-function DeckCard({ deck, index }: DeckCardProps) {
+function DeckCard({ deck, index, viewCount, lastViewedAt, focused, onShowAnalytics }: DeckCardProps) {
   const [showMenu, setShowMenu] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (focused && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [focused])
 
   const handleOpen = useCallback(() => {
     window.location.href = `/decks/${encodeURIComponent(deck.id)}`
@@ -64,10 +92,11 @@ function DeckCard({ deck, index }: DeckCardProps) {
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="group relative"
+      className={`group relative ${focused ? 'ring-2 ring-brand-red rounded-xl' : ''}`}
     >
       <div
         onClick={handleOpen}
@@ -131,13 +160,25 @@ function DeckCard({ deck, index }: DeckCardProps) {
                 {deck.slideCount}
               </span>
             )}
+            {(viewCount ?? 0) > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye size={11} />
+                {viewCount}
+              </span>
+            )}
             {deck.updatedAt && (
               <span className="flex items-center gap-1 ml-auto">
                 <Calendar size={11} />
-                {formatDate(deck.updatedAt)}
+                {formatDate(lastViewedAt ?? deck.updatedAt)}
               </span>
             )}
           </div>
+          {deck.sourcePath && (
+            <div className="flex items-center gap-1 mt-1.5 text-tiny text-text-muted/60 truncate" title={deck.sourcePath}>
+              <FolderOpen size={10} className="flex-shrink-0" />
+              <span className="truncate">{shortenPath(deck.sourcePath)}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -199,6 +240,17 @@ function DeckCard({ deck, index }: DeckCardProps) {
                   <Download size={13} />
                   Open in new tab
                 </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowMenu(false)
+                    onShowAnalytics(deck.id, deck.title)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                >
+                  <BarChart3 size={13} />
+                  Analytics
+                </button>
               </motion.div>
             </>
           )}
@@ -210,13 +262,23 @@ function DeckCard({ deck, index }: DeckCardProps) {
 
 export default function DeckDashboard() {
   const { theme, toggleTheme } = useTheme()
+  const { user, logout } = useAuth()
   const [decks, setDecks] = useState<DeckManifestEntry[]>([])
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('recent')
+  const [analyticsTarget, setAnalyticsTarget] = useState<{ deckId: string; title: string } | null>(null)
+  const [view, setView] = useState<'decks' | 'templates'>('decks')
+  const [refreshing, setRefreshing] = useState(false)
+  const [focusIndex, setFocusIndex] = useState(-1)
+  const [showHelp, setShowHelp] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  // Fetch view stats for all decks
+  const deckStats = useMemo(() => getAllDeckStats(), [decks])
+
+  const loadDecks = useCallback(() => {
     fetchDeckManifest()
       .then((manifest) => {
         setDecks(manifest.decks)
@@ -228,44 +290,173 @@ export default function DeckDashboard() {
       })
   }, [])
 
+  useEffect(() => {
+    loadDecks()
+  }, [loadDecks])
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true)
+    fetchDeckManifest()
+      .then((manifest) => {
+        setDecks(manifest.decks)
+        setStatus('ready')
+      })
+      .catch((err) => {
+        setError(String(err))
+        setStatus('error')
+      })
+      .finally(() => {
+        setTimeout(() => setRefreshing(false), 400)
+      })
+  }, [])
+
+  // Fuse.js index for fuzzy search
+  const fuse = useMemo(
+    () =>
+      new Fuse(decks, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'description', weight: 1 },
+          { name: 'author', weight: 0.5 },
+        ],
+        threshold: 0.35,
+        ignoreLocation: true,
+      }),
+    [decks],
+  )
+
   const filtered = useMemo(() => {
     let result = decks
 
-    // Filter by search
+    // Fuzzy search via Fuse.js
     if (search.trim()) {
-      const q = search.toLowerCase()
-      result = result.filter(
-        (d) =>
-          d.title.toLowerCase().includes(q) ||
-          d.description?.toLowerCase().includes(q) ||
-          d.author?.toLowerCase().includes(q)
-      )
+      result = fuse.search(search).map((r) => r.item)
     }
 
-    // Sort
-    result = [...result].sort((a, b) => {
-      if (sort === 'recent') {
-        const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
-        const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
-        return db - da
-      }
-      if (sort === 'alpha') {
-        return a.title.localeCompare(b.title)
-      }
-      if (sort === 'slides') {
-        return (b.slideCount ?? 0) - (a.slideCount ?? 0)
-      }
-      return 0
-    })
+    // Sort (skip when searching — Fuse already ranks by relevance)
+    if (!search.trim()) {
+      result = [...result].sort((a, b) => {
+        if (sort === 'recent') {
+          const da = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+          const db = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+          return db - da
+        }
+        if (sort === 'alpha') {
+          return a.title.localeCompare(b.title)
+        }
+        if (sort === 'slides') {
+          return (b.slideCount ?? 0) - (a.slideCount ?? 0)
+        }
+        if (sort === 'views') {
+          const va = deckStats.get(a.id)?.totalViews ?? 0
+          const vb = deckStats.get(b.id)?.totalViews ?? 0
+          return vb - va
+        }
+        return 0
+      })
+    }
 
     return result
-  }, [decks, search, sort])
+  }, [decks, search, sort, deckStats, fuse])
+
+  // Reset focus index when the filtered list changes
+  useEffect(() => {
+    setFocusIndex(-1)
+  }, [filtered.length, search])
 
   const sortOptions: { mode: SortMode; label: string; icon: typeof Clock }[] = [
     { mode: 'recent', label: 'Recent', icon: Clock },
     { mode: 'alpha', label: 'A-Z', icon: ArrowUpAZ },
     { mode: 'slides', label: 'Slides', icon: SortAsc },
+    { mode: 'views', label: 'Views', icon: Eye },
   ]
+
+  // Grid columns must match the Tailwind classes on the grid container
+  const getGridCols = useCallback(() => {
+    if (typeof window === 'undefined') return 3
+    if (window.innerWidth >= 1024) return 3
+    if (window.innerWidth >= 640) return 2
+    return 1
+  }, [])
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (view !== 'decks') return
+
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+
+      // Help modal owns keyboard when open
+      if (showHelp) {
+        setShowHelp(false)
+        e.preventDefault()
+        return
+      }
+
+      // When search is focused, only handle Escape
+      if (isInput) {
+        if (e.key === 'Escape') {
+          ;(target as HTMLInputElement).blur()
+          setSearch('')
+          e.preventDefault()
+        }
+        return
+      }
+
+      // `/` — focus search
+      if (e.key === '/') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        return
+      }
+
+      // `?` — show help
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault()
+        setShowHelp(true)
+        return
+      }
+
+      // Escape — clear focus
+      if (e.key === 'Escape') {
+        setFocusIndex(-1)
+        return
+      }
+
+      const cols = getGridCols()
+      const total = filtered.length
+      if (total === 0) return
+
+      // vim-style and arrow navigation
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusIndex((prev) => (prev < 0 ? 0 : Math.min(prev + cols, total - 1)))
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusIndex((prev) => (prev < 0 ? 0 : Math.max(prev - cols, 0)))
+      } else if (e.key === 'l' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        setFocusIndex((prev) => (prev < 0 ? 0 : Math.min(prev + 1, total - 1)))
+      } else if (e.key === 'h' || e.key === 'ArrowLeft') {
+        e.preventDefault()
+        setFocusIndex((prev) => (prev < 0 ? 0 : Math.max(prev - 1, 0)))
+      } else if (e.key === 'g') {
+        // gg — first card (handled via double-tap like App.tsx)
+        setFocusIndex(0)
+      } else if (e.key === 'G') {
+        e.preventDefault()
+        setFocusIndex(total - 1)
+      } else if (e.key === 'Enter') {
+        if (focusIndex >= 0 && focusIndex < total) {
+          window.location.href = `/decks/${encodeURIComponent(filtered[focusIndex].id)}`
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [view, showHelp, filtered, focusIndex, getGridCols])
 
   return (
     <div className="w-full h-full bg-background overflow-y-auto">
@@ -276,11 +467,24 @@ export default function DeckDashboard() {
             <div className="w-8 h-8 rounded-lg bg-brand-red flex items-center justify-center">
               <LayoutGrid size={16} className="text-white" />
             </div>
-            <h1 className="font-display text-text text-h3 font-bold tracking-tight">
-              Shine
-            </h1>
+            <div>
+              <h1 className="font-display text-text text-h3 font-bold tracking-tight leading-none">
+                Shine
+              </h1>
+              <p className="text-xs text-text-muted/60 mt-0.5">Beautiful slide decks made simple</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-nav-bg transition-colors disabled:opacity-50"
+              aria-label="Refresh decks"
+            >
+              <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+            </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -289,6 +493,27 @@ export default function DeckDashboard() {
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+            </motion.button>
+            {user && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => logout().then(() => window.location.reload())}
+                className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-nav-bg transition-colors"
+                aria-label="Sign out"
+                title={`Signed in as ${user.name}`}
+              >
+                <LogOut size={18} />
+              </motion.button>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setView('templates')}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-caption font-semibold border border-border text-text hover:bg-nav-bg transition-colors"
+            >
+              <BookTemplate size={15} />
+              Templates
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -301,13 +526,26 @@ export default function DeckDashboard() {
           </div>
         </div>
 
+        {/* Template Gallery view */}
+        {view === 'templates' && (
+          <TemplateGallery
+            onBack={() => setView('decks')}
+            onUseTemplate={(deckId) => {
+              window.location.href = `/decks/${encodeURIComponent(deckId)}`
+            }}
+          />
+        )}
+
+        {/* Decks view */}
+        {view === 'decks' && <>
         {/* Search & Sort bar */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative flex-1 max-w-md">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search decks..."
+              placeholder="Search decks…  (press /)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-accent border border-border text-text text-caption placeholder:text-text-muted/60 focus:outline-none focus:border-border-accent focus:ring-1 focus:ring-border-accent transition-colors"
@@ -391,18 +629,118 @@ export default function DeckDashboard() {
               {search && ` matching "${search}"`}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((deck, i) => (
-                <DeckCard key={deck.id} deck={deck} index={i} />
-              ))}
+              {filtered.map((deck, i) => {
+                const stats = deckStats.get(deck.id)
+                return (
+                  <DeckCard
+                    key={deck.id}
+                    deck={deck}
+                    index={i}
+                    viewCount={stats?.totalViews}
+                    lastViewedAt={stats?.lastViewedAt}
+                    focused={focusIndex === i}
+                    onShowAnalytics={(id, title) => setAnalyticsTarget({ deckId: id, title })}
+                  />
+                )
+              })}
             </div>
           </>
         )}
 
-        {/* Footer */}
-        <div className="mt-16 pb-4 text-center text-tiny text-text-muted/40">
-          Shine Presentations
+        </>}
+
+        {/* Footer with keyboard hints */}
+        <div className="mt-16 pb-4 text-center text-tiny text-text-muted/40 space-y-1">
+          <div>
+            <span className="font-mono">/</span> search
+            <span className="mx-2">·</span>
+            <span className="font-mono">j k h l</span> navigate
+            <span className="mx-2">·</span>
+            <span className="font-mono">Enter</span> open
+            <span className="mx-2">·</span>
+            <span className="font-mono">?</span> help
+          </div>
+          <div>Shine Presentations</div>
         </div>
       </div>
+
+      {/* Help modal */}
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+            onClick={() => setShowHelp(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="font-display text-text text-xl font-semibold mb-6">
+                Overview Shortcuts
+              </h2>
+              <div className="space-y-3 text-text-muted">
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">/</span>
+                  <span>Focus search (fuzzy)</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">Escape</span>
+                  <span>Clear search / unfocus</span>
+                </div>
+                <div className="border-t border-border my-2" />
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">j / k</span>
+                  <span>Down / Up</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">h / l</span>
+                  <span>Left / Right</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">&darr; &uarr; &larr; &rarr;</span>
+                  <span>Arrow navigation</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">gg</span>
+                  <span>First deck</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">G</span>
+                  <span>Last deck</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">Enter</span>
+                  <span>Open selected deck</span>
+                </div>
+                <div className="border-t border-border my-2" />
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">?</span>
+                  <span>Show this help</span>
+                </div>
+              </div>
+              <p className="text-text-muted/60 text-sm mt-6">Press any key or click to close</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Analytics modal */}
+      <AnimatePresence>
+        {analyticsTarget && (
+          <DeckAnalytics
+            deckId={analyticsTarget.deckId}
+            deckTitle={analyticsTarget.title}
+            onClose={() => setAnalyticsTarget(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
