@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import type { SparklineGridSlideConfig } from '../types'
+import { EASE_OUT } from '../utils/animations'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -17,7 +18,7 @@ const rowVariants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] as const },
+    transition: { duration: 0.4, ease: EASE_OUT },
   },
 }
 
@@ -172,7 +173,7 @@ export default function SparklineGridSlide({ slide }: Props) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-text mb-2"
+          className="font-display text-4xl font-bold text-text mb-2"
         >
           {title}
         </motion.h1>

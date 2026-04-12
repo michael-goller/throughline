@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
 import type { PricingSlideConfig } from '../types'
+import { EASE_OUT } from '../utils/animations'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,7 +19,7 @@ const cardVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0, 0, 0.2, 1] as const },
+    transition: { duration: 0.5, ease: EASE_OUT },
   },
 }
 
@@ -36,7 +37,7 @@ export default function PricingSlide({ slide }: Props) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-text mb-10"
+          className="font-display text-4xl font-bold text-text mb-10"
         >
           {title}
         </motion.h1>
@@ -62,7 +63,7 @@ export default function PricingSlide({ slide }: Props) {
           >
             {/* Header */}
             <div className={`px-6 py-5 ${tier.highlight ? 'bg-brand-red/20' : ''}`}>
-              <h3 className="text-lg font-semibold text-text">{tier.name}</h3>
+              <h3 className="font-display text-lg font-semibold text-text">{tier.name}</h3>
               {tier.description && (
                 <p className="text-text-muted text-sm mt-1">{tier.description}</p>
               )}
@@ -71,7 +72,7 @@ export default function PricingSlide({ slide }: Props) {
             {/* Price */}
             <div className="px-6 py-4 border-b border-text-muted/10">
               <div className="flex items-baseline gap-1">
-                <span className={`text-4xl font-bold ${tier.highlight ? 'text-brand-red' : 'text-text'}`}>
+                <span className={`font-display text-4xl font-bold ${tier.highlight ? 'text-brand-red' : 'text-text'}`}>
                   {tier.price}
                 </span>
                 {tier.period && (

@@ -5,29 +5,7 @@ import {
   RoundedTriangle,
   NeuralNetwork,
 } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { containerSlowVariants, itemFadeUpHeroVariants } from '../utils/animations'
 
 interface Props {
   slide: QASlideConfig
@@ -69,15 +47,15 @@ export default function QASlide({ slide }: Props) {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerSlowVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 text-center px-16"
       >
         {/* Q+A Text */}
         <motion.h1
-          variants={itemVariants}
-          className="text-[10rem] md:text-[14rem] font-bold text-white leading-none tracking-tight"
+          variants={itemFadeUpHeroVariants}
+          className="font-display text-[10rem] md:text-[14rem] font-bold text-white leading-none tracking-tight"
         >
           {text}
         </motion.h1>
@@ -85,7 +63,7 @@ export default function QASlide({ slide }: Props) {
         {/* Subtitle */}
         {slide.subtitle && (
           <motion.p
-            variants={itemVariants}
+            variants={itemFadeUpHeroVariants}
             className="text-h2 md:text-h1 text-white/80 font-normal mt-8"
           >
             {slide.subtitle}

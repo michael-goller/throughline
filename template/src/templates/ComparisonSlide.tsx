@@ -1,54 +1,8 @@
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import type { ComparisonSlideConfig } from '../types'
-import { ClassificationMark } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, x: -30 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const rightCardVariants = {
-  hidden: { opacity: 0, x: 30 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { ClassificationMark, SlideBackground } from '../components'
+import { containerVariants, itemFadeUpVariants, itemSlideLeftVariants, itemSlideRightVariants, accentBarAnimation, EASE_OUT } from '../utils/animations'
 
 const arrowVariants = {
   hidden: { opacity: 0, scale: 0 },
@@ -58,7 +12,7 @@ const arrowVariants = {
     transition: {
       duration: 0.4,
       delay: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
+      ease: EASE_OUT,
     },
   },
 }
@@ -72,12 +26,11 @@ export default function ComparisonSlide({ slide }: Props) {
   const rightLabel = slide.rightLabel || 'After'
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+    <SlideBackground variant="gradient-subtle">
+      <div className="relative w-full h-full flex items-center justify-center">
       {/* Red accent bar at top */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        {...accentBarAnimation}
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
@@ -91,8 +44,8 @@ export default function ComparisonSlide({ slide }: Props) {
         {/* Title */}
         {slide.title && (
           <motion.h2
-            variants={itemVariants}
-            className="text-brand-red text-h2 md:text-h1 font-bold mb-12 text-center"
+            variants={itemFadeUpVariants}
+            className="font-display text-brand-red text-h2 md:text-h1 font-bold mb-12 text-center"
           >
             {slide.title}
           </motion.h2>
@@ -102,7 +55,7 @@ export default function ComparisonSlide({ slide }: Props) {
         <div className="flex items-center gap-8">
           {/* Left (Before) */}
           <motion.div
-            variants={cardVariants}
+            variants={itemSlideLeftVariants}
             className="flex-1 p-8 rounded-xl bg-background-elevated border border-border"
           >
             <h3 className="text-text-muted text-h3 font-semibold mb-6 text-center">
@@ -112,7 +65,7 @@ export default function ComparisonSlide({ slide }: Props) {
               {slide.leftItems.map((item, index) => (
                 <motion.li
                   key={index}
-                  variants={itemVariants}
+                  variants={itemFadeUpVariants}
                   className="flex items-start gap-3 text-text-secondary text-body-lg"
                 >
                   <span className="text-text-muted mt-1">•</span>
@@ -141,7 +94,7 @@ export default function ComparisonSlide({ slide }: Props) {
 
           {/* Right (After) */}
           <motion.div
-            variants={rightCardVariants}
+            variants={itemSlideRightVariants}
             className="flex-1 p-8 rounded-xl bg-background-elevated border border-brand-red/30"
           >
             <h3 className="text-brand-red text-h3 font-semibold mb-6 text-center">
@@ -151,7 +104,7 @@ export default function ComparisonSlide({ slide }: Props) {
               {slide.rightItems.map((item, index) => (
                 <motion.li
                   key={index}
-                  variants={itemVariants}
+                  variants={itemFadeUpVariants}
                   className="flex items-start gap-3 text-text-primary text-body-lg"
                 >
                   <span className="text-brand-red mt-1">•</span>
@@ -165,6 +118,7 @@ export default function ComparisonSlide({ slide }: Props) {
 
       {/* Classification mark */}
       <ClassificationMark />
-    </div>
+      </div>
+    </SlideBackground>
   )
 }

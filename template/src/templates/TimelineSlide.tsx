@@ -1,52 +1,7 @@
 import { motion } from 'framer-motion'
 import type { TimelineSlideConfig } from '../types'
-import { ClassificationMark } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const nodeVariants = {
-  hidden: { opacity: 0, scale: 0 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
-
-const lineVariants = {
-  hidden: { scaleX: 0 },
-  visible: {
-    scaleX: 1,
-    transition: {
-      duration: 0.8,
-      ease: 'easeOut' as const,
-    },
-  },
-}
+import { ClassificationMark, SlideBackground } from '../components'
+import { containerProgressiveVariants, itemFadeUpVariants, itemPopVariants, lineRevealVariants, accentBarAnimation } from '../utils/animations'
 
 interface Props {
   slide: TimelineSlideConfig
@@ -56,18 +11,17 @@ export default function TimelineSlide({ slide }: Props) {
   const nodes = slide.nodes.slice(0, 6) // Soft max of 6 nodes
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+    <SlideBackground variant="dots">
+      <div className="relative w-full h-full flex items-center justify-center">
       {/* Red accent bar at top */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        {...accentBarAnimation}
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerProgressiveVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 px-16 max-w-[1400px] w-full"
@@ -75,8 +29,8 @@ export default function TimelineSlide({ slide }: Props) {
         {/* Title */}
         {slide.title && (
           <motion.h2
-            variants={itemVariants}
-            className="text-brand-red text-h2 md:text-h1 font-bold mb-20 text-center"
+            variants={itemFadeUpVariants}
+            className="font-display text-brand-red text-h2 md:text-h1 font-bold mb-20 text-center"
           >
             {slide.title}
           </motion.h2>
@@ -86,7 +40,7 @@ export default function TimelineSlide({ slide }: Props) {
         <div className="relative">
           {/* Horizontal line */}
           <motion.div
-            variants={lineVariants}
+            variants={lineRevealVariants}
             className="absolute top-6 left-0 right-0 h-0.5 bg-border origin-left"
           />
 
@@ -97,7 +51,7 @@ export default function TimelineSlide({ slide }: Props) {
               return (
                 <motion.div
                   key={index}
-                  variants={nodeVariants}
+                  variants={itemPopVariants}
                   custom={index}
                   className="flex flex-col items-center relative"
                   style={{ flex: 1 }}
@@ -115,7 +69,7 @@ export default function TimelineSlide({ slide }: Props) {
 
                     {/* Card */}
                     <div className="p-4 rounded-lg bg-background-elevated border border-border max-w-[180px] text-center">
-                      <h4 className="text-text-primary text-body font-semibold mb-1">
+                      <h4 className="font-display text-text-primary text-body font-semibold mb-1">
                         {node.title}
                       </h4>
                       {node.description && (
@@ -142,6 +96,7 @@ export default function TimelineSlide({ slide }: Props) {
 
       {/* Classification mark */}
       <ClassificationMark />
-    </div>
+      </div>
+    </SlideBackground>
   )
 }

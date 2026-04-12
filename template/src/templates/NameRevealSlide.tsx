@@ -37,7 +37,7 @@ function sampleTextPixels(
 ): { x: number; y: number }[] {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight)
   ctx.fillStyle = '#ffffff'
-  ctx.font = `bold ${fontSize}px Inter, system-ui, -apple-system, sans-serif`
+  ctx.font = `bold ${fontSize}px Outfit, system-ui, -apple-system, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 

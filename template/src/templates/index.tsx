@@ -28,6 +28,9 @@ import OperatingLoopSlide from './OperatingLoopSlide'
 import OKRScoreSlide from './OKRScoreSlide'
 import SparklineGridSlide from './SparklineGridSlide'
 import BarometerGridSlide from './BarometerGridSlide'
+import ScorecardSlide from './ScorecardSlide'
+import StatusTableSlide from './StatusTableSlide'
+import RiskCardSlide from './RiskCardSlide'
 
 interface SlideRendererProps {
   slide: SlideConfig
@@ -93,6 +96,12 @@ export default function SlideRenderer({ slide }: SlideRendererProps) {
       return <SparklineGridSlide slide={slide} />
     case 'barometer-grid':
       return <BarometerGridSlide slide={slide} />
+    case 'scorecard':
+      return <ScorecardSlide slide={slide} />
+    case 'status-table':
+      return <StatusTableSlide slide={slide} />
+    case 'risk-card':
+      return <RiskCardSlide slide={slide} />
     default:
       return (
         <div className="flex items-center justify-center h-full text-text-muted">
@@ -132,4 +141,7 @@ export {
   OKRScoreSlide,
   SparklineGridSlide,
   BarometerGridSlide,
+  ScorecardSlide,
+  StatusTableSlide,
+  RiskCardSlide,
 }

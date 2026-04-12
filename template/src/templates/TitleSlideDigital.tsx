@@ -6,29 +6,7 @@ import {
   NeuralNetwork,
   TerminalPrompt,
 } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { containerSlowVariants, itemFadeUpHeroVariants } from '../utils/animations'
 
 interface Props {
   slide: TitleSlideDigitalConfig
@@ -68,22 +46,22 @@ export default function TitleSlideDigital({ slide }: Props) {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerSlowVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 text-center px-16 max-w-[1100px]"
       >
         <motion.h1
-          variants={itemVariants}
-          className="text-h1 md:text-hero font-bold text-white leading-tight mb-10"
+          variants={itemFadeUpHeroVariants}
+          className="font-display text-h1 md:text-hero font-bold text-white leading-tight mb-10"
         >
           {slide.title}
         </motion.h1>
 
         {slide.subtitle && (
           <motion.p
-            variants={itemVariants}
-            className="text-h2 md:text-h1 text-white/90 font-semibold mb-12"
+            variants={itemFadeUpHeroVariants}
+            className="font-display text-h2 md:text-h1 text-white/90 font-semibold mb-12"
           >
             {slide.subtitle}
           </motion.p>
@@ -91,7 +69,7 @@ export default function TitleSlideDigital({ slide }: Props) {
 
         {slide.tagline && (
           <motion.p
-            variants={itemVariants}
+            variants={itemFadeUpHeroVariants}
             className="text-h3 md:text-h2 text-white/70 font-normal"
           >
             {slide.tagline}

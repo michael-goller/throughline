@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, ArrowUp } from 'lucide-react'
 import type { MatrixSlideConfig } from '../types'
+import { EASE_OUT } from '../utils/animations'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,7 +19,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] as const },
+    transition: { duration: 0.4, ease: EASE_OUT },
   },
 }
 
@@ -55,7 +56,7 @@ export default function MatrixSlide({ slide }: Props) {
         </div>
       ))}
       {items.length === 0 && (
-        <div className="text-text-muted text-sm italic">Empty</div>
+        <div className="text-text-muted text-sm italic opacity-0">—</div>
       )}
     </motion.div>
   )
@@ -67,7 +68,7 @@ export default function MatrixSlide({ slide }: Props) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-text mb-8"
+          className="font-display text-4xl font-bold text-text mb-8"
         >
           {title}
         </motion.h1>

@@ -169,6 +169,28 @@ const SLIDE_TYPES: SlideTypeInfo[] = [
       items: [{ title: 'Theme', description: 'Description', score: 8, maxScore: 10 }] }),
   },
   {
+    type: 'scorecard', label: 'Scorecard', description: 'Executive scorecard with RAG strip and metrics',
+    category: 'data',
+    factory: () => ({ id: generateSlideId(), type: 'scorecard', headline: 'Period summary',
+      ragItems: [{ label: 'Overall', status: 'green' as const }, { label: 'Schedule', status: 'green' as const },
+        { label: 'Budget', status: 'amber' as const }, { label: 'Scope', status: 'green' as const }, { label: 'Risk', status: 'amber' as const }],
+      metrics: [{ label: 'Metric 1', actual: '95%', target: '90%', trend: 'up' as const }] }),
+  },
+  {
+    type: 'status-table', label: 'Status Table', description: 'Table with RAG status dots per row',
+    category: 'data',
+    factory: () => ({ id: generateSlideId(), type: 'status-table', title: 'Workstream Status',
+      columns: [{ header: 'Workstream' }, { header: 'Status' }, { header: 'End Date' }],
+      rows: [{ cells: ['Stream 1', 'On track', 'Q2'], status: 'green' as const }] }),
+  },
+  {
+    type: 'risk-card', label: 'Risk Card', description: 'Structured risk/issue cards',
+    category: 'data',
+    factory: () => ({ id: generateSlideId(), type: 'risk-card', title: 'Key Risks',
+      risks: [{ title: 'Risk 1', status: 'amber' as const, currentState: 'State', rootCause: 'Cause',
+        businessImpact: 'Impact', action: 'Action needed' }] }),
+  },
+  {
     type: 'image', label: 'Image', description: 'Full-screen static image',
     category: 'special',
     factory: () => ({ id: generateSlideId(), type: 'image', src: '', alt: 'Image' }),

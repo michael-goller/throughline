@@ -114,19 +114,26 @@ export default function OKRScoreSlide({ slide }: Props) {
                     <motion.div
                       key={j}
                       variants={itemVariants}
-                      className={`flex items-start gap-2.5 px-2.5 py-2 rounded-lg ${status.bg} transition-colors`}
+                      className={`relative flex items-start gap-2.5 px-2.5 py-2 rounded-lg ${status.bg} transition-colors`}
                     >
+                      {/* Owner pill — upper right */}
+                      <span className="absolute top-1.5 right-2 inline-flex items-center text-[9px] text-white bg-neutral-600 rounded-full px-2 py-0.5 font-medium">
+                        {kr.owner}
+                      </span>
+
                       {/* Status dot */}
                       <div className={`w-2 h-2 rounded-full ${status.color} mt-1.5 shrink-0`} />
 
                       {/* KR content */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-20">
                         <div className="text-xs font-semibold text-text leading-tight">
                           {kr.title}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-text-muted text-[11px]">{kr.owner}</span>
-                        </div>
+                        {kr.description && (
+                          <p className="text-text-muted text-[10px] leading-snug mt-0.5 line-clamp-2">
+                            {kr.description}
+                          </p>
+                        )}
                       </div>
                     </motion.div>
                   )

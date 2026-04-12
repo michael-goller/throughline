@@ -1,29 +1,7 @@
 import { motion } from 'framer-motion'
 import type { QuoteSlideConfig } from '../types'
-import { ClassificationMark } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { ClassificationMark, SlideBackground } from '../components'
+import { containerSlowVariants, itemBlurFadeVariants } from '../utils/animations'
 
 interface Props {
   slide: QuoteSlideConfig
@@ -55,20 +33,20 @@ function SplitVariant({ slide }: Props) {
       {/* Dark right panel - 60% */}
       <div className="w-[60%] h-full bg-background flex items-center px-16">
         <motion.div
-          variants={containerVariants}
+          variants={containerSlowVariants}
           initial="hidden"
           animate="visible"
           className="max-w-[600px]"
         >
           <motion.blockquote
-            variants={itemVariants}
-            className="text-h2 md:text-h1 text-text-primary font-medium leading-snug mb-10"
+            variants={itemBlurFadeVariants}
+            className="font-display text-h2 md:text-h1 text-text-primary font-medium leading-snug mb-10"
           >
             {slide.quote}
           </motion.blockquote>
 
-          <motion.div variants={itemVariants}>
-            <p className="text-brand-red text-h3 font-semibold">
+          <motion.div variants={itemBlurFadeVariants}>
+            <p className="font-display text-brand-red text-h3 font-semibold">
               {slide.author}
             </p>
             {slide.authorTitle && (
@@ -88,7 +66,8 @@ function SplitVariant({ slide }: Props) {
 
 function FullVariant({ slide }: Props) {
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
+    <SlideBackground variant="gradient-radial">
+      <div className="relative w-full h-full flex items-center justify-center">
       {/* Large quote mark background */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
@@ -101,20 +80,20 @@ function FullVariant({ slide }: Props) {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerSlowVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 text-center px-16 max-w-[1000px]"
       >
         <motion.blockquote
-          variants={itemVariants}
-          className="text-h2 md:text-h1 text-text-primary font-medium leading-snug mb-12"
+          variants={itemBlurFadeVariants}
+          className="font-display text-h2 md:text-h1 text-text-primary font-medium leading-snug mb-12"
         >
           "{slide.quote}"
         </motion.blockquote>
 
-        <motion.div variants={itemVariants}>
-          <p className="text-brand-red text-h3 font-semibold">
+        <motion.div variants={itemBlurFadeVariants}>
+          <p className="font-display text-brand-red text-h3 font-semibold">
             — {slide.author}
           </p>
           {slide.authorTitle && (
@@ -127,7 +106,8 @@ function FullVariant({ slide }: Props) {
 
       {/* Classification mark */}
       <ClassificationMark />
-    </div>
+      </div>
+    </SlideBackground>
   )
 }
 

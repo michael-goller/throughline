@@ -288,13 +288,17 @@ export interface IconGridItem {
   icon: IconRef
   title: string
   description?: string
+  owner?: string
+  deadline?: string
 }
 
 export interface IconGridSlideConfig extends BaseSlide {
   type: 'icon-grid'
   title?: string
+  subtitle?: string
   items: IconGridItem[]
-  columns?: 2 | 3 | 4
+  columns?: 1 | 2 | 3 | 4
+  callout?: string
 }
 
 // Name reveal slide - dissolve old name, reassemble as new name
@@ -344,6 +348,7 @@ export interface OperatingLoopSlideConfig extends BaseSlide {
 // OKR Scorecard slide — dense one-page view of all objectives + KRs + status
 export interface OKRScoreItem {
   title: string
+  description?: string
   owner: string
   progress: 'not-started' | 'on-track' | 'at-risk' | 'behind' | 'done'
 }
@@ -392,6 +397,71 @@ export interface BarometerGridSlideConfig extends BaseSlide {
   columns?: 2 | 3
 }
 
+// ── Scorecard slide ──
+
+export interface ScorecardMetric {
+  label: string
+  actual: string
+  target?: string
+  trend?: 'up' | 'flat' | 'down'
+}
+
+export interface ScorecardRAGItem {
+  label: string
+  status: 'green' | 'amber' | 'red' | 'not-started'
+}
+
+export interface ScorecardSlideConfig extends BaseSlide {
+  type: 'scorecard'
+  title?: string
+  headline: string
+  ragItems: ScorecardRAGItem[]
+  metrics: ScorecardMetric[]
+  confidence?: { score: number; max?: number }
+  decisionsNeeded?: boolean
+  decisionsNote?: string
+}
+
+// ── Status table slide ──
+
+export interface StatusTableColumn {
+  header: string
+  width?: string
+}
+
+export interface StatusTableRow {
+  cells: string[]
+  status?: 'green' | 'amber' | 'red' | 'not-started' | 'done'
+}
+
+export interface StatusTableSlideConfig extends BaseSlide {
+  type: 'status-table'
+  title?: string
+  subtitle?: string
+  columns: StatusTableColumn[]
+  rows: StatusTableRow[]
+  showStatusDot?: boolean
+  summary?: string
+}
+
+// ── Risk card slide ──
+
+export interface RiskItem {
+  title: string
+  status: 'amber' | 'red'
+  currentState: string
+  rootCause: string
+  businessImpact: string
+  action: string
+  pathToGreen?: string
+}
+
+export interface RiskCardSlideConfig extends BaseSlide {
+  type: 'risk-card'
+  title?: string
+  risks: RiskItem[]
+}
+
 // Union type for all slides
 export type SlideConfig =
   | TitleSlideConfig
@@ -423,3 +493,6 @@ export type SlideConfig =
   | OKRScoreSlideConfig
   | SparklineGridSlideConfig
   | BarometerGridSlideConfig
+  | ScorecardSlideConfig
+  | StatusTableSlideConfig
+  | RiskCardSlideConfig

@@ -1,29 +1,7 @@
 import { motion } from 'framer-motion'
 import type { DividerSlideConfig } from '../types'
 import { ClassificationMark, RoundedTriangle } from '../components'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { containerSlowVariants, itemFadeUpHeroVariants } from '../utils/animations'
 
 interface Props {
   slide: DividerSlideConfig
@@ -52,7 +30,7 @@ export default function DividerSlide({ slide }: Props) {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerSlowVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 text-center px-16 max-w-[900px]"
@@ -60,7 +38,7 @@ export default function DividerSlide({ slide }: Props) {
         {/* Section Number */}
         {slide.sectionNumber && (
           <motion.div
-            variants={itemVariants}
+            variants={itemFadeUpHeroVariants}
             className="mb-6"
           >
             <span className="text-white/60 text-h3 font-semibold">
@@ -71,8 +49,8 @@ export default function DividerSlide({ slide }: Props) {
 
         {/* Title */}
         <motion.h1
-          variants={itemVariants}
-          className="text-h1 md:text-hero font-bold text-white leading-tight"
+          variants={itemFadeUpHeroVariants}
+          className="font-display text-h1 md:text-hero font-bold text-white leading-tight"
         >
           {slide.title}
         </motion.h1>
@@ -80,8 +58,8 @@ export default function DividerSlide({ slide }: Props) {
         {/* Subtitle */}
         {slide.subtitle && (
           <motion.p
-            variants={itemVariants}
-            className="text-h3 md:text-h2 text-white/80 font-normal mt-6"
+            variants={itemFadeUpHeroVariants}
+            className="font-display text-h3 md:text-h2 text-white/80 font-normal mt-6"
           >
             {slide.subtitle}
           </motion.p>

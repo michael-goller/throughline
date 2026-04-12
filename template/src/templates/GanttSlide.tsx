@@ -3,29 +3,7 @@ import { useMemo } from 'react'
 import type { GanttSlideConfig, GanttTask } from '../types'
 import { ClassificationMark } from '../components'
 import { useMermaidGantt } from '../hooks/useMermaidGantt'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0, 0, 0.2, 1] as const,
-    },
-  },
-}
+import { containerFastVariants, itemFadeUpVariants, accentBarAnimation, EASE_OUT } from '../utils/animations'
 
 const barVariants = {
   hidden: { scaleX: 0, opacity: 0 },
@@ -34,7 +12,7 @@ const barVariants = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      ease: [0, 0, 0.2, 1] as const,
+      ease: EASE_OUT,
     },
   },
 }
@@ -48,9 +26,15 @@ function parseDate(dateStr: string): Date {
   return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
 }
 
-function formatDateLabel(date: Date, format: 'month' | 'quarter' | 'week'): string {
+function formatDateLabel(date: Date, format: 'month' | 'quarter' | 'week' | 'relative-month', originDate?: Date): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   switch (format) {
+    case 'relative-month':
+      if (originDate) {
+        const monthDiff = (date.getFullYear() - originDate.getFullYear()) * 12 + (date.getMonth() - originDate.getMonth()) + 1
+        return `Month ${monthDiff}`
+      }
+      return `${months[date.getMonth()]}`
     case 'quarter':
       const quarter = Math.floor(date.getMonth() / 3) + 1
       return `Q${quarter} ${date.getFullYear()}`
@@ -118,11 +102,17 @@ export default function GanttSlide({ slide }: Props) {
       labelDate.setMonth(Math.floor(labelDate.getMonth() / 3) * 3)
     }
 
+    // For relative-month, track the origin as the first visible label
+    let originDate: Date | undefined = undefined
+
     while (labelDate <= max) {
       const position = ((labelDate.getTime() - min.getTime()) / totalMs) * 100
       if (position >= 0 && position <= 100) {
+        if (dateFormat === 'relative-month' && !originDate) {
+          originDate = new Date(labelDate)
+        }
         labels.push({
-          label: formatDateLabel(labelDate, dateFormat),
+          label: formatDateLabel(labelDate, dateFormat, originDate),
           position,
         })
       }
@@ -136,6 +126,7 @@ export default function GanttSlide({ slide }: Props) {
           labelDate.setDate(labelDate.getDate() + 7)
           break
         case 'month':
+        case 'relative-month':
         default:
           labelDate.setMonth(labelDate.getMonth() + 1)
       }
@@ -220,15 +211,13 @@ export default function GanttSlide({ slide }: Props) {
     <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
       {/* Red accent bar at top */}
       <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        {...accentBarAnimation}
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={containerFastVariants}
         initial="hidden"
         animate="visible"
         className="relative z-10 px-16 py-12 max-w-[1400px] w-full h-full flex flex-col"
@@ -236,8 +225,8 @@ export default function GanttSlide({ slide }: Props) {
         {/* Title */}
         {slide.title && (
           <motion.h2
-            variants={itemVariants}
-            className="text-brand-red text-h2 md:text-h1 font-bold mb-8 text-center"
+            variants={itemFadeUpVariants}
+            className="font-display text-brand-red text-h2 md:text-h1 font-bold mb-8 text-center"
           >
             {slide.title}
           </motion.h2>
@@ -254,7 +243,7 @@ export default function GanttSlide({ slide }: Props) {
                 <div key={groupIndex}>
                   {group.section && (
                     <motion.div
-                      variants={itemVariants}
+                      variants={itemFadeUpVariants}
                       className="text-text-secondary text-caption font-semibold uppercase tracking-wide border-t border-border mt-1 first:mt-0 first:border-t-0 flex items-center"
                       style={{ height: rowHeight }}
                     >
@@ -264,7 +253,7 @@ export default function GanttSlide({ slide }: Props) {
                   {group.tasks.map(({ task }, taskIndex) => (
                     <motion.div
                       key={taskIndex}
-                      variants={itemVariants}
+                      variants={itemFadeUpVariants}
                       className="flex items-center text-text-primary text-body-sm truncate"
                       style={{ height: rowHeight }}
                     >
@@ -282,7 +271,7 @@ export default function GanttSlide({ slide }: Props) {
                 {timeLabels.map((label, index) => (
                   <motion.span
                     key={index}
-                    variants={itemVariants}
+                    variants={itemFadeUpVariants}
                     className="absolute text-text-muted text-caption whitespace-nowrap -translate-x-1/2"
                     style={{ left: `${label.position}%` }}
                   >
@@ -350,28 +339,34 @@ export default function GanttSlide({ slide }: Props) {
             </div>
           </div>
 
-          {/* Legend */}
-          <motion.div
-            variants={itemVariants}
-            className="flex justify-center gap-6 mt-6 pt-4 border-t border-border"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-3 rounded bg-accent-green" />
-              <span className="text-text-muted text-caption">Done</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-3 rounded bg-brand-red" />
-              <span className="text-text-muted text-caption">Active</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-3 rounded bg-accent-orange" />
-              <span className="text-text-muted text-caption">Critical</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rotate-45 bg-accent-blue" />
-              <span className="text-text-muted text-caption">Milestone</span>
-            </div>
-          </motion.div>
+          {/* Legend — only show when multiple statuses are used */}
+          {(() => {
+            const usedStatuses = new Set(tasks.map(t => t.status).filter(Boolean))
+            if (usedStatuses.size < 2) return null
+            return (
+              <motion.div
+                variants={itemFadeUpVariants}
+                className="flex justify-center gap-6 mt-6 pt-4 border-t border-border"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-3 rounded bg-accent-green" />
+                  <span className="text-text-muted text-caption">Done</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-3 rounded bg-brand-red" />
+                  <span className="text-text-muted text-caption">Active</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-3 rounded bg-accent-orange" />
+                  <span className="text-text-muted text-caption">Critical</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rotate-45 bg-accent-blue" />
+                  <span className="text-text-muted text-caption">Milestone</span>
+                </div>
+              </motion.div>
+            )
+          })()}
         </div>
       </motion.div>
 

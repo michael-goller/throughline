@@ -1,25 +1,6 @@
 import { motion } from 'framer-motion'
 import type { BarometerGridSlideConfig } from '../types'
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.3,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0, 0, 0.2, 1] as const },
-  },
-}
+import { containerVariants, itemFadeUpVariants } from '../utils/animations'
 
 function Barometer({ score, maxScore }: { score: number; maxScore: number }) {
   return (
@@ -65,7 +46,7 @@ export default function BarometerGridSlide({ slide }: Props) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-text mb-2"
+          className="font-display text-4xl font-bold text-text mb-2"
         >
           {title}
         </motion.h1>
@@ -90,7 +71,7 @@ export default function BarometerGridSlide({ slide }: Props) {
         {items.map((item, i) => (
           <motion.div
             key={i}
-            variants={itemVariants}
+            variants={itemFadeUpVariants}
             className="flex flex-col p-5 rounded-xl bg-nav-bg/50 border border-text-muted/10"
           >
             <h3 className="text-lg font-semibold text-text mb-1.5">{item.title}</h3>

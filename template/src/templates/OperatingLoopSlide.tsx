@@ -114,7 +114,7 @@ export default function OperatingLoopSlide({ slide }: Props) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-brand-red text-h2 md:text-h1 font-bold mb-6"
+            className="font-display text-brand-red text-h2 md:text-h1 font-bold mb-6"
           >
             {title}
           </motion.h2>
