@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { eq, and, like } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { compare } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
-import { getDb } from '../../lib/db.js';
-import { decks, shareTokens } from '../../lib/schema.js';
-import { ensureTables } from '../../lib/migrate.js';
+import { getDb } from '../../_lib/db.js';
+import { decks, shareTokens } from '../../_lib/schema.js';
+import { ensureTables } from '../../_lib/migrate.js';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'dev-secret-change-me'
@@ -44,7 +44,7 @@ async function handleMeta(req: VercelRequest, res: VercelResponse, slug: string,
     if (tokenId) {
       const tokens = await db.select({ id: shareTokens.id, expiresAt: shareTokens.expiresAt })
         .from(shareTokens)
-        .where(and(eq(shareTokens.deckId, deck.id), like(shareTokens.id, `${tokenId}%`)));
+        .where(and(eq(shareTokens.deckId, deck.id), sql`${shareTokens.id}::text like ${tokenId + '%'}`));
 
       const token = tokens[0];
       if (!token) return res.status(404).json({ error: 'Share link not found' });
@@ -75,7 +75,7 @@ async function handleVerify(req: VercelRequest, res: VercelResponse, slug: strin
 
     // Find share token by short ID prefix
     const tokens = await db.select().from(shareTokens)
-      .where(and(eq(shareTokens.deckId, deck.id), like(shareTokens.id, `${shortId}%`)));
+      .where(and(eq(shareTokens.deckId, deck.id), sql`${shareTokens.id}::text like ${shortId + '%'}`));
 
     const token = tokens[0];
     if (!token) return res.status(404).json({ error: 'Share link not found' });
@@ -134,7 +134,7 @@ async function handleGetDeck(req: VercelRequest, res: VercelResponse, slug: stri
 
     // Verify the share token still exists and isn't expired
     const tokens = await db.select().from(shareTokens)
-      .where(and(eq(shareTokens.deckId, deck.id), like(shareTokens.id, `${shortId}%`)));
+      .where(and(eq(shareTokens.deckId, deck.id), sql`${shareTokens.id}::text like ${shortId + '%'}`));
 
     const token = tokens[0];
     if (!token) return res.status(404).json({ error: 'Share link revoked' });

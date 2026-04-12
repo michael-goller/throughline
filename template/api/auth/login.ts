@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
-import { getDb } from '../lib/db.js';
-import { presenters } from '../lib/schema.js';
-import { signToken, setSessionCookie } from '../lib/auth.js';
-import { ensureTables } from '../lib/migrate.js';
+import { getDb } from '../_lib/db.js';
+import { presenters } from '../_lib/schema.js';
+import { signToken, setSessionCookie } from '../_lib/auth.js';
+import { ensureTables } from '../_lib/migrate.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

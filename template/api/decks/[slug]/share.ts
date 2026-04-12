@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq, and } from 'drizzle-orm';
 import { hash } from 'bcryptjs';
-import { getDb } from '../../lib/db.js';
-import { decks, shareTokens } from '../../lib/schema.js';
-import { requireAuth } from '../../lib/auth.js';
-import { ensureTables } from '../../lib/migrate.js';
+import { getDb } from '../../_lib/db.js';
+import { decks, shareTokens } from '../../_lib/schema.js';
+import { requireAuth } from '../../_lib/auth.js';
+import { ensureTables } from '../../_lib/migrate.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slug = req.query.slug as string;
