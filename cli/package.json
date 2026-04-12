@@ -1,6 +1,6 @@
 {
   "name": "shine-deck",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Beautiful slide decks made simple",
   "type": "module",
   "bin": {
@@ -14,18 +14,27 @@
   },
   "files": [
     "bin",
-    "dist",
-    "template"
+    "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michael-goller/shine.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/michael-goller/shine#readme",
   "keywords": [
     "slides",
     "presentation",
     "deck",
     "react",
-    "vite"
+    "vite",
+    "cli"
   ],
   "author": "Michael Goller",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "chalk": "^5.3.0",
     "commander": "^12.0.0",

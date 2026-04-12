@@ -5,19 +5,25 @@
 
 import { program } from 'commander'
 import chalk from 'chalk'
-import { formatPath } from './lib/config.js'
+import { formatPath, getTemplatePath } from './lib/config.js'
 import {
   createDeck,
   isFullDeck,
+  isGalleryRunning,
   isRunning,
   isThinDeck,
   openInBrowser,
+  openUrl,
   startDeck,
+  startGallery,
   stopAllDecks,
   stopDeck,
+  stopGallery,
 } from './lib/deck.js'
 import { pickDeck } from './lib/picker.js'
-import { addDeck, getDeck, listDecks, removeDeck, renameDeck } from './lib/registry.js'
+import { addDeck, getDeck, getGalleryState, listDecks, removeDeck, renameDeck, updateDeckPublished } from './lib/registry.js'
+import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish as cloudPublish, unpublish as cloudUnpublish, loadCredentials, getApiUrl, setApiUrl } from './lib/cloud.js'
+import { createInterface } from 'readline'
 
 program
   .name('shine')
@@ -157,19 +163,34 @@ program
 // ─────────────────────────────────────────────────────────────
 program
   .command('serve [name]')
-  .description("Start a deck's dev server")
+  .description("Start a deck's dev server (no name = pick from list)")
   .option('-p, --port <port>', 'Port number to use', parseInt)
-  .action(async (name?: string, options?: { port?: number }) => {
-    if (!name) {
-      name = pickDeck('Start deck') ?? undefined
-      if (!name) return
-    }
-
+  .option('--gallery', 'Start the gallery server instead of a single deck')
+  .action(async (name?: string, options?: { port?: number; gallery?: boolean }) => {
     try {
+      if (options?.gallery) {
+        // Explicit --gallery flag — start the gallery server
+        const { pid, port } = await startGallery(options?.port)
+        console.log(chalk.green(`✓ Started gallery on http://localhost:${port}`))
+        console.log(`→ PID: ${pid}`)
+        console.log(`→ Stop with: shine stop --gallery`)
+        return
+      }
+
+      if (!name) {
+        // No deck specified — interactive picker
+        name = pickDeck('Serve deck') ?? undefined
+        if (!name) return
+      }
+
       const { pid, port } = await startDeck(name, options?.port)
-      console.log(chalk.green(`✓ Started '${name}' on http://localhost:${port}`))
+      const deckUrl = `http://localhost:${port}/decks/${name}`
+      console.log(chalk.green(`✓ Started '${name}' on ${deckUrl}`))
       console.log(`→ PID: ${pid}`)
       console.log(`→ Stop with: shine stop ${name}`)
+      // Auto-open in browser
+      await new Promise((r) => setTimeout(r, 1000))
+      openUrl(deckUrl)
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
@@ -182,14 +203,29 @@ program
 program
   .command('stop [name]')
   .description("Stop a deck's dev server")
-  .option('--all', 'Stop all running decks')
-  .action((name?: string, options?: { all?: boolean }) => {
+  .option('--all', 'Stop all running decks (including gallery)')
+  .option('--gallery', 'Stop the gallery server')
+  .action((name?: string, options?: { all?: boolean; gallery?: boolean }) => {
     if (options?.all) {
       const stopped = stopAllDecks()
+      const galleryWasRunning = stopGallery()
+      if (galleryWasRunning) {
+        console.log(chalk.green(`✓ Stopped gallery`))
+      }
       if (stopped.length > 0) {
         stopped.forEach((n) => console.log(chalk.green(`✓ Stopped '${n}'`)))
-      } else {
+      }
+      if (!galleryWasRunning && stopped.length === 0) {
         console.log('No running decks to stop')
+      }
+      return
+    }
+
+    if (options?.gallery) {
+      if (stopGallery()) {
+        console.log(chalk.green(`✓ Stopped gallery`))
+      } else {
+        console.log('Gallery was not running')
       }
       return
     }
@@ -220,20 +256,32 @@ program
   .action(() => {
     const decks = listDecks()
 
+    // Show gallery status if running
+    if (isGalleryRunning()) {
+      const state = getGalleryState()
+      console.log(chalk.green(`▶︎ Gallery running → http://localhost:${state.port}`))
+      console.log()
+    }
+
     if (decks.length === 0) {
       console.log('No decks found. Create one with: shine new <name>')
       return
     }
 
-    console.log(`${'NAME'.padEnd(20)} ${'STATUS'.padEnd(12)} ${'PORT'.padEnd(8)} PATH`)
+    // Determine max name width
+    const maxName = Math.max(4, ...decks.map(([n]) => n.length)) + 2
+
+    console.log(`${'NAME'.padEnd(maxName)} ${'PUBLISHED'.padEnd(52)} PATH`)
 
     for (const [name, deck] of decks) {
-      const running = isRunning(name)
-      const status = running ? chalk.green('▶︎ running') : chalk.red('⏹ stopped')
-      const port = deck.port ? String(deck.port) : '-'
+      const published = deck.publishedUrl
+        ? chalk.green('✓') + ' ' + deck.publishedUrl
+        : chalk.dim('—')
       const path = formatPath(deck.path)
+      // chalk adds ~10 hidden chars for color codes
+      const pubPad = deck.publishedUrl ? 62 : 63
 
-      console.log(`${name.padEnd(20)} ${status.padEnd(21)} ${port.padEnd(8)} ${path}`)
+      console.log(`${name.padEnd(maxName)} ${published.padEnd(pubPad)} ${path}`)
     }
   })
 
@@ -242,14 +290,29 @@ program
 // ─────────────────────────────────────────────────────────────
 program
   .command('open [name]')
-  .description('Open a deck in the browser (starts server if needed)')
+  .description('Open a deck in the browser (no name = gallery; starts server if needed)')
   .action(async (name?: string) => {
-    if (!name) {
-      name = pickDeck('Open deck') ?? undefined
-      if (!name) return
-    }
-
     try {
+      if (!name) {
+        // No deck specified — open the gallery
+        if (!isGalleryRunning()) {
+          console.log('Starting gallery...')
+          const { port } = await startGallery()
+          console.log(chalk.green(`✓ Started gallery on http://localhost:${port}`))
+          await new Promise((r) => setTimeout(r, 1000))
+        }
+
+        const state = getGalleryState()
+        const url = `http://localhost:${state.port}`
+        if (openUrl(url)) {
+          console.log(chalk.green(`✓ Opening ${url} in browser`))
+        } else {
+          console.log(chalk.red(`✗ Failed to open browser`))
+          process.exit(1)
+        }
+        return
+      }
+
       const deck = getDeck(name)
       if (!deck) {
         console.log(chalk.red(`✗ Deck '${name}' not found`))
@@ -261,14 +324,12 @@ program
         console.log(`Starting '${name}'...`)
         const { port } = await startDeck(name)
         console.log(chalk.green(`✓ Started on http://localhost:${port}`))
-
-        // Give server a moment to start
         await new Promise((r) => setTimeout(r, 1000))
       }
 
       if (openInBrowser(name)) {
         const updatedDeck = getDeck(name)
-        console.log(chalk.green(`✓ Opening http://localhost:${updatedDeck?.port} in browser`))
+        console.log(chalk.green(`✓ Opening http://localhost:${updatedDeck?.port}/decks/${name} in browser`))
       } else {
         console.log(chalk.red(`✗ Failed to open browser`))
         process.exit(1)
@@ -308,7 +369,7 @@ program
     if (running) {
       console.log(`Port: ${deck.port}`)
       console.log(`PID: ${deck.pid}`)
-      console.log(`URL: http://localhost:${deck.port}`)
+      console.log(`URL: http://localhost:${deck.port}/decks/${name}`)
     }
 
     if (deck.created_at) {
@@ -319,5 +380,354 @@ program
       console.log(`Started: ${deck.started_at}`)
     }
   })
+
+// ─────────────────────────────────────────────────────────────
+// shine export [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('export [name]')
+  .description('Export slides to PNG/PDF (deck must be running)')
+  .option('--png', 'Export PNGs only, no PDF')
+  .option('--light', 'Export in light mode (default: dark)')
+  .option('--slides <range>', 'Slide selection (e.g., 1,3,5-7)')
+  .option('--quality <level>', 'Quality: high/medium/low', 'medium')
+  .action(async (name?: string, options?: { png?: boolean; light?: boolean; slides?: string; quality?: string }) => {
+    if (!name) {
+      name = pickDeck('Export deck') ?? undefined
+      if (!name) return
+    }
+
+    const deck = getDeck(name)
+    if (!deck) {
+      console.log(chalk.red(`✗ Deck '${name}' not found`))
+      process.exit(1)
+    }
+
+    if (!isRunning(name)) {
+      console.log(chalk.red(`✗ Deck '${name}' is not running`))
+      console.log(`→ Start it first: shine serve ${name}`)
+      process.exit(1)
+    }
+
+    const { execSync } = await import('child_process')
+    const { existsSync, mkdirSync } = await import('fs')
+    const { join } = await import('path')
+
+    const deckPath = deck.path
+    const port = deck.port
+    const theme = options?.light ? 'light' : 'dark'
+    const quality = options?.quality || 'medium'
+
+    // For thin decks, run from template directory
+    const runDir = isThinDeck(deckPath) ? getTemplatePath() : deckPath
+
+    // Ensure export directory in the deck folder
+    const exportDir = join(deckPath, 'export')
+    if (!existsSync(exportDir)) {
+      mkdirSync(exportDir, { recursive: true })
+    }
+
+    // Build npm command
+    const npmScript = options?.png ? 'export:png' : 'export'
+    let cmd = `npm run ${npmScript}`
+
+    const extraArgs: string[] = []
+    if (options?.slides) extraArgs.push(`--slides=${options.slides}`)
+    if (quality !== 'medium') extraArgs.push(`--quality=${quality}`)
+
+    if (extraArgs.length > 0) {
+      cmd += ` -- ${extraArgs.join(' ')}`
+    }
+
+    console.log(`Exporting '${name}' (${theme} mode, ${quality} quality)...`)
+
+    try {
+      const env: Record<string, string> = {
+        ...process.env as Record<string, string>,
+        EXPORT_PORT: String(port),
+        EXPORT_THEME: theme,
+        EXPORT_OUTPUT: exportDir,
+      }
+      if (isThinDeck(deckPath)) {
+        env.DECK_PATH = deckPath
+      }
+
+      execSync(cmd, { cwd: runDir, env, stdio: 'inherit' })
+      console.log(chalk.green(`✓ Export complete`))
+      console.log(`→ Files in: ${formatPath(exportDir)}`)
+    } catch {
+      console.log(chalk.red(`✗ Export failed`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine cloud [url]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('cloud [url]')
+  .description('Show or set the Shine cloud API URL')
+  .action((url?: string) => {
+    if (url) {
+      // Remove trailing slash
+      const cleanUrl = url.replace(/\/+$/, '')
+      setApiUrl(cleanUrl)
+      console.log(chalk.green(`✓ API URL set to ${cleanUrl}`))
+    } else {
+      console.log(`API URL: ${getApiUrl()}`)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine login
+// ─────────────────────────────────────────────────────────────
+program
+  .command('login')
+  .description('Log in to Shine cloud')
+  .option('--email <email>', 'Email address')
+  .option('--password <password>', 'Password')
+  .action(async (options: { email?: string; password?: string }) => {
+    try {
+      const email = options.email || await promptInput('Email: ')
+      const password = options.password || await promptInput('Password: ', true)
+      const user = await cloudLogin(email, password)
+      console.log(chalk.green(`✓ Logged in as ${user.name} (${user.email})`))
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine logout
+// ─────────────────────────────────────────────────────────────
+program
+  .command('logout')
+  .description('Log out of Shine cloud')
+  .action(() => {
+    clearCredentials()
+    console.log(chalk.green('✓ Logged out'))
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine whoami
+// ─────────────────────────────────────────────────────────────
+program
+  .command('whoami')
+  .description('Show current logged-in user')
+  .action(async () => {
+    try {
+      const creds = loadCredentials()
+      if (!creds) {
+        console.log('Not logged in. Run: shine login')
+        process.exit(1)
+      }
+      const user = await cloudWhoami()
+      if (!user) {
+        console.log('Session expired. Run: shine login')
+        process.exit(1)
+      }
+      console.log(`${user.name} (${user.email})`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine publish [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('publish [name]')
+  .description('Publish a deck to Shine cloud')
+  .action(async (name?: string) => {
+    try {
+      if (!name) {
+        name = pickDeck('Publish deck') ?? undefined
+        if (!name) return
+      }
+
+      const deck = getDeck(name)
+      if (!deck) {
+        console.log(chalk.red(`✗ Deck '${name}' not found`))
+        process.exit(1)
+      }
+
+      console.log(`Publishing '${name}'...`)
+      const result = await cloudPublish(deck.path)
+      updateDeckPublished(name, result.url)
+      console.log(chalk.green(`✓ Published!`))
+      console.log(`→ URL: ${result.url}`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine unpublish [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('unpublish [name]')
+  .description('Remove a published deck from Shine cloud')
+  .action(async (name?: string) => {
+    try {
+      if (!name) {
+        name = pickDeck('Unpublish deck') ?? undefined
+        if (!name) return
+      }
+
+      await cloudUnpublish(name)
+      updateDeckPublished(name, null)
+      console.log(chalk.green(`✓ Deck '${name}' unpublished`))
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine update
+// ─────────────────────────────────────────────────────────────
+program
+  .command('update')
+  .description('Update Shine to the latest version')
+  .action(async () => {
+    const { execSync } = await import('child_process')
+    const { existsSync } = await import('fs')
+    const { join } = await import('path')
+
+    // Determine install location
+    const shineHome = process.env.SHINE_HOME || join(process.env.HOME || '', '.shine')
+    const installDir = join(shineHome, 'install')
+
+    if (existsSync(join(installDir, '.git'))) {
+      // Git-based install (from install.sh)
+      console.log('Pulling latest changes...')
+      try {
+        execSync('git pull --ff-only origin main', { cwd: installDir, stdio: 'inherit' })
+      } catch {
+        console.log(chalk.yellow('Fast-forward failed, trying merge...'))
+        execSync('git pull origin main', { cwd: installDir, stdio: 'inherit' })
+      }
+
+      console.log('Rebuilding CLI...')
+      execSync('npm install --no-audit --no-fund', { cwd: join(installDir, 'cli'), stdio: 'inherit' })
+      execSync('npm run build', { cwd: join(installDir, 'cli'), stdio: 'inherit' })
+
+      console.log('Updating template dependencies...')
+      execSync('npm install --no-audit --no-fund', { cwd: join(installDir, 'template'), stdio: 'inherit' })
+
+      console.log(chalk.green('✓ Shine updated to latest'))
+    } else {
+      // npm-based or manual install — try npm update
+      console.log('Checking for updates via npm...')
+      try {
+        execSync('npm update -g shine-deck', { stdio: 'inherit' })
+        console.log(chalk.green('✓ Shine updated'))
+      } catch {
+        console.log(chalk.yellow('Could not auto-update.'))
+        console.log('Re-run the install script:')
+        console.log('  curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash')
+      }
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// shine doctor
+// ─────────────────────────────────────────────────────────────
+program
+  .command('doctor')
+  .description('Check Shine installation health')
+  .action(async () => {
+    const { existsSync } = await import('fs')
+    const { join } = await import('path')
+    const { execSync } = await import('child_process')
+
+    let issues = 0
+    const check = (label: string, ok: boolean, fix?: string) => {
+      if (ok) {
+        console.log(chalk.green('  ✓') + `  ${label}`)
+      } else {
+        console.log(chalk.red('  ✗') + `  ${label}`)
+        if (fix) console.log(chalk.dim(`     → ${fix}`))
+        issues++
+      }
+    }
+
+    console.log(chalk.bold('Shine Doctor\n'))
+
+    // Node.js version
+    const nodeVer = process.versions.node
+    const nodeMajor = parseInt(nodeVer.split('.')[0])
+    check(`Node.js v${nodeVer}`, nodeMajor >= 20, 'Upgrade to Node.js 20+')
+
+    // npm
+    let npmVer = ''
+    try { npmVer = execSync('npm -v', { encoding: 'utf-8' }).trim() } catch {}
+    check(`npm v${npmVer || 'not found'}`, !!npmVer, 'Install npm')
+
+    // git
+    let gitVer = ''
+    try { gitVer = execSync('git --version', { encoding: 'utf-8' }).trim().replace('git version ', '') } catch {}
+    check(`git ${gitVer || 'not found'}`, !!gitVer, 'Install git')
+
+    // Template directory
+    const templatePath = getTemplatePath()
+    check(`Template: ${formatPath(templatePath)}`, existsSync(templatePath), 'Re-run install.sh')
+
+    // Template node_modules
+    const templateModules = join(templatePath, 'node_modules')
+    check('Template dependencies installed', existsSync(templateModules), `cd ${formatPath(templatePath)} && npm install`)
+
+    // Config
+    const shineDir = join(process.env.HOME || '', '.shine')
+    check(`Config dir: ${formatPath(shineDir)}`, existsSync(shineDir))
+
+    // Registry
+    const registry = join(shineDir, 'registry.json')
+    check('Registry file exists', existsSync(registry))
+
+    console.log('')
+    if (issues === 0) {
+      console.log(chalk.green('Everything looks good!'))
+    } else {
+      console.log(chalk.yellow(`${issues} issue${issues > 1 ? 's' : ''} found — see fixes above.`))
+    }
+  })
+
+/** Prompt for user input */
+function promptInput(question: string, hidden = false): Promise<string> {
+  return new Promise((resolve) => {
+    if (hidden) {
+      process.stdout.write(question)
+      let input = ''
+      process.stdin.setRawMode?.(true)
+      process.stdin.resume()
+      process.stdin.setEncoding('utf-8')
+      const onData = (char: string) => {
+        if (char === '\n' || char === '\r' || char === '\u0004') {
+          process.stdin.setRawMode?.(false)
+          process.stdin.removeListener('data', onData)
+          process.stdout.write('\n')
+          resolve(input)
+        } else if (char === '\u0003') {
+          process.exit(1)
+        } else if (char === '\u007F' || char === '\b') {
+          input = input.slice(0, -1)
+        } else {
+          input += char
+        }
+      }
+      process.stdin.on('data', onData)
+    } else {
+      const rl = createInterface({ input: process.stdin, output: process.stdout })
+      rl.question(question, (answer: string) => {
+        rl.close()
+        resolve(answer)
+      })
+    }
+  })
+}
 
 program.parse()
