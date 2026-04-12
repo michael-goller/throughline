@@ -117,6 +117,95 @@ const prompt = fillTemplate('quarterly-update', {
 // prompt.user   — filled user prompt
 ```
 
+## Context Ingestion Pipeline
+
+Auto-generate slide content from external documents and data files.
+
+### Supported Formats
+
+| Format | Type | Parser | Dependency |
+|--------|------|--------|------------|
+| PDF | Document | `parsePDF()` | `npm install pdf-parse` |
+| DOCX | Document | `parseDOCX()` | `npm install mammoth` |
+| PPTX | Document | `parsePPTX()` | `npm install jszip` |
+| TXT/MD | Document | `parseText()` | Built-in |
+| CSV/TSV | Data | `parseCSV()` | Built-in |
+| Excel | Data | `parseExcel()` | `npm install xlsx` |
+
+### Quick Start
+
+```typescript
+import { ingestFile, analyzeDeckStyle, buildIngestContext, fillTemplate } from './agent'
+
+// 1. Ingest source files
+const report = await ingestFile(pdfBuffer, 'Q1-report.pdf')
+const metrics = await ingestFile(csvText, 'metrics.csv')
+
+// 2. Optionally analyze an existing deck for style consistency
+const style = analyzeDeckStyle(existingDeck)
+
+// 3. Build context for the agent
+const context = buildIngestContext(
+  [report.document!],
+  metrics.tables ?? [],
+  style,
+)
+
+// 4. Use with the from-document template
+const prompt = fillTemplate('from-document', {
+  'deck title': 'Q1 2026 Business Review',
+  'ingested context': context.prompt,
+  'additional instructions': 'Focus on revenue growth and team expansion',
+})
+```
+
+### Pipeline Overview
+
+```
+Document/Data File
+    ↓
+ingestDocument() / ingestDataFile()
+    ↓
+ExtractedContent / DataTable
+    ↓
+buildIngestContext()  ← optional: analyzeDeckStyle()
+    ↓
+IngestContext { documents, dataTables, styleProfile, recommendations, prompt }
+    ↓
+fillTemplate('from-document', { ... })
+    ↓
+Agent creates deck using tools
+```
+
+### What Gets Extracted
+
+**From Documents:**
+- Sections with headings, body text, and bullet points
+- Key-value pairs (e.g., "Revenue: $1.2M")
+- Numeric metrics with labels, values, units, and trend direction
+- Notable quotes
+
+**From Data Files:**
+- Column headers and data rows
+- Auto-detected column types (numeric, text, date, percentage, currency)
+
+**From Existing Decks (style analysis):**
+- Slide type distribution and preferences
+- Opening/closing patterns
+- Icon usage
+- Tone indicators (strategic, data-driven, collaborative, etc.)
+
+### Slide Recommendations
+
+`buildIngestContext()` automatically generates slide type recommendations based on content patterns:
+
+- Sections with 2+ metrics → `stats` slide
+- Sections with 4+ bullets → `steps` slide
+- Sections with bullets → `content` slide
+- Multiple key-value pairs → `two-column` slide
+- Notable quotes → `quote` slide
+- Data tables with numeric columns → `stats` or `feature-grid` slide
+
 ## JSON Schema
 
 The full JSON Schema is exported for validation or passing as structured output format:

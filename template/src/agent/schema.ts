@@ -185,6 +185,8 @@ const iconGridItem = {
     icon: iconRef,
     title: { type: 'string' as const },
     description: { type: 'string' as const },
+    owner: { type: 'string' as const },
+    deadline: { type: 'string' as const },
   },
   required: ['icon', 'title'] as const,
   additionalProperties: false,
@@ -216,6 +218,7 @@ const okrScoreItem = {
   type: 'object' as const,
   properties: {
     title: { type: 'string' as const },
+    description: { type: 'string' as const },
     owner: { type: 'string' as const },
     progress: {
       type: 'string' as const,
@@ -596,13 +599,15 @@ const slideSchemas = {
 
   'icon-grid': {
     type: 'object' as const,
-    description: 'Grid of icons with titles/descriptions — capabilities, values, features',
+    description: 'Grid of icons with titles/descriptions — capabilities, values, features. Supports optional owner, deadline per item, subtitle, and callout.',
     properties: {
       ...baseSlideProps,
       type: { type: 'string' as const, const: 'icon-grid' },
       title: { type: 'string' as const },
+      subtitle: { type: 'string' as const },
       items: { type: 'array' as const, items: iconGridItem },
-      columns: { type: 'number' as const, enum: [2, 3, 4] },
+      columns: { type: 'number' as const, enum: [1, 2, 3, 4] },
+      callout: { type: 'string' as const },
     },
     required: ['id', 'type', 'items'],
     additionalProperties: false,
@@ -705,6 +710,128 @@ const slideSchemas = {
       columns: { type: 'number' as const, enum: [2, 3] },
     },
     required: ['id', 'type', 'items'],
+    additionalProperties: false,
+  },
+
+  scorecard: {
+    type: 'object' as const,
+    description: 'Executive scorecard with RAG status strip, metrics table, confidence score, and decisions flag',
+    properties: {
+      ...baseSlideProps,
+      type: { type: 'string' as const, const: 'scorecard' },
+      title: { type: 'string' as const },
+      headline: { type: 'string' as const, description: 'One-line summary of the period' },
+      ragItems: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            label: { type: 'string' as const },
+            status: { type: 'string' as const, enum: ['green', 'amber', 'red', 'not-started'] },
+          },
+          required: ['label', 'status'] as const,
+          additionalProperties: false,
+        },
+        description: 'RAG status indicators (e.g. Overall, Schedule, Budget, Scope, Risk)',
+      },
+      metrics: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            label: { type: 'string' as const },
+            actual: { type: 'string' as const },
+            target: { type: 'string' as const },
+            trend: { type: 'string' as const, enum: ['up', 'flat', 'down'] },
+          },
+          required: ['label', 'actual'] as const,
+          additionalProperties: false,
+        },
+        description: 'Key metrics with actual vs target and trend arrows',
+      },
+      confidence: {
+        type: 'object' as const,
+        properties: {
+          score: { type: 'number' as const },
+          max: { type: 'number' as const, description: 'Default 10' },
+        },
+        required: ['score'] as const,
+        additionalProperties: false,
+      },
+      decisionsNeeded: { type: 'boolean' as const },
+      decisionsNote: { type: 'string' as const },
+    },
+    required: ['id', 'type', 'headline', 'ragItems', 'metrics'],
+    additionalProperties: false,
+  },
+
+  'status-table': {
+    type: 'object' as const,
+    description: 'Table with per-row RAG status dots — workstream matrices, commitment trackers',
+    properties: {
+      ...baseSlideProps,
+      type: { type: 'string' as const, const: 'status-table' },
+      title: { type: 'string' as const },
+      subtitle: { type: 'string' as const },
+      columns: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            header: { type: 'string' as const },
+            width: { type: 'string' as const, description: 'CSS grid width (e.g. "2fr", "120px")' },
+          },
+          required: ['header'] as const,
+          additionalProperties: false,
+        },
+      },
+      rows: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            cells: { type: 'array' as const, items: { type: 'string' as const } },
+            status: { type: 'string' as const, enum: ['green', 'amber', 'red', 'not-started', 'done'] },
+          },
+          required: ['cells'] as const,
+          additionalProperties: false,
+        },
+      },
+      showStatusDot: { type: 'boolean' as const, description: 'Show RAG dot per row (default true)' },
+      summary: { type: 'string' as const, description: 'Summary line below table' },
+    },
+    required: ['id', 'type', 'columns', 'rows'],
+    additionalProperties: false,
+  },
+
+  'risk-card': {
+    type: 'object' as const,
+    description: 'Structured risk/issue cards with current state, root cause, impact, action, and path to green',
+    properties: {
+      ...baseSlideProps,
+      type: { type: 'string' as const, const: 'risk-card' },
+      title: { type: 'string' as const },
+      risks: {
+        type: 'array' as const,
+        items: {
+          type: 'object' as const,
+          properties: {
+            title: { type: 'string' as const },
+            status: { type: 'string' as const, enum: ['amber', 'red'] },
+            currentState: { type: 'string' as const },
+            rootCause: { type: 'string' as const },
+            businessImpact: { type: 'string' as const },
+            action: { type: 'string' as const },
+            pathToGreen: { type: 'string' as const },
+          },
+          required: ['title', 'status', 'currentState', 'rootCause', 'businessImpact', 'action'] as const,
+          additionalProperties: false,
+        },
+        maxItems: 3,
+        description: 'Max 2-3 risk cards per slide',
+      },
+    },
+    required: ['id', 'type', 'risks'],
     additionalProperties: false,
   },
 }

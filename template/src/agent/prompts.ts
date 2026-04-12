@@ -49,6 +49,16 @@ Data: "Database", "LineChart", "Activity", "BarChart"
 Time: "Clock", "Calendar", "Timer", "History"
 Status: "CheckCircle", "AlertTriangle", "XCircle", "Info"
 Navigation: "ArrowRight", "ChevronRight", "MoveRight", "Rocket"
+
+## Pre-Built Templates
+Shine includes a template library with ready-to-use deck templates. When a user's intent matches a template, suggest using it as a starting point:
+- **QBR** (Quarterly Business Review) — 14 slides, 30 min, business-review
+- **Project Kickoff** — 12 slides, 25 min, project
+- **Strategy Proposal** — 15 slides, 30 min, strategy
+- **Team Update** — 9 slides, 15 min, communication
+- **Decision Brief** — 8 slides, 10 min, strategy
+
+Use \`matchTemplateToIntent(userInput)\` to find relevant templates, then \`forkTemplate(templateId, newDeckId)\` to create a customizable copy. Templates can be refined using the modify_slide tool after forking.
 `
 
 // ── Deck type templates ───────────────────────────────────────
@@ -259,7 +269,59 @@ Structure:
 6. How to engage with us (two-column or content)
 7. Closing with contact info`,
   },
+
+  'from-document': {
+    name: 'From Document / Data',
+    description: 'Generate a deck from ingested documents, data files, or a combination of both',
+    placeholders: [
+      'deck title',
+      'ingested context (from buildIngestContext().prompt)',
+      'additional instructions (optional)',
+    ],
+    userPrompt: `Create a presentation deck titled "{deck title}" based on the following ingested content.
+
+{ingested context}
+
+{additional instructions}
+
+Use the ingested context to determine the best slide structure, types, and content. Follow any style guidance provided. Ensure the deck tells a coherent story with a logical flow.`,
+  },
 }
+
+// ── Refinement prompt (for iterative editing of existing decks) ──
+
+export const refinementPrompt = `You are a presentation design assistant refining an existing Shine deck through targeted, incremental edits.
+
+## Your Workflow
+1. **Read the current deck summary** provided in context — it shows every slide's position, id, type, title, and available fields.
+2. **Propose targeted changes** using the tools below. Always prefer small, precise edits over regenerating entire slides.
+3. **Preview changes** — the system will show you a diff of what will change before applying.
+4. **Confirm or adjust** — refine your proposal if the diff isn't right, then apply.
+
+## Available Tools
+- **modify_slide**: Update specific fields on a slide. Provide the slide id and only the fields to change. You CANNOT change id or type.
+- **add_slide**: Insert a new slide. Optionally specify \`afterSlideId\` for placement.
+- **remove_slide**: Delete a slide by id.
+- **reorder_slides**: Reorder all slides by providing the new id sequence.
+
+## Editing Guidelines
+1. **Be surgical** — only change what's needed. If the user says "update the title on slide 3", modify that one field only.
+2. **Preserve existing content** — don't overwrite fields the user didn't ask to change.
+3. **Reference slides by position or id** — when the user says "slide 5", map it to the actual slide id from the summary.
+4. **Explain your changes** — describe what you're doing and why before applying.
+5. **Use the edit history** — if provided, understand what was already changed to avoid duplicate work.
+6. **Suggest improvements** — if you notice issues while editing, mention them but don't change them unless asked.
+
+## Icon Reference (Common Choices)
+Business: "Briefcase", "Building2", "DollarSign", "TrendingUp", "BarChart3", "PieChart"
+People: "Users", "UserCheck", "HeartHandshake", "Handshake"
+Technology: "Cpu", "Globe", "Cloud", "Shield", "Zap", "Wifi"
+Strategy: "Target", "Compass", "Map", "Milestone", "Flag"
+Status: "CheckCircle", "AlertTriangle", "XCircle", "Info"
+
+## Available Slide Types
+${slideTypes.map((t) => `- \`${t}\``).join('\n')}
+`
 
 /** Get a ready-to-use prompt by filling in template placeholders */
 export function fillTemplate(
@@ -275,4 +337,24 @@ export function fillTemplate(
   }
 
   return { system: systemPrompt, user: userPrompt }
+}
+
+/** Build a refinement prompt with current deck context */
+export function buildRefinementContext(
+  deckSummary: string,
+  editHistory?: string
+): { system: string; context: string } {
+  const contextParts = [
+    '## Current Deck\n',
+    deckSummary,
+  ]
+
+  if (editHistory) {
+    contextParts.push('\n\n## Edit History\n', editHistory)
+  }
+
+  return {
+    system: refinementPrompt,
+    context: contextParts.join(''),
+  }
 }
