@@ -59,7 +59,7 @@ const THEME = getTheme();
 const QUALITY = getQuality();
 const QUALITY_SETTINGS = QUALITY_PRESETS[QUALITY];
 const BASE_URL = `http://localhost:${PORT}?theme=${THEME}`;
-const OUTPUT_DIR = path.join(__dirname, '..', 'export');
+const OUTPUT_DIR = process.env.EXPORT_OUTPUT || path.join(__dirname, '..', 'export');
 const VIEWPORT = { width: 1920, height: 1080, deviceScaleFactor: QUALITY_SETTINGS.scale };
 
 // Parse --slides argument

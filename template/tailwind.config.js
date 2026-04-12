@@ -27,9 +27,12 @@ export default {
         'nav-bg': 'var(--nav-bg)',
         'nav-bg-hover': 'var(--nav-bg-hover)',
         'nav-text': 'var(--nav-text)',
+        'accent-indigo': 'var(--accent-indigo)',
+        'accent-indigo-hover': 'var(--accent-indigo-hover)',
       },
       fontFamily: {
         sans: ['"Nunito Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Outfit"', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'hero': ['72px', { lineHeight: '1.1' }],

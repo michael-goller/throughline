@@ -10,10 +10,12 @@ import {
   addDeck,
   allocatePort,
   getDeck,
+  getGalleryState,
   isPortInUse,
   listDecks,
   pidExists,
   updateDeckStatus,
+  updateGalleryState,
 } from './registry.js'
 
 // Marker file that identifies a thin deck folder
@@ -297,7 +299,18 @@ export function isRunning(name: string): boolean {
 }
 
 /**
- * Open a deck in the default browser.
+ * Open a URL in the default browser.
+ */
+export function openUrl(url: string): boolean {
+  const { platform } = process
+  const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open'
+
+  spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref()
+  return true
+}
+
+/**
+ * Open a deck in the default browser (navigates to /decks/:name).
  */
 export function openInBrowser(name: string): boolean {
   const deck = getDeck(name)
@@ -310,13 +323,75 @@ export function openInBrowser(name: string): boolean {
     return false
   }
 
-  const url = `http://localhost:${deck.port}`
+  const url = `http://localhost:${deck.port}/decks/${encodeURIComponent(name)}`
+  return openUrl(url)
+}
 
-  // Open URL based on platform
-  const { platform } = process
-  const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open'
+/**
+ * Start the gallery server (no specific deck — shows all decks overview).
+ */
+export async function startGallery(port?: number): Promise<{ pid: number; port: number }> {
+  const state = getGalleryState()
 
-  spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref()
+  if (state.pid && pidExists(state.pid)) {
+    throw new Error(
+      `Gallery is already running on http://localhost:${state.port} (PID: ${state.pid})`
+    )
+  }
 
+  const templatePath = getTemplatePath()
+
+  if (!existsSync(templatePath)) {
+    throw new Error(`Template not found at ${templatePath}`)
+  }
+
+  if (!port) {
+    port = await allocatePort()
+  } else if (await isPortInUse(port)) {
+    throw new Error(`Port ${port} is already in use`)
+  }
+
+  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port), '--strictPort'], {
+    cwd: templatePath,
+    // No DECK_PATH — the plugin falls back to ~/decks/ and shows all decks
+    detached: true,
+    stdio: 'ignore',
+  })
+
+  proc.unref()
+
+  updateGalleryState({ pid: proc.pid!, port })
+
+  return { pid: proc.pid!, port }
+}
+
+/**
+ * Check if the gallery server is running.
+ */
+export function isGalleryRunning(): boolean {
+  const state = getGalleryState()
+  return !!(state.pid && pidExists(state.pid))
+}
+
+/**
+ * Stop the gallery server.
+ */
+export function stopGallery(): boolean {
+  const state = getGalleryState()
+
+  if (!state.pid) return false
+
+  if (!pidExists(state.pid)) {
+    updateGalleryState({ pid: null, port: null })
+    return false
+  }
+
+  try {
+    process.kill(-state.pid, 'SIGTERM')
+  } catch {
+    // Process might have already exited
+  }
+
+  updateGalleryState({ pid: null, port: null })
   return true
 }

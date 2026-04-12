@@ -12,10 +12,17 @@ export interface DeckEntry {
   pid: number | null
   created_at: string | null
   started_at: string | null
+  publishedUrl: string | null
+}
+
+export interface GalleryState {
+  pid: number | null
+  port: number | null
 }
 
 interface Registry {
   decks: Record<string, DeckEntry>
+  gallery?: GalleryState
 }
 
 /**
@@ -60,6 +67,7 @@ export function addDeck(name: string, path: string): void {
     pid: null,
     created_at: new Date().toISOString(),
     started_at: null,
+    publishedUrl: null,
   }
 
   saveRegistry(registry)
@@ -114,6 +122,17 @@ export function updateDeckStatus(
     deck.port = updates.port
   }
 
+  saveRegistry(registry)
+}
+
+/**
+ * Update a deck's published URL.
+ */
+export function updateDeckPublished(name: string, url: string | null): void {
+  const registry = loadRegistry()
+  const deck = registry.decks[name]
+  if (!deck) return
+  deck.publishedUrl = url
   saveRegistry(registry)
 }
 
@@ -207,4 +226,25 @@ export function pidExists(pid: number): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Get gallery server state.
+ */
+export function getGalleryState(): GalleryState {
+  const registry = loadRegistry()
+  return registry.gallery ?? { pid: null, port: null }
+}
+
+/**
+ * Update gallery server state.
+ */
+export function updateGalleryState(updates: { pid?: number | null; port?: number | null }): void {
+  const registry = loadRegistry()
+  if (!registry.gallery) {
+    registry.gallery = { pid: null, port: null }
+  }
+  if (updates.pid !== undefined) registry.gallery.pid = updates.pid
+  if (updates.port !== undefined) registry.gallery.port = updates.port
+  saveRegistry(registry)
 }
