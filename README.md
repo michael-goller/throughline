@@ -1,51 +1,282 @@
 # Shine
 
-A keyboard-first presentation system with live audience feedback.
+**Beautiful slide decks made simple.**
+Or: presentations for people who'd rather not make presentations.
 
-## Structure
+---
 
-```
-shine/
-├── template/     # React/Vite slide deck template
-├── cli/          # shine-deck CLI for managing decks
-└── README.md
-```
+The world runs on spreadsheets and slide decks — but nobody actually *enjoys* making them. Shine lets you describe what you want, and an AI agent builds beautiful presentations with modern web technology. No proprietary format. No lock-in. No dragging boxes around a canvas at 2am wondering where your life went wrong.
+
+Your deck is a `slides.config.ts` file — a plain TypeScript array of slide objects. AI agents read and write it directly. You talk, they build. You present, everyone's impressed. You take the credit.
 
 ## Quick Start
 
 ```bash
-# Install CLI dependencies
-cd cli && npm install
+# Install
+curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash
 
-# Create a new deck
-./cli/bin/shine.js new my-deck
+# Create a deck
+shine new quarterly-update
 
-# Start the deck
-./cli/bin/shine.js serve my-deck
+# Tell your AI agent what you want
+# (Claude Code, Gemini CLI, Codex — dealer's choice)
 
-# Open in browser
-./cli/bin/shine.js open my-deck
+# Present
+shine serve quarterly-update
 ```
 
-## Template
+That's it. Three commands and a conversation.
 
-The `template/` folder contains the React/Vite presentation app. See `template/README.md` for slide types and configuration.
+## Install
+
+**One-liner** (macOS, Linux, WSL) — installs everything, including Node.js if you don't have it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash
+```
+
+**Homebrew:**
+
+```bash
+brew install michael-goller/tap/shine
+```
+
+**npm:**
+
+```bash
+npm install -g shine-deck
+```
+
+## How It Works
+
+Shine is just a web app built for decks.
+
+1. **You create a deck** — `shine new my-deck` scaffolds a `slides.config.ts` and a `public/` folder. That's your entire deck. Two items.
+2. **An AI agent writes the config** — the config is a typed array of slide objects. Each slide has a `type`, a `title`, and type-specific content. AI agents are *really good* at writing these.
+3. **Shine renders it** — React 19, Framer Motion, and Tailwind CSS turn your config into a polished, animated presentation with dark and light themes.
+
+```typescript
+// slides.config.ts — this is a deck
+import type { SlideConfig } from './src/deck';
+
+const slides: SlideConfig[] = [
+  {
+    type: 'title',
+    title: 'Q1 Results',
+    subtitle: 'We did numbers and some of them went up',
+  },
+  {
+    type: 'stats',
+    title: 'Key Metrics',
+    stats: [
+      { label: 'Revenue', value: '$4.2M', trend: 'up', change: '+18%' },
+      { label: 'Users', value: '12,400', trend: 'up', change: '+34%' },
+      { label: 'Bugs', value: '3', trend: 'down', change: '-97%' },
+    ],
+  },
+  {
+    type: 'timeline',
+    title: 'Roadmap',
+    events: [
+      { date: 'Jan', title: 'Launch', description: 'Ship it' },
+      { date: 'Mar', title: 'Scale', description: 'Ship it faster' },
+    ],
+  },
+];
+
+export default slides;
+```
+
+## 33 Built-in Slide Types
+
+No need to design anything from scratch.
+
+| Category | Types |
+|---|---|
+| **Presentation Flow** | `title`, `title-digital`, `divider`, `qa`, `closing` |
+| **Content** | `content`, `two-column`, `three-column`, `quote`, `image-content`, `image` |
+| **Data & Metrics** | `stats`, `gantt`, `timeline`, `sparkline-grid`, `barometer-grid` |
+| **Analysis** | `comparison`, `matrix`, `fishbone`, `force-field`, `feature-grid` |
+| **Organization** | `org-chart`, `team-objectives`, `okr-score`, `operating-loop`, `icon-grid`, `steps` |
+| **Special** | `pricing`, `name-reveal`, `risk-card`, `scorecard`, `status-table` |
+
+Every slide type supports dark and light themes, smooth Framer Motion animations, and responsive layouts.
 
 ## CLI Commands
 
-- `shine new <name>` - Create a new deck
-- `shine serve <name>` - Start dev server
-- `shine stop <name>` - Stop dev server
-- `shine ls` - List all decks
-- `shine open <name>` - Open in browser
-- `shine export <name>` - Export to PDF
+| Command | What it does |
+|---|---|
+| `shine new <name>` | Create a new deck (`--full` for a complete template copy) |
+| `shine serve [name]` | Start the dev server with live reload |
+| `shine open [name]` | Open a deck in the browser (or the gallery if no name) |
+| `shine ls` | List all your decks |
+| `shine export [name]` | Export to PNG or PDF (`--png`, `--light`, `--slides 1-5`) |
+| `shine publish [name]` | Push to Shine Cloud for sharing |
+| `shine unpublish [name]` | Remove from Shine Cloud |
+| `shine status [name]` | Detailed deck info: path, port, type, URLs |
+| `shine stop [name]` | Stop a running server (`--all` for everything) |
+| `shine add <name> [path]` | Register an existing deck directory |
+| `shine rm [name]` | Unregister a deck (files stay on disk) |
+| `shine rename <old> <new>` | Rename a deck |
+| `shine update` | Self-update to the latest version |
+| `shine doctor` | Health check — Node.js, npm, git, template, config |
+
+### Cloud Commands
+
+| Command | What it does |
+|---|---|
+| `shine cloud [url]` | Show or set the Shine Cloud API URL |
+| `shine login` | Log in to Shine Cloud |
+| `shine logout` | Clear stored credentials |
+| `shine whoami` | Show current user |
 
 ## Keyboard Shortcuts
 
-- `j/k` or `→/←` - Next/previous slide
-- `gg` / `G` - First/last slide
-- `/` - Search slides
-- `s` - Star/unstar slide
-- `h` - Hide/show slide
-- `i` - Feedback mode
-- `?` - Help
+Vim-style navigation because we have standards.
+
+| Key | Action |
+|---|---|
+| `j` / `k` or `Arrow Right` / `Arrow Left` | Next / previous slide |
+| `gg` | Jump to first slide |
+| `G` | Jump to last slide |
+| `/` | Search slides |
+| `s` | Star / unstar slide |
+| `h` | Hide / show slide |
+| `i` | Toggle feedback mode |
+| `p` | Presenter view |
+| `?` | Show all shortcuts |
+
+## Features
+
+- **Vim-style navigation** — `j/k`, `gg/G`, search with `/`
+- **Presenter mode** — speaker notes, slide preview, timer
+- **Laser pointer** — because pointing at things makes you look authoritative
+- **PDF & PNG export** — via Puppeteer, with slide range and quality options
+- **Live reload** — edit your config, see changes instantly
+- **Dark + Light themes** — toggle with a click
+- **Slide overview** — thumbnail grid of all slides
+- **Visual editor** — for when you want to click instead of type
+- **Slide search** — fuzzy search across all slide content
+- **Deck gallery** — dashboard showing all your decks in one place
+- **Live feedback** — real-time reactions, comments, and questions from your audience (via InstantDB)
+- **Analytics** — view tracking and engagement metrics
+
+## Thin vs. Full Decks
+
+Shine has two deck modes:
+
+- **Thin** (default) — just a `slides.config.ts` and `public/` folder. The shared template renders everything. Fast to create, tiny footprint, great for most decks.
+- **Full** (`shine new --full`) — a complete copy of the template with its own `src/`, `package.json`, and everything. Use this when you need custom components or deep modifications.
+
+Thin decks are the sweet spot. One config file, all 33 slide types, zero maintenance.
+
+## AI Agent Integration
+
+Shine includes a full agent API designed for AI-powered deck creation. This is the machinery that lets Claude Code, Gemini CLI, or any LLM-powered tool generate and refine decks programmatically.
+
+### Agent Tools
+
+Five structured tools that AI agents can call:
+
+| Tool | Description |
+|---|---|
+| `create_deck` | Generate a complete deck from a description |
+| `add_slide` | Insert a new slide at any position |
+| `modify_slide` | Update an existing slide's content |
+| `remove_slide` | Delete a slide by index |
+| `reorder_slides` | Rearrange slide order |
+
+### Document Ingestion
+
+Feed existing content and Shine extracts structure for deck generation:
+
+- **PDF** — text extraction with layout analysis
+- **Word (.docx)** — paragraph and heading parsing
+- **PowerPoint (.pptx)** — slide-by-slide content extraction
+- **Excel (.xlsx)** — data table parsing
+- **CSV / plain text** — direct parsing
+
+### Pre-built Templates
+
+Five ready-to-fork deck templates with full slide configurations:
+
+| Template | Slides | Use case |
+|---|---|---|
+| Quarterly Business Review | 14 | Performance metrics, financials, roadmap |
+| Project Kickoff | 12 | Scope, timeline, team, risks |
+| Strategy Proposal | 15 | Analysis, recommendations, implementation |
+| Team Update | 9 | Status, blockers, wins, next steps |
+| Decision Brief | 8 | Context, options, recommendation |
+
+### Refinement Protocol
+
+Iterative editing with undo support — create an edit session, apply changes, preview diffs, and roll back if needed.
+
+## Project Structure
+
+```
+shine/
+├── cli/              # Shine CLI (shine-deck npm package)
+│   ├── src/cli.ts    # All commands
+│   └── bin/shine.js  # Entry point
+├── template/         # React/Vite presentation engine
+│   ├── src/
+│   │   ├── templates/  # 33 slide type components
+│   │   ├── components/ # UI: presenter view, gallery, feedback, etc.
+│   │   ├── agent/      # AI agent API: tools, prompts, ingest, templates
+│   │   ├── hooks/      # React hooks (analytics, laser pointer, auth)
+│   │   └── lib/        # Deck loader, analytics, InstantDB
+│   ├── api/            # Serverless API (auth, deck storage)
+│   └── vite.config.ts  # Custom plugin for thin deck resolution
+├── site/             # Landing page
+├── Formula/          # Homebrew formula
+└── install.sh        # One-liner installer
+```
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| **Rendering** | React 19, Framer Motion, Tailwind CSS 3 |
+| **Bundler** | Vite 7 |
+| **CLI** | TypeScript, Commander, Chalk, Execa |
+| **Export** | Puppeteer (PDF + PNG) |
+| **Live Feedback** | InstantDB (real-time reactions, comments) |
+| **Cloud Storage** | Vercel Blob, Neon Postgres, Drizzle ORM |
+| **Auth** | JWT (Jose), bcrypt |
+| **Search** | Fuse.js (fuzzy search) |
+| **Icons** | Lucide React |
+
+## Configuration
+
+Shine stores its config in `~/.shine/`:
+
+```
+~/.shine/
+├── config.json    # Template path, decks directory, port range
+└── registry.json  # All registered decks with paths, ports, URLs
+```
+
+Default config:
+
+```json
+{
+  "template_path": "~/.shine/install/template",
+  "decks_path": "~/decks",
+  "port_range": [5173, 5199]
+}
+```
+
+## Requirements
+
+- **Node.js** >= 20 (the installer handles this)
+- **npm** (comes with Node.js)
+- **git** (for install.sh and self-update)
+
+## Disclaimer
+
+This is a hobby project, close to 100% vibe coded. It scratches a personal itch — maybe other people find it useful too.
+
+## License
+
+MIT
