@@ -1,11 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { put, get } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 
 const BLOB_KEY = 'shine-cloud-signups.json';
 
 interface Signup {
   email: string;
   timestamp: string;
+}
+
+async function readSignups(): Promise<Signup[]> {
+  const { blobs } = await list({ prefix: BLOB_KEY });
+  if (blobs.length === 0) return [];
+
+  const res = await fetch(blobs[0].url);
+  if (!res.ok) return [];
+  return await res.json();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -35,16 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    let signups: Signup[] = [];
-    try {
-      const existing = await get(BLOB_KEY);
-      if (existing) {
-        const text = await existing.text();
-        signups = JSON.parse(text);
-      }
-    } catch {
-      signups = [];
-    }
+    const signups = await readSignups();
 
     if (signups.some((s) => s.email === normalizedEmail)) {
       return res.status(200).json({ message: "You're already on the list!" });
@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     signups.push({ email: normalizedEmail, timestamp: new Date().toISOString() });
 
     await put(BLOB_KEY, JSON.stringify(signups, null, 2), {
-      access: 'private',
+      access: 'public',
       addRandomSuffix: false,
     });
 
