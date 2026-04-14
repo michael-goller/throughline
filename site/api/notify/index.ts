@@ -55,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await put(BLOB_KEY, JSON.stringify(signups, null, 2), {
       access: 'public',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
 
     return res.status(200).json({ message: "You're on the list! We'll notify you when Shine Cloud launches." });
