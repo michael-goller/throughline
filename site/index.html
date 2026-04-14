@@ -694,10 +694,11 @@
       <p style="color: var(--text-secondary); font-size: 14px; max-width: 480px; margin: 0 auto;">
         One command to publish. Shareable links. Live reactions.
       </p>
-      <form class="email-form" action="mailto:michael.goller@gmail.com?subject=Shine%20Cloud%20Early%20Access" method="GET">
-        <input type="email" name="body" placeholder="you@company.com" required />
-        <button type="submit">Notify me</button>
+      <form class="email-form" id="notify-form">
+        <input type="email" id="notify-email" placeholder="you@company.com" required autocomplete="email" />
+        <button type="submit" id="notify-btn">Notify me</button>
       </form>
+      <p id="notify-msg" style="color: var(--indigo-light); font-size: 13px; margin-top: 12px; display: none;"></p>
     </div>
   </section>
 
@@ -714,5 +715,34 @@
     </div>
   </footer>
 
+  <script>
+    document.getElementById('notify-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('notify-btn');
+      var msg = document.getElementById('notify-msg');
+      var email = document.getElementById('notify-email').value;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      msg.style.display = 'none';
+      try {
+        var res = await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+        msg.textContent = data.message || data.error;
+        msg.style.color = res.ok ? 'var(--indigo-light)' : '#f87171';
+        msg.style.display = 'block';
+        if (res.ok) document.getElementById('notify-email').value = '';
+      } catch {
+        msg.textContent = 'Something went wrong. Please try again.';
+        msg.style.color = '#f87171';
+        msg.style.display = 'block';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Notify me';
+    });
+  </script>
 </body>
 </html>

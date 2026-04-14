@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "@vercel/blob": "^2.3.3",
+    "@vercel/node": "^5.0.0"
+  }
+}
