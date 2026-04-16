@@ -256,9 +256,8 @@ export function stopDeck(name: string): boolean {
     return false
   }
 
-  // Kill the process group
   try {
-    process.kill(-deck.pid, 'SIGTERM')
+    process.kill(process.platform === 'win32' ? deck.pid : -deck.pid, 'SIGTERM')
   } catch {
     // Process might have already exited
   }
@@ -387,7 +386,7 @@ export function stopGallery(): boolean {
   }
 
   try {
-    process.kill(-state.pid, 'SIGTERM')
+    process.kill(process.platform === 'win32' ? state.pid : -state.pid, 'SIGTERM')
   } catch {
     // Process might have already exited
   }
