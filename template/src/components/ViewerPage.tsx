@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Lock, AlertCircle, ChevronRight } from 'lucide-react'
 import SlideRenderer from '../templates'
 import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
+import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
 import { useSwipe } from '../hooks/useSwipe'
 import { isInstantDBConfigured } from '../lib/instantdb'
@@ -243,6 +244,11 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   feedbackMode: boolean
   setFeedbackMode: (v: boolean) => void
 }) {
+  const [showHelp, setShowHelp] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchInitialQuery, setSearchInitialQuery] = useState('')
+  const lastKeyRef = useRef({ key: '', time: 0 })
+
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
       setDirection(1)
@@ -257,22 +263,64 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
     }
   }, [currentSlide])
 
-  // Keyboard navigation
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext() }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev() }
-      else if (e.key === 'o' || e.key === 'O') { e.preventDefault(); setShowOverview(!showOverview) }
-      else if (e.key === 'Escape') { setShowOverview(false); setFeedbackMode(false) }
-      else if (e.key === 'i' || e.key === 'I') { e.preventDefault(); setFeedbackMode(!feedbackMode) }
-      else if (e.key === 'Home') { setDirection(-1); setCurrentSlide(0) }
-      else if (e.key === 'End') { setDirection(1); setCurrentSlide(slides.length - 1) }
+      if (showSearch) return
+      if (showOverview) {
+        if (e.key === 'Escape') setShowOverview(false)
+        return
+      }
+
+      if (showHelp) {
+        setShowHelp(false)
+        return
+      }
+
+      if (feedbackMode) {
+        if (e.key === 'Escape') setFeedbackMode(false)
+        return
+      }
+
+      if (e.key === 'Escape') {
+        setShowOverview(false)
+        setFeedbackMode(false)
+        return
+      }
+
+      // Vim navigation
+      if (e.key === 'j' || e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault(); goNext()
+      } else if (e.key === 'k' || e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        e.preventDefault(); goPrev()
+      } else if (e.key === 'g') {
+        const now = Date.now()
+        if (lastKeyRef.current.key === 'g' && now - lastKeyRef.current.time < 500) {
+          e.preventDefault(); setDirection(-1); setCurrentSlide(0)
+        }
+      } else if (e.key === 'G') {
+        e.preventDefault(); setDirection(1); setCurrentSlide(slides.length - 1)
+      } else if (e.key === 'o' || e.key === 'O') {
+        e.preventDefault(); setShowOverview(true)
+      } else if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault(); setFeedbackMode(true)
+      } else if (e.key === '/') {
+        e.preventDefault(); setSearchInitialQuery(''); setShowSearch(true)
+      } else if (e.key === ':') {
+        e.preventDefault(); setSearchInitialQuery(':'); setShowSearch(true)
+      } else if (e.key === '?') {
+        e.preventDefault(); setShowHelp(true)
+      } else if (e.key === 'Home') {
+        setDirection(-1); setCurrentSlide(0)
+      } else if (e.key === 'End') {
+        setDirection(1); setCurrentSlide(slides.length - 1)
+      }
+
+      lastKeyRef.current = { key: e.key, time: Date.now() }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [goNext, goPrev, showOverview, slides.length])
+  }, [goNext, goPrev, showOverview, showSearch, showHelp, feedbackMode, slides.length])
 
-  // Swipe
   useSwipe({ onSwipeLeft: goNext, onSwipeRight: goPrev })
 
   const slide = slides[currentSlide]
@@ -318,6 +366,80 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           feedbackMode={feedbackMode}
         />
       )}
+
+      {/* Search Modal */}
+      <AnimatePresence>
+        {showSearch && (
+          <SlideSearch
+            slides={slides}
+            initialQuery={searchInitialQuery}
+            starredSlideIds={[]}
+            hiddenSlideIds={[]}
+            onSelect={(i: number) => {
+              setDirection(i > currentSlide ? 1 : -1)
+              setCurrentSlide(i)
+              setShowSearch(false)
+            }}
+            onClose={() => setShowSearch(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Help Overlay */}
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-30 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+            onClick={() => setShowHelp(false)}
+          >
+            <div className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border">
+              <h2 className="font-display text-text text-xl font-semibold mb-6">Keyboard Shortcuts</h2>
+              <div className="space-y-3 text-text-muted">
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">j / k</span>
+                  <span>Next / Previous slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">&rarr; / &larr;</span>
+                  <span>Next / Previous slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">gg</span>
+                  <span>First slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">G</span>
+                  <span>Last slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">/</span>
+                  <span>Search / Table of contents</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">:N</span>
+                  <span>Jump to slide N</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">i</span>
+                  <span>Feedback mode (add reactions)</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">o</span>
+                  <span>Slide overview</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-brand-red">?</span>
+                  <span>Show this help</span>
+                </div>
+              </div>
+              <p className="text-text-muted/60 text-sm mt-6">Press any key to close</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Minimal progress bar */}
       <div className="fixed bottom-0 left-0 right-0 h-0.5 bg-white/5">
