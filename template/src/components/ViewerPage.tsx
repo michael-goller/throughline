@@ -4,7 +4,9 @@ import { Loader2, Lock, AlertCircle, ChevronRight } from 'lucide-react'
 import SlideRenderer from '../templates'
 import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
+import FeedbackOverlay from './FeedbackOverlay'
 import { useSwipe } from '../hooks/useSwipe'
+import { isInstantDBConfigured } from '../lib/instantdb'
 
 interface ViewerPageProps {
   slug: string
@@ -23,6 +25,7 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showOverview, setShowOverview] = useState(false)
   const [direction, setDirection] = useState(0)
+  const [feedbackMode, setFeedbackMode] = useState(false)
 
   // Check if we already have a valid session, then try to load the deck
   useEffect(() => {
@@ -142,7 +145,7 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
   }
 
   // Verified — show the presentation
-  return <ViewerPresentation slides={slides} currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} showOverview={showOverview} setShowOverview={setShowOverview} direction={direction} setDirection={setDirection} />
+  return <ViewerPresentation slides={slides} currentSlide={currentSlide} setCurrentSlide={setCurrentSlide} showOverview={showOverview} setShowOverview={setShowOverview} direction={direction} setDirection={setDirection} deckId={slug} feedbackMode={feedbackMode} setFeedbackMode={setFeedbackMode} />
 }
 
 function PasswordPrompt({ title, error, password, setPassword, submitting, onSubmit }: {
@@ -228,7 +231,7 @@ const transition = {
   scale: { type: 'spring' as const, stiffness: 500, damping: 38, mass: 0.8 },
 }
 
-function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOverview, setShowOverview, direction, setDirection }: {
+function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOverview, setShowOverview, direction, setDirection, deckId, feedbackMode, setFeedbackMode }: {
   slides: SlideConfig[]
   currentSlide: number
   setCurrentSlide: (n: number) => void
@@ -236,6 +239,9 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   setShowOverview: (v: boolean) => void
   direction: number
   setDirection: (n: number) => void
+  deckId: string
+  feedbackMode: boolean
+  setFeedbackMode: (v: boolean) => void
 }) {
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
@@ -257,7 +263,8 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext() }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev() }
       else if (e.key === 'o' || e.key === 'O') { e.preventDefault(); setShowOverview(!showOverview) }
-      else if (e.key === 'Escape') { setShowOverview(false) }
+      else if (e.key === 'Escape') { setShowOverview(false); setFeedbackMode(false) }
+      else if (e.key === 'i' || e.key === 'I') { e.preventDefault(); setFeedbackMode(!feedbackMode) }
       else if (e.key === 'Home') { setDirection(-1); setCurrentSlide(0) }
       else if (e.key === 'End') { setDirection(1); setCurrentSlide(slides.length - 1) }
     }
@@ -303,6 +310,14 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           <SlideRenderer slide={slide} />
         </motion.div>
       </AnimatePresence>
+
+      {isInstantDBConfigured && (
+        <FeedbackOverlay
+          deckId={deckId}
+          slideId={slide.id}
+          feedbackMode={feedbackMode}
+        />
+      )}
 
       {/* Minimal progress bar */}
       <div className="fixed bottom-0 left-0 right-0 h-0.5 bg-white/5">
