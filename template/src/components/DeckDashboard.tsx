@@ -25,12 +25,14 @@ import {
   RefreshCw,
   FolderOpen,
   LogOut,
+  Share2,
 } from 'lucide-react'
 import { fetchDeckManifest, type DeckManifestEntry } from '../lib/deckLoader'
 import { getAllDeckStats } from '../lib/analytics'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth } from '../hooks/useAuth'
 import DeckAnalytics from './DeckAnalytics'
+import ShareDialog from './ShareDialog'
 import TemplateGallery from './TemplateGallery'
 
 type SortMode = 'recent' | 'alpha' | 'slides' | 'views'
@@ -41,7 +43,9 @@ interface DeckCardProps {
   viewCount?: number
   lastViewedAt?: string | null
   focused?: boolean
+  shareCount?: number
   onShowAnalytics: (deckId: string, title: string) => void
+  onShare: (slug: string, title: string) => void
 }
 
 /** Shorten a path for display — show ~/ for home dir, last 2 segments otherwise */
@@ -64,7 +68,7 @@ function formatDate(dateStr?: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
 }
 
-function DeckCard({ deck, index, viewCount, lastViewedAt, focused, onShowAnalytics }: DeckCardProps) {
+function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, onShowAnalytics, onShare }: DeckCardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -166,6 +170,18 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, onShowAnalyti
                 {viewCount}
               </span>
             )}
+            {(shareCount ?? 0) > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onShare(deck.id, deck.title)
+                }}
+                className="flex items-center gap-1 hover:text-brand-red transition-colors"
+              >
+                <Share2 size={11} />
+                {shareCount}
+              </button>
+            )}
             {deck.updatedAt && (
               <span className="flex items-center gap-1 ml-auto">
                 <Calendar size={11} />
@@ -244,6 +260,17 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, onShowAnalyti
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowMenu(false)
+                    onShare(deck.id, deck.title)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                >
+                  <Share2 size={13} />
+                  Share…
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowMenu(false)
                     onShowAnalytics(deck.id, deck.title)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
@@ -269,6 +296,8 @@ export default function DeckDashboard() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('recent')
   const [analyticsTarget, setAnalyticsTarget] = useState<{ deckId: string; title: string } | null>(null)
+  const [shareTarget, setShareTarget] = useState<{ slug: string; title: string } | null>(null)
+  const [shareCounts, setShareCounts] = useState<Map<string, number>>(new Map())
   const [view, setView] = useState<'decks' | 'templates'>('decks')
   const [refreshing, setRefreshing] = useState(false)
   const [focusIndex, setFocusIndex] = useState(-1)
@@ -293,6 +322,23 @@ export default function DeckDashboard() {
   useEffect(() => {
     loadDecks()
   }, [loadDecks])
+
+  useEffect(() => {
+    if (decks.length === 0) return
+    const apiBase = import.meta.env.VITE_DECK_API_URL || '/api/decks'
+    decks.forEach(deck => {
+      fetch(`${apiBase}/${encodeURIComponent(deck.id)}/share`, { credentials: 'include' })
+        .then(r => r.ok ? r.json() : [])
+        .then((tokens: unknown[]) => {
+          setShareCounts(prev => {
+            const next = new Map(prev)
+            next.set(deck.id, tokens.length)
+            return next
+          })
+        })
+        .catch(() => {})
+    })
+  }, [decks])
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true)
@@ -639,7 +685,9 @@ export default function DeckDashboard() {
                     viewCount={stats?.totalViews}
                     lastViewedAt={stats?.lastViewedAt}
                     focused={focusIndex === i}
+                    shareCount={shareCounts.get(deck.id)}
                     onShowAnalytics={(id, title) => setAnalyticsTarget({ deckId: id, title })}
+                    onShare={(slug, title) => setShareTarget({ slug, title })}
                   />
                 )
               })}
@@ -738,6 +786,24 @@ export default function DeckDashboard() {
             deckId={analyticsTarget.deckId}
             deckTitle={analyticsTarget.title}
             onClose={() => setAnalyticsTarget(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Share dialog */}
+      <AnimatePresence>
+        {shareTarget && (
+          <ShareDialog
+            slug={shareTarget.slug}
+            deckTitle={shareTarget.title}
+            onClose={() => setShareTarget(null)}
+            onShareCountChange={(count) => {
+              setShareCounts(prev => {
+                const next = new Map(prev)
+                next.set(shareTarget.slug, count)
+                return next
+              })
+            }}
           />
         )}
       </AnimatePresence>
