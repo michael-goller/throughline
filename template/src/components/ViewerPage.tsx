@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Lock, AlertCircle, ChevronRight } from 'lucide-react'
+import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
 import SlideRenderer from '../templates'
 import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
 import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
 import { useSwipe } from '../hooks/useSwipe'
+import { useTheme } from '../hooks/useTheme'
 import { isInstantDBConfigured } from '../lib/instantdb'
 
 interface ViewerPageProps {
@@ -248,6 +249,7 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   const [showSearch, setShowSearch] = useState(false)
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const lastKeyRef = useRef({ key: '', time: 0 })
+  const { theme, toggleTheme } = useTheme()
 
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
@@ -441,14 +443,63 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
         )}
       </AnimatePresence>
 
-      {/* Minimal progress bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-0.5 bg-white/5">
-        <motion.div
-          className="h-full bg-brand-red/60"
-          initial={false}
-          animate={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-          transition={{ duration: 0.3 }}
-        />
+      {/* Navigation controls */}
+      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
+        <div className="relative h-1 w-full bg-border/50">
+          <motion.div
+            className="absolute inset-y-0 left-0 right-0 origin-left"
+            style={{
+              background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
+              boxShadow: '0 0 8px var(--brand-red)',
+            }}
+            animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
+            transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+          />
+        </div>
+        <div className="flex items-center gap-1 px-1.5 py-1">
+          <motion.button
+            animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}
+            whileHover={currentSlide > 0 ? { opacity: 1 } : {}}
+            whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
+            onClick={goPrev}
+            disabled={currentSlide === 0}
+            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={14} />
+          </motion.button>
+
+          <div className="text-nav-text text-tiny font-medium px-1.5 flex items-center gap-1 select-none tabular-nums">
+            <span className="inline-flex">
+              <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
+            </span>
+          </div>
+
+          <motion.button
+            animate={{ opacity: currentSlide < slides.length - 1 ? 0.6 : 0.2 }}
+            whileHover={currentSlide < slides.length - 1 ? { opacity: 1 } : {}}
+            whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
+            onClick={goNext}
+            disabled={currentSlide === slides.length - 1}
+            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={14} />
+          </motion.button>
+
+          <div className="w-px h-3.5 bg-border mx-0.5" />
+
+          <motion.button
+            animate={{ opacity: 0.6 }}
+            whileHover={{ opacity: 1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleTheme}
+            className="p-1 rounded text-nav-text"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+          </motion.button>
+        </div>
       </div>
     </div>
   )
