@@ -52,8 +52,8 @@ function parseDeckRoute(): RouteInfo {
   const params = new URLSearchParams(window.location.search)
   const queryPresenter = params.has('presenter')
 
-  // Match /view/:slug/:tokenId (viewer sharing)
-  const viewerMatch = pathname.match(/^\/view\/([^/]+)\/([^/]+)\/?$/)
+  // Match /view/:slug/:tokenId (viewer sharing) — ignore any trailing path segments
+  const viewerMatch = pathname.match(/^\/view\/([^/]+)\/([^/]+)/)
   if (viewerMatch) {
     return { mode: 'viewer', deckId: '', presenter: false, viewerSlug: decodeURIComponent(viewerMatch[1]), viewerTokenId: decodeURIComponent(viewerMatch[2]) }
   }
