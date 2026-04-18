@@ -1,0 +1,121 @@
+/*
+ * Spectrum Design Tokens — Single source of truth
+ * Used by both site/ (landing page) and template/ (app)
+ */
+
+/* ── Dark Theme (default) ────────────────────────────────── */
+:root {
+  /* Backgrounds & Surfaces */
+  --bg-base: #0B0C10;
+  --bg-surface: #14161D;
+  --bg-elevated: #1E2028;
+  --bg-overlay: rgba(20, 22, 29, 0.85);
+
+  /* Text */
+  --text-primary: #E5E7EB;
+  --text-secondary: rgba(229, 231, 235, 0.70);
+  --text-muted: #8B95A7;
+
+  /* Accents */
+  --accent-primary: #38BDF8;
+  --accent-primary-hover: #5CCBFA;
+  --accent-violet: #8B5CF6;
+  --accent-cyan: #22D3EE;
+  --spectral-gradient: linear-gradient(90deg, #8B5CF6, #38BDF8, #22D3EE, #2DD4BF);
+  --gold-highlight: #F5B94A;
+  --gold-highlight-text: #E8A317;
+  --accent-teal: #2DD4BF;
+  --accent-coral: #F87171;
+
+  /* Borders */
+  --border-subtle: rgba(229, 231, 235, 0.08);
+  --border-default: rgba(229, 231, 235, 0.12);
+
+  /* Interaction States */
+  --focus-ring: 2px solid var(--accent-primary);
+  --disabled-opacity: 0.4;
+  --selection-bg: rgba(56, 189, 248, 0.15);
+  --active-opacity: 0.9;
+
+  /* Alpha helpers (avoid hardcoded rgba usage in consumers) */
+  --accent-primary-04: color-mix(in srgb, var(--accent-primary) 4%, transparent);
+  --accent-primary-08: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --accent-primary-10: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --accent-primary-12: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  --accent-primary-15: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-primary-30: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  --accent-teal-06: color-mix(in srgb, var(--accent-teal) 6%, transparent);
+  --accent-teal-10: color-mix(in srgb, var(--accent-teal) 10%, transparent);
+  --accent-teal-12: color-mix(in srgb, var(--accent-teal) 12%, transparent);
+  --gold-highlight-06: color-mix(in srgb, var(--gold-highlight) 6%, transparent);
+  --gold-highlight-10: color-mix(in srgb, var(--gold-highlight) 10%, transparent);
+  --gold-highlight-12: color-mix(in srgb, var(--gold-highlight) 12%, transparent);
+  --text-primary-03: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  --text-primary-06: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --text-primary-08: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --text-primary-18: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  --surface-shadow: color-mix(in srgb, var(--bg-base) 30%, transparent);
+  --white-50: color-mix(in srgb, #ffffff 50%, transparent);
+  --white-80: color-mix(in srgb, #ffffff 80%, transparent);
+
+  /* Facet Edge */
+  --facet-center: #DBEAFE;
+  --facet-edge-gradient: linear-gradient(90deg,
+    transparent 0%, var(--accent-primary) 20%,
+    #DBEAFE 48%, #FFFFFF 50%, #DBEAFE 52%,
+    var(--accent-primary) 80%, transparent 100%);
+}
+
+/* ── Light Theme ─────────────────────────────────────────── */
+html.light {
+  --bg-base: #EEF0F5;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F1F3F8;
+  --bg-overlay: rgba(248, 249, 252, 0.85);
+
+  --text-primary: #0F1219;
+  --text-secondary: rgba(15, 18, 25, 0.70);
+  --text-muted: #6B7280;
+
+  --accent-primary: #2563EB;
+  --accent-primary-hover: #1D4ED8;
+  --spectral-gradient: linear-gradient(90deg, #7C3AED, #2563EB, #0891B2, #0D9488);
+  --gold-highlight: #E8A317;
+  --gold-highlight-text: #B7791F;
+  --accent-teal: #0D9488;
+  --accent-coral: #E11D48;
+
+  --border-subtle: rgba(15, 18, 25, 0.08);
+  --border-default: rgba(15, 18, 25, 0.12);
+
+  --facet-center: #E8F1FF;
+  --facet-edge-gradient: linear-gradient(90deg,
+    transparent 0%, var(--accent-primary) 20%,
+    #E8F1FF 48%, #FFFFFF 50%, #E8F1FF 52%,
+    var(--accent-primary) 80%, transparent 100%);
+
+  --surface-shadow: color-mix(in srgb, var(--bg-base) 14%, transparent);
+}
+
+/* ── Utility Classes ─────────────────────────────────────── */
+
+/* Facet edge: 2px horizontal band at top of hero/emphasized cards.
+   Parent must have position: relative. Max one per page. */
+.facet-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--facet-edge-gradient);
+  pointer-events: none;
+}
+
+/* Standardized glass treatment for overlays and panels */
+.shine-glass {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  isolation: isolate;
+}

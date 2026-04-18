@@ -2,7 +2,7 @@
  * Deck operations - create, serve, stop.
  */
 
-import { spawn } from 'child_process'
+import { spawn, type ChildProcess } from 'child_process'
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { getDecksPath, getTemplatePath } from './config.js'
@@ -17,6 +17,31 @@ import {
   updateDeckStatus,
   updateGalleryState,
 } from './registry.js'
+
+/**
+ * Read Vite's stdout to detect the actual port it bound to.
+ * Falls back to the requested port after a timeout.
+ */
+function detectVitePort(proc: ChildProcess, fallbackPort: number): Promise<number> {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve(fallbackPort), 5000)
+    let buffer = ''
+
+    proc.stdout?.on('data', (chunk: Buffer) => {
+      buffer += chunk.toString()
+      const match = buffer.match(/localhost:(\d+)/)
+      if (match) {
+        clearTimeout(timeout)
+        resolve(parseInt(match[1], 10))
+      }
+    })
+
+    proc.on('error', () => {
+      clearTimeout(timeout)
+      resolve(fallbackPort)
+    })
+  })
+}
 
 // Marker file that identifies a thin deck folder
 const DECK_MARKER = '.shine-deck'
@@ -195,46 +220,50 @@ export async function startDeck(
 /**
  * Start a thin deck by running vite from the template with DECK_PATH.
  */
-function startThinDeck(
+async function startThinDeck(
   name: string,
   deckPath: string,
   port: number
-): { pid: number; port: number } {
+): Promise<{ pid: number; port: number }> {
   const templatePath = getTemplatePath()
 
-  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port), '--strictPort'], {
+  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port)], {
     cwd: templatePath,
     env: { ...process.env, DECK_PATH: deckPath },
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'ignore'],
   })
 
+  const actualPort = await detectVitePort(proc, port)
+  proc.stdout?.destroy()
   proc.unref()
 
-  updateDeckStatus(name, { pid: proc.pid, port })
+  updateDeckStatus(name, { pid: proc.pid, port: actualPort })
 
-  return { pid: proc.pid!, port }
+  return { pid: proc.pid!, port: actualPort }
 }
 
 /**
  * Start a full deck by running vite from its directory.
  */
-function startFullDeck(
+async function startFullDeck(
   name: string,
   deckPath: string,
   port: number
-): { pid: number; port: number } {
-  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port), '--strictPort'], {
+): Promise<{ pid: number; port: number }> {
+  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port)], {
     cwd: deckPath,
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'ignore'],
   })
 
+  const actualPort = await detectVitePort(proc, port)
+  proc.stdout?.destroy()
   proc.unref()
 
-  updateDeckStatus(name, { pid: proc.pid, port })
+  updateDeckStatus(name, { pid: proc.pid, port: actualPort })
 
-  return { pid: proc.pid!, port }
+  return { pid: proc.pid!, port: actualPort }
 }
 
 /**
@@ -350,18 +379,19 @@ export async function startGallery(port?: number): Promise<{ pid: number; port: 
     throw new Error(`Port ${port} is already in use`)
   }
 
-  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port), '--strictPort'], {
+  const proc = spawn('npm', ['run', 'dev', '--', '--port', String(port)], {
     cwd: templatePath,
-    // No DECK_PATH — the plugin falls back to ~/decks/ and shows all decks
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'ignore'],
   })
 
+  const actualPort = await detectVitePort(proc, port)
+  proc.stdout?.destroy()
   proc.unref()
 
-  updateGalleryState({ pid: proc.pid!, port })
+  updateGalleryState({ pid: proc.pid!, port: actualPort })
 
-  return { pid: proc.pid!, port }
+  return { pid: proc.pid!, port: actualPort }
 }
 
 /**
