@@ -1,0 +1,186 @@
+/*
+ * Throughline Design Tokens — Preview / DIG-70 test
+ *
+ * Conceptual shift from Shine/Spectrum: diamond+light → thread+continuity.
+ *   • Red accent (roter Faden) replaces cyan dispersion.
+ *   • Warp-line background pattern replaces flat charcoal.
+ *   • Thread edge (asymmetric single-color) replaces prismatic facet edge.
+ *   • Spectral gradient removed; activity expressed via thread animation.
+ */
+
+/* ── Dark Theme (default) ────────────────────────────────── */
+:root {
+  /* Warmer charcoal base — slight red undertone to live alongside the thread */
+  --bg-base: #16141A;
+  --bg-surface: #1D1B22;
+  --bg-elevated: #26232C;
+  --bg-overlay: rgba(29, 27, 34, 0.85);
+
+  /* Text — near-platinum on warm charcoal */
+  --text-primary: #ECE8E4;
+  --text-secondary: rgba(236, 232, 228, 0.70);
+  --text-muted: #8F8A85;
+
+  /* Thread-red accent — considered, not shouty. Tailwind red-700 territory. */
+  --accent-primary: #B91C1C;
+  --accent-primary-hover: #DC2626;
+
+  /* Legacy-compat aliases — remove after full rebrand */
+  --accent-violet: #B91C1C;
+  --accent-cyan: #B91C1C;
+  --spectral-gradient: var(--accent-primary);
+
+  /* Amber (non-primary action affordance — rarely used) */
+  --gold-highlight: #D4A24C;
+  --gold-highlight-text: #C98E2E;
+
+  /* Semantic — kept distinct from primary red */
+  --accent-teal: #3DB5A0;
+  --accent-coral: #EF4444;
+
+  /* Borders — warm tone matching base */
+  --border-subtle: rgba(236, 232, 228, 0.07);
+  --border-default: rgba(236, 232, 228, 0.11);
+
+  /* Interaction States */
+  --focus-ring: 2px solid var(--accent-primary);
+  --disabled-opacity: 0.4;
+  --selection-bg: rgba(185, 28, 28, 0.18);
+  --active-opacity: 0.9;
+
+  /* Alpha helpers */
+  --accent-primary-04: color-mix(in srgb, var(--accent-primary) 4%, transparent);
+  --accent-primary-08: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --accent-primary-10: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --accent-primary-12: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  --accent-primary-15: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-primary-30: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  --accent-teal-06: color-mix(in srgb, var(--accent-teal) 6%, transparent);
+  --accent-teal-10: color-mix(in srgb, var(--accent-teal) 10%, transparent);
+  --accent-teal-12: color-mix(in srgb, var(--accent-teal) 12%, transparent);
+  --gold-highlight-06: color-mix(in srgb, var(--gold-highlight) 6%, transparent);
+  --gold-highlight-10: color-mix(in srgb, var(--gold-highlight) 10%, transparent);
+  --gold-highlight-12: color-mix(in srgb, var(--gold-highlight) 12%, transparent);
+  --text-primary-03: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  --text-primary-06: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --text-primary-08: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --text-primary-18: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  --surface-shadow: color-mix(in srgb, var(--bg-base) 30%, transparent);
+  --white-50: color-mix(in srgb, #ffffff 50%, transparent);
+  --white-80: color-mix(in srgb, #ffffff 80%, transparent);
+
+  /* Thread edge — asymmetric single-color, replaces prismatic facet edge */
+  --thread-edge-gradient: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent-primary) 12%,
+    var(--accent-primary) 88%,
+    transparent 100%);
+
+  /* Legacy alias for existing consumers */
+  --facet-center: var(--accent-primary);
+  --facet-edge-gradient: var(--thread-edge-gradient);
+
+  /* Warp-line structure — vertical loom-warp, ~3% opacity on dark */
+  --warp-line-color: rgba(236, 232, 228, 0.028);
+  --warp-line-spacing: 56px;
+  --warp-pattern:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(var(--warp-line-spacing) - 1px),
+      var(--warp-line-color) calc(var(--warp-line-spacing) - 1px),
+      var(--warp-line-color) var(--warp-line-spacing)
+    );
+}
+
+/* ── Light Theme ─────────────────────────────────────────── */
+html.light {
+  /* Warm off-white paper — more texture than cool neutral */
+  --bg-base: #F5F3EE;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #EFECE5;
+  --bg-overlay: rgba(245, 243, 238, 0.85);
+
+  --text-primary: #1A1816;
+  --text-secondary: rgba(26, 24, 22, 0.70);
+  --text-muted: #6B635B;
+
+  /* Deeper red on light — counter-intuitive but cleaner */
+  --accent-primary: #991B1B;
+  --accent-primary-hover: #7F1D1D;
+  --accent-violet: #991B1B;
+  --accent-cyan: #991B1B;
+  --spectral-gradient: var(--accent-primary);
+
+  --gold-highlight: #B7791F;
+  --gold-highlight-text: #92580F;
+
+  --accent-teal: #0F766E;
+  --accent-coral: #BE123C;
+
+  --border-subtle: rgba(26, 24, 22, 0.08);
+  --border-default: rgba(26, 24, 22, 0.12);
+
+  --selection-bg: rgba(153, 27, 27, 0.15);
+
+  --thread-edge-gradient: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent-primary) 12%,
+    var(--accent-primary) 88%,
+    transparent 100%);
+  --facet-center: var(--accent-primary);
+  --facet-edge-gradient: var(--thread-edge-gradient);
+
+  --surface-shadow: color-mix(in srgb, var(--bg-base) 14%, transparent);
+
+  /* On light, warp lines need slightly higher opacity to read */
+  --warp-line-color: rgba(26, 24, 22, 0.04);
+}
+
+/* ── Utility Classes ─────────────────────────────────────── */
+
+/* Thread edge — replaces facet-edge. Parent must be position: relative. */
+.thread-edge,
+.facet-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--thread-edge-gradient);
+  pointer-events: none;
+}
+
+/* Standardized glass treatment */
+.throughline-glass,
+.shine-glass {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  isolation: isolate;
+}
+
+/* Warp-line structure applied to a surface. Use on <body> or full-bleed section. */
+.warp-surface {
+  background-color: var(--bg-base);
+  background-image: var(--warp-pattern);
+}
+
+/* The throughline itself — a horizontal thread element with draw-in animation */
+@keyframes thread-draw {
+  from { stroke-dashoffset: 100%; opacity: 0; }
+  to   { stroke-dashoffset: 0;    opacity: 1; }
+}
+.thread-line {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--accent-primary);
+  transform-origin: left center;
+  animation: thread-draw-fill 1.2s ease-out forwards;
+}
+@keyframes thread-draw-fill {
+  from { transform: scaleX(0); opacity: 0.6; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
