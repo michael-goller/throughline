@@ -19,6 +19,8 @@ export interface DeckConfig {
   description?: string
   author?: string
   createdAt?: string
+  /** The "one claim" that anchors the deck (see `throughline shape`). */
+  throughline?: string
   slides: SlideConfig[]
 }
 

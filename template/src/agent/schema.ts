@@ -858,6 +858,11 @@ export const deckConfigSchema = {
     description: { type: 'string' as const, description: 'Short description of the deck' },
     author: { type: 'string' as const },
     createdAt: { type: 'string' as const, description: 'ISO 8601 date' },
+    throughline: {
+      type: 'string' as const,
+      description:
+        'The "one claim" the deck is making — the single argument every slide must serve. Populated by `throughline shape` and validated by `throughline check`.',
+    },
     slides: {
       type: 'array' as const,
       items: slideConfigSchema,

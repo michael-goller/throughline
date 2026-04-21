@@ -463,3 +463,22 @@ export type SlideConfig =
   | ScorecardSlideConfig
   | StatusTableSlideConfig
   | RiskCardSlideConfig
+
+/**
+ * Top-level deck configuration. May be the default export of a deck's
+ * `slides.config.ts`, or inferred from named exports (`slides`, `title`, …)
+ * by the CLI publish pipeline.
+ */
+export interface DeckConfig {
+  title: string
+  description?: string
+  author?: string
+  createdAt?: string
+  /**
+   * The "one claim" that anchors the deck — the single argument every slide
+   * must serve. Populated by `throughline shape` / `throughline new --from-brief`
+   * and validated by `throughline check`.
+   */
+  throughline?: string
+  slides: SlideConfig[]
+}

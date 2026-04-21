@@ -23,6 +23,9 @@ import {
 import { pickDeck } from './lib/picker.js'
 import { addDeck, getDeck, getGalleryState, listDecks, removeDeck, renameDeck, updateDeckPublished } from './lib/registry.js'
 import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish as cloudPublish, unpublish as cloudUnpublish, loadCredentials, getApiUrl, setApiUrl, createShare, listShares, deleteShare } from './lib/cloud.js'
+import { runShape, readBrief, resolveBriefPath, BRIEF_FILENAME } from './lib/shape.js'
+import { createDeckFromBrief } from './lib/brief.js'
+import { checkDeck } from './lib/check.js'
 import { createInterface } from 'readline'
 
 // Terra cotta brand color — matches site/throughline-tokens.css (--accent-primary dark).
@@ -50,10 +53,29 @@ program
   .description('Create a new slide deck')
   .option('--full', 'Create full deck (copy entire template)')
   .option('--here', 'Create in current directory instead of ~/decks/')
-  .action((name: string, options: { full?: boolean; here?: boolean }) => {
+  .option('--from-brief [path]', `Scaffold from a ${BRIEF_FILENAME} (default: ./)`)
+  .action((name: string, options: { full?: boolean; here?: boolean; fromBrief?: string | boolean }) => {
     try {
       const targetDir = options.here ? (name === '.' ? process.cwd() : `${process.cwd()}/${name}`) : undefined
       const deckName = name === '.' ? process.cwd().split('/').pop()! : name
+
+      if (options.fromBrief) {
+        if (options.full) {
+          throw new Error('--from-brief generates a thin deck; it can not be combined with --full.')
+        }
+        const briefInput = typeof options.fromBrief === 'string' ? options.fromBrief : undefined
+        const briefPath = resolveBriefPath(briefInput, process.cwd())
+        const brief = readBrief(briefPath)
+
+        const deckPath = createDeckFromBrief(deckName, brief, { targetDir })
+
+        console.log(chalk.green(`✓ Created deck '${deckName}' from brief at ${formatPath(deckPath)}`))
+        console.log(`→ Throughline: ${chalk.italic(brief.throughline)}`)
+        console.log(`→ Evidence slides: ${brief.evidence.length}`)
+        console.log(`→ Edit slides: ${formatPath(deckPath)}/slides.config.ts`)
+        console.log(`→ Start server: throughline serve ${deckName}`)
+        return
+      }
 
       const deckPath = createDeck(deckName, {
         targetDir,
@@ -70,6 +92,88 @@ program
         console.log(`→ Add images: ${formatPath(deckPath)}/public/`)
       }
       console.log(`→ Start server: throughline serve ${deckName}`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// throughline shape
+// ─────────────────────────────────────────────────────────────
+program
+  .command('shape')
+  .description('Run the Shape flow — capture your throughline before building slides')
+  .option('--out <path>', `Directory to write ${BRIEF_FILENAME} into`, process.cwd())
+  .option('--force', 'Overwrite an existing brief file')
+  .action(async (options: { out: string; force?: boolean }) => {
+    try {
+      const { path, brief } = await runShape(options.out, { force: options.force })
+      console.log(chalk.green(`\n✓ Wrote ${formatPath(path)}`))
+      console.log(`→ Throughline: ${chalk.italic(brief.throughline)}`)
+      console.log(`→ Next: throughline new <name> --from-brief`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// throughline check [name]
+// ─────────────────────────────────────────────────────────────
+program
+  .command('check [name]')
+  .description('Lint a deck — warns if the throughline statement is missing')
+  .option('--path <dir>', 'Path to a deck directory (overrides [name])')
+  .action((name: string | undefined, options: { path?: string }) => {
+    try {
+      let deckDir: string
+      let label: string
+
+      if (options.path) {
+        deckDir = options.path
+        label = formatPath(options.path)
+      } else if (name) {
+        const deck = getDeck(name)
+        if (!deck) {
+          console.log(chalk.red(`✗ Deck '${name}' not found in registry`))
+          process.exit(1)
+        }
+        deckDir = deck.path
+        label = name
+      } else {
+        deckDir = process.cwd()
+        label = formatPath(deckDir)
+      }
+
+      const result = checkDeck(deckDir)
+
+      console.log(chalk.bold(`\nthroughline check: ${label}`))
+      console.log(`  config:     ${formatPath(result.configFile)}`)
+      console.log(`  title:      ${result.title ?? chalk.dim('(none)')}`)
+      console.log(`  throughline:${result.throughline ? ' ' + chalk.italic(result.throughline) : ' ' + chalk.dim('(missing)')}`)
+      console.log(`  slides:     ${result.slideCount}`)
+
+      if (result.issues.length === 0) {
+        console.log(chalk.green('\n✓ All checks passed.'))
+        return
+      }
+
+      const errors = result.issues.filter((i) => i.severity === 'error')
+      const warnings = result.issues.filter((i) => i.severity === 'warning')
+
+      console.log('')
+      for (const issue of result.issues) {
+        const tag = issue.severity === 'error' ? chalk.red('✗ error') : chalk.yellow('! warning')
+        console.log(`${tag}  ${chalk.dim(issue.rule)}  ${issue.message}`)
+        if (issue.hint) console.log(`         ${chalk.dim(issue.hint)}`)
+      }
+
+      if (errors.length > 0) {
+        process.exit(1)
+      } else if (warnings.length > 0) {
+        process.exit(2)
+      }
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
