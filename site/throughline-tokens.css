@@ -21,14 +21,10 @@
   --text-secondary: rgba(236, 232, 228, 0.70);
   --text-muted: #8F8A85;
 
-  /* Thread-red accent — considered, not shouty. Tailwind red-700 territory. */
-  --accent-primary: #B91C1C;
-  --accent-primary-hover: #DC2626;
-
-  /* Legacy-compat aliases — remove after full rebrand */
-  --accent-violet: #B91C1C;
-  --accent-cyan: #B91C1C;
-  --spectral-gradient: var(--accent-primary);
+  /* Terra cotta accent — the throughline color. Warm, earthy, considered. */
+  --accent-primary: #E2725B;
+  --accent-primary-hover: #C2553A;
+  --accent-muted: color-mix(in srgb, var(--accent-primary) 60%, transparent);
 
   /* Amber (non-primary action affordance — rarely used) */
   --gold-highlight: #D4A24C;
@@ -45,7 +41,7 @@
   /* Interaction States */
   --focus-ring: 2px solid var(--accent-primary);
   --disabled-opacity: 0.4;
-  --selection-bg: rgba(185, 28, 28, 0.18);
+  --selection-bg: color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --active-opacity: 0.9;
 
   /* Alpha helpers */
@@ -69,16 +65,12 @@
   --white-50: color-mix(in srgb, #ffffff 50%, transparent);
   --white-80: color-mix(in srgb, #ffffff 80%, transparent);
 
-  /* Thread edge — asymmetric single-color, replaces prismatic facet edge */
+  /* Thread edge — single-color, replaces prismatic facet edge */
   --thread-edge-gradient: linear-gradient(90deg,
     transparent 0%,
-    var(--accent-primary) 12%,
-    var(--accent-primary) 88%,
+    var(--accent-primary) 15%,
+    var(--accent-primary) 85%,
     transparent 100%);
-
-  /* Legacy alias for existing consumers */
-  --facet-center: var(--accent-primary);
-  --facet-edge-gradient: var(--thread-edge-gradient);
 
   /* Warp-line structure — vertical loom-warp, ~3% opacity on dark */
   --warp-line-color: rgba(236, 232, 228, 0.028);
@@ -105,12 +97,10 @@ html.light {
   --text-secondary: rgba(26, 24, 22, 0.70);
   --text-muted: #6B635B;
 
-  /* Deeper red on light — counter-intuitive but cleaner */
-  --accent-primary: #991B1B;
-  --accent-primary-hover: #7F1D1D;
-  --accent-violet: #991B1B;
-  --accent-cyan: #991B1B;
-  --spectral-gradient: var(--accent-primary);
+  /* Deeper terra cotta on light — more earth, less fire */
+  --accent-primary: #C2553A;
+  --accent-primary-hover: #A8432C;
+  --accent-muted: color-mix(in srgb, var(--accent-primary) 55%, transparent);
 
   --gold-highlight: #B7791F;
   --gold-highlight-text: #92580F;
@@ -121,15 +111,13 @@ html.light {
   --border-subtle: rgba(26, 24, 22, 0.08);
   --border-default: rgba(26, 24, 22, 0.12);
 
-  --selection-bg: rgba(153, 27, 27, 0.15);
+  --selection-bg: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 
   --thread-edge-gradient: linear-gradient(90deg,
     transparent 0%,
-    var(--accent-primary) 12%,
-    var(--accent-primary) 88%,
+    var(--accent-primary) 15%,
+    var(--accent-primary) 85%,
     transparent 100%);
-  --facet-center: var(--accent-primary);
-  --facet-edge-gradient: var(--thread-edge-gradient);
 
   --surface-shadow: color-mix(in srgb, var(--bg-base) 14%, transparent);
 
@@ -139,9 +127,8 @@ html.light {
 
 /* ── Utility Classes ─────────────────────────────────────── */
 
-/* Thread edge — replaces facet-edge. Parent must be position: relative. */
-.thread-edge,
-.facet-edge {
+/* Thread edge. Parent must be position: relative. */
+.thread-edge {
   position: absolute;
   top: 0;
   left: 0;
