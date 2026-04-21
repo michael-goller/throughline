@@ -26,6 +26,7 @@ import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish a
 import { runShape, readBrief, resolveBriefPath, BRIEF_FILENAME } from './lib/shape.js'
 import { createDeckFromBrief } from './lib/brief.js'
 import { checkDeck } from './lib/check.js'
+import { runOnboard } from './lib/onboard.js'
 import { createInterface } from 'readline'
 
 // Terra cotta brand color — matches site/throughline-tokens.css (--accent-primary dark).
@@ -92,6 +93,24 @@ program
         console.log(`→ Add images: ${formatPath(deckPath)}/public/`)
       }
       console.log(`→ Start server: throughline serve ${deckName}`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// throughline onboard
+// ─────────────────────────────────────────────────────────────
+program
+  .command('onboard')
+  .description('Guided walkthrough — install → first deck → published share link')
+  .option('--here', 'Create the example deck in the current directory instead of ~/decks/')
+  .option('--example <key>', 'Skip the picker and use a specific example (board-update|design-proposal|incident-retro)')
+  .option('--name <deckName>', 'Skip the deck-name prompt and use this name')
+  .action(async (options: { here?: boolean; example?: string; name?: string }) => {
+    try {
+      await runOnboard({ here: options.here, autoExample: options.example, autoDeckName: options.name })
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
