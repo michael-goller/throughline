@@ -1,7 +1,7 @@
 /*
  * Throughline Design Tokens — Preview / DIG-70 test
  *
- * Conceptual shift from Shine/Spectrum: diamond+light → thread+continuity.
+ * Conceptual shift from the prior Spectrum design: diamond+light → thread+continuity.
  *   • Red accent (roter Faden) replaces cyan dispersion.
  *   • Warp-line background pattern replaces flat charcoal.
  *   • Thread edge (asymmetric single-color) replaces prismatic facet edge.
@@ -152,8 +152,7 @@ html.light {
 }
 
 /* Standardized glass treatment */
-.throughline-glass,
-.shine-glass {
+.throughline-glass {
   background: var(--bg-overlay);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);

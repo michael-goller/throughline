@@ -14,7 +14,7 @@ interface UsePresenterSyncOptions {
   onSyncResponse?: (slide: number, total: number) => void
 }
 
-const CHANNEL_NAME = 'shine-presenter-sync'
+const CHANNEL_NAME = 'throughline-presenter-sync'
 
 export function usePresenterSync(
   currentSlide: number,

@@ -1,5 +1,5 @@
 /**
- * Context ingestion pipeline for Shine deck generation.
+ * Context ingestion pipeline for Throughline deck generation.
  *
  * Extracts structured content from documents (PDF, DOCX, PPTX)
  * and data files (CSV, Excel), then transforms it into context

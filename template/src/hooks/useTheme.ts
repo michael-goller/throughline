@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 export type Theme = 'dark' | 'light'
 
 const STORAGE_KEY = 'slide-deck-theme'
-const CHANNEL_NAME = 'shine-theme-sync'
+const CHANNEL_NAME = 'throughline-theme-sync'
 
 function getInitialTheme(): Theme {
   if (typeof window !== 'undefined') {

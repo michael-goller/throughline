@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Upload the Shine tarball to Vercel Blob storage.
+ * Upload the Throughline tarball to Vercel Blob storage.
  *
  * Prerequisites:
  *   - Run ./scripts/pack-tarball.sh first
@@ -9,7 +9,7 @@
  * Usage:
  *   BLOB_READ_WRITE_TOKEN=vercel_blob_rw_... node scripts/upload-blob.mjs
  *
- * The script uploads dist/shine-v<version>.tar.gz and prints the download URL.
+ * The script uploads dist/throughline-v<version>.tar.gz and prints the download URL.
  */
 
 import { readFileSync } from "node:fs";
@@ -28,7 +28,7 @@ const cliPkg = JSON.parse(
   readFileSync(resolve(repoRoot, "cli/package.json"), "utf-8")
 );
 const version = cliPkg.version;
-const tarballPath = resolve(repoRoot, `dist/shine-v${version}.tar.gz`);
+const tarballPath = resolve(repoRoot, `dist/throughline-v${version}.tar.gz`);
 
 // Verify token
 const token = process.env.BLOB_READ_WRITE_TOKEN;
@@ -52,9 +52,9 @@ try {
   process.exit(1);
 }
 
-console.log(`Uploading shine-v${version}.tar.gz (${(tarball.length / 1024 / 1024).toFixed(1)} MB)...`);
+console.log(`Uploading throughline-v${version}.tar.gz (${(tarball.length / 1024 / 1024).toFixed(1)} MB)...`);
 
-const blob = await put(`shine/shine-v${version}.tar.gz`, tarball, {
+const blob = await put(`throughline/throughline-v${version}.tar.gz`, tarball, {
   access: "private",
   token,
   addRandomSuffix: false,
@@ -62,7 +62,7 @@ const blob = await put(`shine/shine-v${version}.tar.gz`, tarball, {
 
 console.log(`\nUploaded successfully!`);
 console.log(`Blob URL: ${blob.url}`);
-console.log(`Blob pathname: shine/shine-v${version}.tar.gz`);
+console.log(`Blob pathname: throughline/throughline-v${version}.tar.gz`);
 console.log(`\nThe tarball is served through the token-gated download endpoint:`);
-console.log(`  curl -fSL https://<site-domain>/api/download/<token> -o shine.tar.gz`);
+console.log(`  curl -fSL https://<site-domain>/api/download/<token> -o throughline.tar.gz`);
 console.log(`\nThe install script handles this automatically.`);

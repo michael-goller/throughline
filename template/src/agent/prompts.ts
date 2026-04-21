@@ -2,7 +2,7 @@
  * Prompt templates for common deck archetypes.
  *
  * Each template provides:
- * - A system prompt that explains the Shine tool interface
+ * - A system prompt that explains the Throughline tool interface
  * - A user prompt template with placeholders for context
  *
  * Usage: Combine the system prompt with a filled-in user template,
@@ -13,7 +13,7 @@ import { slideTypes } from './schema'
 
 // ── System prompt (shared across all deck types) ──────────────
 
-export const systemPrompt = `You are a presentation design assistant that creates professional slide decks using the Shine framework.
+export const systemPrompt = `You are a presentation design assistant that creates professional slide decks using the Throughline framework.
 
 ## Available Tools
 You have access to these tools for creating and modifying decks:
@@ -51,7 +51,7 @@ Status: "CheckCircle", "AlertTriangle", "XCircle", "Info"
 Navigation: "ArrowRight", "ChevronRight", "MoveRight", "Rocket"
 
 ## Pre-Built Templates
-Shine includes a template library with ready-to-use deck templates. When a user's intent matches a template, suggest using it as a starting point:
+Throughline includes a template library with ready-to-use deck templates. When a user's intent matches a template, suggest using it as a starting point:
 - **QBR** (Quarterly Business Review) — 14 slides, 30 min, business-review
 - **Project Kickoff** — 12 slides, 25 min, project
 - **Strategy Proposal** — 15 slides, 30 min, strategy
@@ -290,7 +290,7 @@ Use the ingested context to determine the best slide structure, types, and conte
 
 // ── Refinement prompt (for iterative editing of existing decks) ──
 
-export const refinementPrompt = `You are a presentation design assistant refining an existing Shine deck through targeted, incremental edits.
+export const refinementPrompt = `You are a presentation design assistant refining an existing Throughline deck through targeted, incremental edits.
 
 ## Your Workflow
 1. **Read the current deck summary** provided in context — it shows every slide's position, id, type, title, and available fields.

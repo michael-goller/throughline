@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from 'react'
 
-const STORAGE_KEY = 'shine-deck-identity'
+const STORAGE_KEY = 'throughline-identity'
 
 export interface Identity {
   name: string

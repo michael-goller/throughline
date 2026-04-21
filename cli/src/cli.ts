@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shine CLI - Beautiful decks made simple.
+ * Throughline CLI - The dev-native way to make decks.
  */
 
 import { program } from 'commander'
@@ -26,12 +26,12 @@ import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish a
 import { createInterface } from 'readline'
 
 program
-  .name('shine')
-  .description('Beautiful slide decks made simple')
+  .name('throughline')
+  .description('The dev-native way to make decks')
   .version('0.1.0')
 
 // ─────────────────────────────────────────────────────────────
-// shine new <name>
+// throughline new <name>
 // ─────────────────────────────────────────────────────────────
 program
   .command('new <name>')
@@ -57,7 +57,7 @@ program
         console.log(`→ Edit slides: ${formatPath(deckPath)}/slides.config.ts`)
         console.log(`→ Add images: ${formatPath(deckPath)}/public/`)
       }
-      console.log(`→ Start server: shine serve ${deckName}`)
+      console.log(`→ Start server: throughline serve ${deckName}`)
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
@@ -65,7 +65,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine add <name> [path]
+// throughline add <name> [path]
 // ─────────────────────────────────────────────────────────────
 program
   .command('add <name> [path]')
@@ -93,11 +93,11 @@ program
 
     addDeck(name, deckPath)
     console.log(chalk.green(`✓ Registered ${deckType} deck '${name}' at ${formatPath(deckPath)}`))
-    console.log(`→ Start server: shine serve ${name}`)
+    console.log(`→ Start server: throughline serve ${name}`)
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine rm [name]
+// throughline rm [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('rm [name]')
@@ -125,7 +125,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine rename <old-name> <new-name>
+// throughline rename <old-name> <new-name>
 // ─────────────────────────────────────────────────────────────
 program
   .command('rename <old-name> <new-name>')
@@ -159,7 +159,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine serve [name]
+// throughline serve [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('serve [name]')
@@ -173,7 +173,7 @@ program
         const { pid, port } = await startGallery(options?.port)
         console.log(chalk.green(`✓ Started gallery on http://localhost:${port}`))
         console.log(`→ PID: ${pid}`)
-        console.log(`→ Stop with: shine stop --gallery`)
+        console.log(`→ Stop with: throughline stop --gallery`)
         return
       }
 
@@ -187,7 +187,7 @@ program
       const deckUrl = `http://localhost:${port}/decks/${name}`
       console.log(chalk.green(`✓ Started '${name}' on ${deckUrl}`))
       console.log(`→ PID: ${pid}`)
-      console.log(`→ Stop with: shine stop ${name}`)
+      console.log(`→ Stop with: throughline stop ${name}`)
       // Auto-open in browser
       await new Promise((r) => setTimeout(r, 1000))
       openUrl(deckUrl)
@@ -198,7 +198,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine stop [name]
+// throughline stop [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('stop [name]')
@@ -248,7 +248,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine ls
+// throughline ls
 // ─────────────────────────────────────────────────────────────
 program
   .command('ls')
@@ -264,7 +264,7 @@ program
     }
 
     if (decks.length === 0) {
-      console.log('No decks found. Create one with: shine new <name>')
+      console.log('No decks found. Create one with: throughline new <name>')
       return
     }
 
@@ -286,7 +286,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine open [name]
+// throughline open [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('open [name]')
@@ -341,7 +341,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine status [name]
+// throughline status [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('status [name]')
@@ -382,7 +382,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine export [name]
+// throughline export [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('export [name]')
@@ -405,7 +405,7 @@ program
 
     if (!isRunning(name)) {
       console.log(chalk.red(`✗ Deck '${name}' is not running`))
-      console.log(`→ Start it first: shine serve ${name}`)
+      console.log(`→ Start it first: throughline serve ${name}`)
       process.exit(1)
     }
 
@@ -462,11 +462,11 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine cloud [url]
+// throughline cloud [url]
 // ─────────────────────────────────────────────────────────────
 program
   .command('cloud [url]')
-  .description('Show or set the Shine cloud API URL')
+  .description('Show or set the Throughline cloud API URL')
   .action((url?: string) => {
     if (url) {
       // Remove trailing slash
@@ -479,11 +479,11 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine login
+// throughline login
 // ─────────────────────────────────────────────────────────────
 program
   .command('login')
-  .description('Log in to Shine cloud')
+  .description('Log in to Throughline cloud')
   .option('--email <email>', 'Email address')
   .option('--password <password>', 'Password')
   .action(async (options: { email?: string; password?: string }) => {
@@ -499,18 +499,18 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine logout
+// throughline logout
 // ─────────────────────────────────────────────────────────────
 program
   .command('logout')
-  .description('Log out of Shine cloud')
+  .description('Log out of Throughline cloud')
   .action(() => {
     clearCredentials()
     console.log(chalk.green('✓ Logged out'))
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine whoami
+// throughline whoami
 // ─────────────────────────────────────────────────────────────
 program
   .command('whoami')
@@ -519,12 +519,12 @@ program
     try {
       const creds = loadCredentials()
       if (!creds) {
-        console.log('Not logged in. Run: shine login')
+        console.log('Not logged in. Run: throughline login')
         process.exit(1)
       }
       const user = await cloudWhoami()
       if (!user) {
-        console.log('Session expired. Run: shine login')
+        console.log('Session expired. Run: throughline login')
         process.exit(1)
       }
       console.log(`${user.name} (${user.email})`)
@@ -535,11 +535,11 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine publish [name]
+// throughline publish [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('publish [name]')
-  .description('Publish a deck to Shine cloud')
+  .description('Publish a deck to Throughline cloud')
   .action(async (name?: string) => {
     try {
       if (!name) {
@@ -565,11 +565,11 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine unpublish [name]
+// throughline unpublish [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('unpublish [name]')
-  .description('Remove a published deck from Shine cloud')
+  .description('Remove a published deck from Throughline cloud')
   .action(async (name?: string) => {
     try {
       if (!name) {
@@ -587,7 +587,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine share <name>
+// throughline share <name>
 // ─────────────────────────────────────────────────────────────
 program
   .command('share [name]')
@@ -630,7 +630,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine shares [name]
+// throughline shares [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('shares [name]')
@@ -644,7 +644,7 @@ program
 
       const tokens = await listShares(name)
       if (tokens.length === 0) {
-        console.log(`No share links for '${name}'. Create one with: shine share ${name} --password <pw>`)
+        console.log(`No share links for '${name}'. Create one with: throughline share ${name} --password <pw>`)
         return
       }
 
@@ -663,7 +663,7 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine unshare [name]
+// throughline unshare [name]
 // ─────────────────────────────────────────────────────────────
 program
   .command('unshare [name]')
@@ -695,19 +695,19 @@ program
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine update
+// throughline update
 // ─────────────────────────────────────────────────────────────
 program
   .command('update')
-  .description('Update Shine to the latest version')
+  .description('Update Throughline to the latest version')
   .action(async () => {
     const { execSync } = await import('child_process')
     const { existsSync } = await import('fs')
     const { join } = await import('path')
 
     // Determine install location
-    const shineHome = process.env.SHINE_HOME || join(process.env.HOME || '', '.shine')
-    const installDir = join(shineHome, 'install')
+    const throughlineHome = process.env.THROUGHLINE_HOME || join(process.env.HOME || '', '.throughline')
+    const installDir = join(throughlineHome, 'install')
 
     if (existsSync(join(installDir, '.git'))) {
       // Git-based install (from install.sh)
@@ -726,27 +726,27 @@ program
       console.log('Updating template dependencies...')
       execSync('npm install --no-audit --no-fund', { cwd: join(installDir, 'template'), stdio: 'inherit' })
 
-      console.log(chalk.green('✓ Shine updated to latest'))
+      console.log(chalk.green('✓ Throughline updated to latest'))
     } else {
       // npm-based or manual install — try npm update
       console.log('Checking for updates via npm...')
       try {
-        execSync('npm update -g shine-deck', { stdio: 'inherit' })
-        console.log(chalk.green('✓ Shine updated'))
+        execSync('npm update -g throughline', { stdio: 'inherit' })
+        console.log(chalk.green('✓ Throughline updated'))
       } catch {
         console.log(chalk.yellow('Could not auto-update.'))
         console.log('Re-run the install script:')
-        console.log('  curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash')
+        console.log('  curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash')
       }
     }
   })
 
 // ─────────────────────────────────────────────────────────────
-// shine doctor
+// throughline doctor
 // ─────────────────────────────────────────────────────────────
 program
   .command('doctor')
-  .description('Check Shine installation health')
+  .description('Check Throughline installation health')
   .action(async () => {
     const { existsSync } = await import('fs')
     const { join } = await import('path')
@@ -763,7 +763,7 @@ program
       }
     }
 
-    console.log(chalk.bold('Shine Doctor\n'))
+    console.log(chalk.bold('Throughline Doctor\n'))
 
     // Node.js version
     const nodeVer = process.versions.node
@@ -789,11 +789,11 @@ program
     check('Template dependencies installed', existsSync(templateModules), `cd ${formatPath(templatePath)} && npm install`)
 
     // Config
-    const shineDir = join(process.env.HOME || '', '.shine')
-    check(`Config dir: ${formatPath(shineDir)}`, existsSync(shineDir))
+    const throughlineDir = join(process.env.HOME || '', '.throughline')
+    check(`Config dir: ${formatPath(throughlineDir)}`, existsSync(throughlineDir))
 
     // Registry
-    const registry = join(shineDir, 'registry.json')
+    const registry = join(throughlineDir, 'registry.json')
     check('Registry file exists', existsSync(registry))
 
     console.log('')

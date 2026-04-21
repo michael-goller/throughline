@@ -1,6 +1,6 @@
-# Shine Agent Tool Interface
+# Throughline Agent Tool Interface
 
-This module provides the structured interface for AI agents to create and modify Shine presentation decks. All slide configs are pure JSON — no TypeScript imports required.
+This module provides the structured interface for AI agents to create and modify Throughline presentation decks. All slide configs are pure JSON — no TypeScript imports required.
 
 ## Quick Start
 

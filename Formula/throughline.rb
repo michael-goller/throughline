@@ -1,7 +1,7 @@
-class Shine < Formula
-  desc "Beautiful slide decks made simple"
-  homepage "https://github.com/michael-goller/shine"
-  url "https://github.com/michael-goller/shine.git", branch: "main"
+class Throughline < Formula
+  desc "The dev-native way to make decks"
+  homepage "https://github.com/michael-goller/throughline"
+  url "https://github.com/michael-goller/throughline.git", branch: "main"
   version "0.2.0"
   license "MIT"
 
@@ -23,19 +23,19 @@ class Shine < Formula
     libexec.install Dir["*"]
 
     # Create wrapper script that sets up the right paths
-    (bin/"shine").write <<~EOS
+    (bin/"throughline").write <<~EOS
       #!/usr/bin/env bash
-      exec "#{Formula["node@20"].opt_bin}/node" "#{libexec}/cli/bin/shine.js" "$@"
+      exec "#{Formula["node@20"].opt_bin}/node" "#{libexec}/cli/bin/throughline.js" "$@"
     EOS
   end
 
   def post_install
     # Create default config if not present
-    shine_dir = "#{ENV["HOME"]}/.shine"
-    config_file = "#{shine_dir}/config.json"
+    throughline_dir = "#{ENV["HOME"]}/.throughline"
+    config_file = "#{throughline_dir}/config.json"
     return if File.exist?(config_file)
 
-    mkdir_p shine_dir
+    mkdir_p throughline_dir
     File.write(config_file, JSON.generate({
       "template_path" => "#{libexec}/template",
       "decks_path" => "#{ENV["HOME"]}/decks",
@@ -44,6 +44,6 @@ class Shine < Formula
   end
 
   test do
-    assert_match "Beautiful slide decks made simple", shell_output("#{bin}/shine --help")
+    assert_match "The dev-native way to make decks", shell_output("#{bin}/throughline --help")
   end
 end

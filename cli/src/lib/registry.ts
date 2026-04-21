@@ -4,7 +4,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { createServer, createConnection } from 'net'
-import { REGISTRY_FILE, ensureShineDir, getPortRange } from './config.js'
+import { REGISTRY_FILE, ensureThroughlineDir, getPortRange } from './config.js'
 
 export interface DeckEntry {
   path: string
@@ -29,7 +29,7 @@ interface Registry {
  * Load the registry from disk.
  */
 function loadRegistry(): Registry {
-  ensureShineDir()
+  ensureThroughlineDir()
 
   if (!existsSync(REGISTRY_FILE)) {
     return { decks: {} }
@@ -43,7 +43,7 @@ function loadRegistry(): Registry {
  * Save the registry to disk.
  */
 function saveRegistry(registry: Registry): void {
-  ensureShineDir()
+  ensureThroughlineDir()
   writeFileSync(REGISTRY_FILE, JSON.stringify(registry, null, 2))
 }
 

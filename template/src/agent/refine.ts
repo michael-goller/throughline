@@ -1,5 +1,5 @@
 /**
- * Iterative agent refinement protocol for Shine decks.
+ * Iterative agent refinement protocol for Throughline decks.
  *
  * Builds on the core tools (add/modify/remove/reorder) to provide:
  * - Diff generation (human-readable before/after per slide)

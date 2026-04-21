@@ -5,7 +5,7 @@ interface SlideState {
   hidden: string[]
 }
 
-const STORAGE_KEY = 'shine-slide-state'
+const STORAGE_KEY = 'throughline-slide-state'
 
 function getStorageKey(deckId: string): string {
   return `${STORAGE_KEY}-${deckId}`

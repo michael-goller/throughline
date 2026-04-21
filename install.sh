@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Shine installer — curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash
+# Throughline installer — curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
 #
 # Works on macOS, Linux, and Windows (WSL/Git Bash).
 # Installs Node.js (via nvm) if missing, clones the repo, builds the CLI,
-# and symlinks `shine` into your PATH.
+# and symlinks `throughline` into your PATH.
 
 set -euo pipefail
 
@@ -17,9 +17,9 @@ BOLD='\033[1m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-SHINE_REPO="https://github.com/michael-goller/shine.git"
-SHINE_HOME="${SHINE_HOME:-$HOME/.shine}"
-SHINE_INSTALL_DIR="$SHINE_HOME/install"
+THROUGHLINE_REPO="https://github.com/michael-goller/throughline.git"
+THROUGHLINE_HOME="${THROUGHLINE_HOME:-$HOME/.throughline}"
+THROUGHLINE_INSTALL_DIR="$THROUGHLINE_HOME/install"
 MIN_NODE_MAJOR=20
 
 # ── Helpers ──────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ banner() {
 
 ART
   printf "${RESET}"
-  printf "  ${DIM}Beautiful slide decks made simple.${RESET}\n\n"
+  printf "  ${DIM}The dev-native way to make decks.${RESET}\n\n"
 }
 
 # ── Detect platform ─────────────────────────────────────────────
@@ -122,27 +122,27 @@ ensure_git() {
 }
 
 # ── Clone / update repo ─────────────────────────────────────────
-install_shine() {
-  mkdir -p "$SHINE_HOME"
+install_throughline() {
+  mkdir -p "$THROUGHLINE_HOME"
 
-  if [ -d "$SHINE_INSTALL_DIR/.git" ]; then
+  if [ -d "$THROUGHLINE_INSTALL_DIR/.git" ]; then
     info "Updating existing installation..."
-    cd "$SHINE_INSTALL_DIR"
+    cd "$THROUGHLINE_INSTALL_DIR"
     git pull --ff-only origin main 2>/dev/null || git pull origin main
     cd - >/dev/null
   else
-    info "Cloning Shine..."
-    rm -rf "$SHINE_INSTALL_DIR"
-    git clone --depth 1 "$SHINE_REPO" "$SHINE_INSTALL_DIR"
+    info "Cloning Throughline..."
+    rm -rf "$THROUGHLINE_INSTALL_DIR"
+    git clone --depth 1 "$THROUGHLINE_REPO" "$THROUGHLINE_INSTALL_DIR"
   fi
 
-  ok "Source downloaded to $SHINE_INSTALL_DIR"
+  ok "Source downloaded to $THROUGHLINE_INSTALL_DIR"
 }
 
 # ── Build CLI ────────────────────────────────────────────────────
 build_cli() {
   info "Installing CLI dependencies..."
-  cd "$SHINE_INSTALL_DIR/cli"
+  cd "$THROUGHLINE_INSTALL_DIR/cli"
   npm install --no-audit --no-fund --loglevel=error
   ok "Dependencies installed"
 
@@ -156,7 +156,7 @@ build_cli() {
 # ── Install template dependencies ────────────────────────────────
 install_template_deps() {
   info "Installing template dependencies..."
-  cd "$SHINE_INSTALL_DIR/template"
+  cd "$THROUGHLINE_INSTALL_DIR/template"
   npm install --no-audit --no-fund --loglevel=error
   ok "Template ready"
   cd - >/dev/null
@@ -165,9 +165,9 @@ install_template_deps() {
 # ── Symlink into PATH ───────────────────────────────────────────
 link_binary() {
   local BIN_DIR=""
-  local SHINE_BIN="$SHINE_INSTALL_DIR/cli/bin/shine.js"
+  local THROUGHLINE_BIN="$THROUGHLINE_INSTALL_DIR/cli/bin/throughline.js"
 
-  chmod +x "$SHINE_BIN"
+  chmod +x "$THROUGHLINE_BIN"
 
   # Determine best bin directory
   if [ -d "/opt/homebrew/bin" ] && echo "$PATH" | grep -q "/opt/homebrew/bin"; then
@@ -180,9 +180,9 @@ link_binary() {
   fi
 
   # Remove old symlink if present
-  rm -f "$BIN_DIR/shine"
-  ln -sf "$SHINE_BIN" "$BIN_DIR/shine"
-  ok "Linked ${BOLD}shine${RESET} → $BIN_DIR/shine"
+  rm -f "$BIN_DIR/throughline"
+  ln -sf "$THROUGHLINE_BIN" "$BIN_DIR/throughline"
+  ok "Linked ${BOLD}throughline${RESET} → $BIN_DIR/throughline"
 
   # Check if BIN_DIR is in PATH
   if ! echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
@@ -197,11 +197,11 @@ link_binary() {
 
 # ── Write default config ─────────────────────────────────────────
 write_config() {
-  local CONFIG_FILE="$SHINE_HOME/config.json"
+  local CONFIG_FILE="$THROUGHLINE_HOME/config.json"
   if [ ! -f "$CONFIG_FILE" ]; then
     cat > "$CONFIG_FILE" << EOF
 {
-  "template_path": "$SHINE_INSTALL_DIR/template",
+  "template_path": "$THROUGHLINE_INSTALL_DIR/template",
   "decks_path": "$HOME/decks",
   "port_range": [5173, 5199]
 }
@@ -215,23 +215,23 @@ EOF
 # ── Done ─────────────────────────────────────────────────────────
 finish() {
   echo ""
-  printf "  ${GREEN}${BOLD}Shine is installed!${RESET}\n"
+  printf "  ${GREEN}${BOLD}Throughline is installed!${RESET}\n"
   echo ""
   printf "  ${DIM}Get started:${RESET}\n"
   echo ""
-  echo "    shine new my-deck      # Create a deck"
-  echo "    shine serve my-deck    # Start dev server"
-  echo "    shine open my-deck     # Open in browser"
+  echo "    throughline new my-deck      # Create a deck"
+  echo "    throughline serve my-deck    # Start dev server"
+  echo "    throughline open my-deck     # Open in browser"
   echo ""
   printf "  ${DIM}Manage decks:${RESET}\n"
   echo ""
-  echo "    shine ls               # List all decks"
-  echo "    shine publish my-deck  # Publish to cloud"
-  echo "    shine export my-deck   # Export to PDF"
+  echo "    throughline ls               # List all decks"
+  echo "    throughline publish my-deck  # Publish to cloud"
+  echo "    throughline export my-deck   # Export to PDF"
   echo ""
   printf "  ${DIM}Update anytime:${RESET}\n"
   echo ""
-  echo "    shine update           # Pull latest & rebuild"
+  echo "    throughline update           # Pull latest & rebuild"
   echo ""
 }
 
@@ -241,7 +241,7 @@ main() {
   detect_platform
   ensure_git
   ensure_node
-  install_shine
+  install_throughline
   build_cli
   install_template_deps
   link_binary

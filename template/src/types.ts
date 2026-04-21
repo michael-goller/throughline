@@ -1,8 +1,8 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-export type { SlideConfig } from '@shine/types'
-export type * from '@shine/types'
+export type { SlideConfig } from '@throughline/types'
+export type * from '@throughline/types'
 
 export type IconRef = LucideIcon | string
 

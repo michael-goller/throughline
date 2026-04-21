@@ -1,11 +1,11 @@
-# Shine
+# Throughline
 
-**Beautiful slide decks made simple.**
+**The dev-native way to make decks.**
 Or: presentations for people who'd rather not make presentations.
 
 ---
 
-The world runs on spreadsheets and slide decks — but nobody actually *enjoys* making them. Shine lets you describe what you want, and an AI agent builds beautiful presentations with modern web technology. No proprietary format. No lock-in. No dragging boxes around a canvas at 2am wondering where your life went wrong.
+The world runs on spreadsheets and slide decks — but nobody actually *enjoys* making them. Throughline lets you describe what you want, and an AI agent builds beautiful presentations with modern web technology. No proprietary format. No lock-in. No dragging boxes around a canvas at 2am wondering where your life went wrong.
 
 Your deck is a `slides.config.ts` file — a plain TypeScript array of slide objects. AI agents read and write it directly. You talk, they build. You present, everyone's impressed. You take the credit.
 
@@ -13,16 +13,16 @@ Your deck is a `slides.config.ts` file — a plain TypeScript array of slide obj
 
 ```bash
 # Install
-curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
 
 # Create a deck
-shine new quarterly-update
+throughline new quarterly-update
 
 # Tell your AI agent what you want
 # (Claude Code, Gemini CLI, Codex — dealer's choice)
 
 # Present
-shine serve quarterly-update
+throughline serve quarterly-update
 ```
 
 That's it. Three commands and a conversation.
@@ -32,28 +32,28 @@ That's it. Three commands and a conversation.
 **One-liner** (macOS, Linux, WSL) — installs everything, including Node.js if you don't have it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/michael-goller/shine/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
 ```
 
 **Homebrew:**
 
 ```bash
-brew install michael-goller/tap/shine
+brew install michael-goller/tap/throughline
 ```
 
 **npm:**
 
 ```bash
-npm install -g shine-deck
+npm install -g throughline
 ```
 
 ## How It Works
 
-Shine is just a web app built for decks.
+Throughline is just a web app built for decks.
 
-1. **You create a deck** — `shine new my-deck` scaffolds a `slides.config.ts` and a `public/` folder. That's your entire deck. Two items.
+1. **You create a deck** — `throughline new my-deck` scaffolds a `slides.config.ts` and a `public/` folder. That's your entire deck. Two items.
 2. **An AI agent writes the config** — the config is a typed array of slide objects. Each slide has a `type`, a `title`, and type-specific content. AI agents are *really good* at writing these.
-3. **Shine renders it** — React 19, Framer Motion, and Tailwind CSS turn your config into a polished, animated presentation with dark and light themes.
+3. **Throughline renders it** — React 19, Framer Motion, and Tailwind CSS turn your config into a polished, animated presentation with dark and light themes.
 
 ```typescript
 // slides.config.ts — this is a deck
@@ -106,29 +106,29 @@ Every slide type supports dark and light themes, smooth Framer Motion animations
 
 | Command | What it does |
 |---|---|
-| `shine new <name>` | Create a new deck (`--full` for a complete template copy) |
-| `shine serve [name]` | Start the dev server with live reload |
-| `shine open [name]` | Open a deck in the browser (or the gallery if no name) |
-| `shine ls` | List all your decks |
-| `shine export [name]` | Export to PNG or PDF (`--png`, `--light`, `--slides 1-5`) |
-| `shine publish [name]` | Push to Shine Cloud for sharing |
-| `shine unpublish [name]` | Remove from Shine Cloud |
-| `shine status [name]` | Detailed deck info: path, port, type, URLs |
-| `shine stop [name]` | Stop a running server (`--all` for everything) |
-| `shine add <name> [path]` | Register an existing deck directory |
-| `shine rm [name]` | Unregister a deck (files stay on disk) |
-| `shine rename <old> <new>` | Rename a deck |
-| `shine update` | Self-update to the latest version |
-| `shine doctor` | Health check — Node.js, npm, git, template, config |
+| `throughline new <name>` | Create a new deck (`--full` for a complete template copy) |
+| `throughline serve [name]` | Start the dev server with live reload |
+| `throughline open [name]` | Open a deck in the browser (or the gallery if no name) |
+| `throughline ls` | List all your decks |
+| `throughline export [name]` | Export to PNG or PDF (`--png`, `--light`, `--slides 1-5`) |
+| `throughline publish [name]` | Push to Throughline Cloud for sharing |
+| `throughline unpublish [name]` | Remove from Throughline Cloud |
+| `throughline status [name]` | Detailed deck info: path, port, type, URLs |
+| `throughline stop [name]` | Stop a running server (`--all` for everything) |
+| `throughline add <name> [path]` | Register an existing deck directory |
+| `throughline rm [name]` | Unregister a deck (files stay on disk) |
+| `throughline rename <old> <new>` | Rename a deck |
+| `throughline update` | Self-update to the latest version |
+| `throughline doctor` | Health check — Node.js, npm, git, template, config |
 
 ### Cloud Commands
 
 | Command | What it does |
 |---|---|
-| `shine cloud [url]` | Show or set the Shine Cloud API URL |
-| `shine login` | Log in to Shine Cloud |
-| `shine logout` | Clear stored credentials |
-| `shine whoami` | Show current user |
+| `throughline cloud [url]` | Show or set the Throughline Cloud API URL |
+| `throughline login` | Log in to Throughline Cloud |
+| `throughline logout` | Clear stored credentials |
+| `throughline whoami` | Show current user |
 
 ## Keyboard Shortcuts
 
@@ -163,16 +163,16 @@ Vim-style navigation because we have standards.
 
 ## Thin vs. Full Decks
 
-Shine has two deck modes:
+Throughline has two deck modes:
 
 - **Thin** (default) — just a `slides.config.ts` and `public/` folder. The shared template renders everything. Fast to create, tiny footprint, great for most decks.
-- **Full** (`shine new --full`) — a complete copy of the template with its own `src/`, `package.json`, and everything. Use this when you need custom components or deep modifications.
+- **Full** (`throughline new --full`) — a complete copy of the template with its own `src/`, `package.json`, and everything. Use this when you need custom components or deep modifications.
 
 Thin decks are the sweet spot. One config file, all 33 slide types, zero maintenance.
 
 ## AI Agent Integration
 
-Shine includes a full agent API designed for AI-powered deck creation. This is the machinery that lets Claude Code, Gemini CLI, or any LLM-powered tool generate and refine decks programmatically.
+Throughline includes a full agent API designed for AI-powered deck creation. This is the machinery that lets Claude Code, Gemini CLI, or any LLM-powered tool generate and refine decks programmatically.
 
 ### Agent Tools
 
@@ -188,7 +188,7 @@ Five structured tools that AI agents can call:
 
 ### Document Ingestion
 
-Feed existing content and Shine extracts structure for deck generation:
+Feed existing content and Throughline extracts structure for deck generation:
 
 - **PDF** — text extraction with layout analysis
 - **Word (.docx)** — paragraph and heading parsing
@@ -215,10 +215,10 @@ Iterative editing with undo support — create an edit session, apply changes, p
 ## Project Structure
 
 ```
-shine/
-├── cli/              # Shine CLI (shine-deck npm package)
+throughline/
+├── cli/              # Throughline CLI (throughline npm package)
 │   ├── src/cli.ts    # All commands
-│   └── bin/shine.js  # Entry point
+│   └── bin/throughline.js  # Entry point
 ├── template/         # React/Vite presentation engine
 │   ├── src/
 │   │   ├── templates/  # 33 slide type components
@@ -249,10 +249,10 @@ shine/
 
 ## Configuration
 
-Shine stores its config in `~/.shine/`:
+Throughline stores its config in `~/.throughline/`:
 
 ```
-~/.shine/
+~/.throughline/
 ├── config.json    # Template path, decks directory, port range
 └── registry.json  # All registered decks with paths, ports, URLs
 ```
@@ -261,7 +261,7 @@ Default config:
 
 ```json
 {
-  "template_path": "~/.shine/install/template",
+  "template_path": "~/.throughline/install/template",
   "decks_path": "~/decks",
   "port_range": [5173, 5199]
 }

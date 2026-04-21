@@ -1,5 +1,5 @@
 /**
- * Agent tool definitions for Shine deck manipulation.
+ * Agent tool definitions for Throughline deck manipulation.
  *
  * These tool definitions follow the standard AI tool-calling convention:
  * each tool has a name, description, and a JSON Schema for its parameters.
@@ -39,7 +39,7 @@ export interface ToolResult {
 const createDeckTool: ToolDefinition = {
   name: 'create_deck',
   description:
-    'Create a new Shine presentation deck from scratch. Returns a complete deck config with all slides. ' +
+    'Create a new Throughline presentation deck from scratch. Returns a complete deck config with all slides. ' +
     'Use this when the user wants a new presentation. The slides array must contain at least one slide. ' +
     'Each slide needs a unique "id" and a "type" that determines its layout.',
   parameters: deckConfigSchema,

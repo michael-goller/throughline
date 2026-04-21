@@ -1,5 +1,5 @@
 /**
- * @shine/types — shared slide type definitions used by both
+ * @throughline/types — shared slide type definitions used by both
  * the local presentation app and the cloud backend.
  *
  * Icon references are plain strings here (Lucide icon names).

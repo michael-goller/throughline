@@ -1,14 +1,14 @@
 /**
- * Cloud auth and publish functionality for Shine CLI.
+ * Cloud auth and publish functionality for Throughline CLI.
  */
 
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdtempSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { execSync } from 'child_process'
-import { SHINE_DIR, ensureShineDir, getTemplatePath } from './config.js'
+import { THROUGHLINE_DIR, ensureThroughlineDir, getTemplatePath } from './config.js'
 
-const CREDENTIALS_FILE = join(SHINE_DIR, 'credentials.json')
+const CREDENTIALS_FILE = join(THROUGHLINE_DIR, 'credentials.json')
 
 interface Credentials {
   token: string
@@ -18,7 +18,7 @@ interface Credentials {
 }
 
 export function saveCredentials(creds: Credentials): void {
-  ensureShineDir()
+  ensureThroughlineDir()
   writeFileSync(CREDENTIALS_FILE, JSON.stringify(creds, null, 2), 'utf-8')
 }
 
@@ -39,10 +39,10 @@ export function clearCredentials(): void {
 
 export function getApiUrl(): string {
   // 1. Env var override
-  if (process.env.SHINE_API_URL) return process.env.SHINE_API_URL
+  if (process.env.THROUGHLINE_API_URL) return process.env.THROUGHLINE_API_URL
 
   // 2. Check registry for configured URL
-  const registryPath = join(SHINE_DIR, 'registry.json')
+  const registryPath = join(THROUGHLINE_DIR, 'registry.json')
   if (existsSync(registryPath)) {
     try {
       const registry = JSON.parse(readFileSync(registryPath, 'utf-8'))
@@ -55,8 +55,8 @@ export function getApiUrl(): string {
 }
 
 export function setApiUrl(url: string): void {
-  ensureShineDir()
-  const registryPath = join(SHINE_DIR, 'registry.json')
+  ensureThroughlineDir()
+  const registryPath = join(THROUGHLINE_DIR, 'registry.json')
   let registry: Record<string, unknown> = {}
   if (existsSync(registryPath)) {
     try {
@@ -112,7 +112,7 @@ export async function whoami(): Promise<{ name: string; email: string } | null> 
 export async function publish(deckDir: string): Promise<{ slug: string; url: string }> {
   const creds = loadCredentials()
   if (!creds) {
-    throw new Error('Not logged in. Run: shine login')
+    throw new Error('Not logged in. Run: throughline login')
   }
 
   // Find the slides config file — check multiple common locations
@@ -165,7 +165,7 @@ export async function publish(deckDir: string): Promise<{ slug: string; url: str
   let configJson: string
   try {
     // Write extract script to a temp file to avoid shell escaping issues
-    const tmpDir = mkdtempSync(join(tmpdir(), 'shine-'))
+    const tmpDir = mkdtempSync(join(tmpdir(), 'throughline-'))
     const tmpScript = join(tmpDir, 'extract.ts')
     writeFileSync(tmpScript, extractScript, 'utf-8')
 
@@ -234,7 +234,7 @@ export async function publish(deckDir: string): Promise<{ slug: string; url: str
 export async function unpublish(slug: string): Promise<void> {
   const creds = loadCredentials()
   if (!creds) {
-    throw new Error('Not logged in. Run: shine login')
+    throw new Error('Not logged in. Run: throughline login')
   }
 
   const apiUrl = getApiUrl()
@@ -259,7 +259,7 @@ export interface ShareToken {
 
 export async function createShare(slug: string, password: string, options?: { label?: string; expiresAt?: string }): Promise<ShareToken> {
   const creds = loadCredentials()
-  if (!creds) throw new Error('Not logged in. Run: shine login')
+  if (!creds) throw new Error('Not logged in. Run: throughline login')
 
   const apiUrl = getApiUrl()
   const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {
@@ -281,7 +281,7 @@ export async function createShare(slug: string, password: string, options?: { la
 
 export async function listShares(slug: string): Promise<ShareToken[]> {
   const creds = loadCredentials()
-  if (!creds) throw new Error('Not logged in. Run: shine login')
+  if (!creds) throw new Error('Not logged in. Run: throughline login')
 
   const apiUrl = getApiUrl()
   const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {
@@ -298,7 +298,7 @@ export async function listShares(slug: string): Promise<ShareToken[]> {
 
 export async function deleteShare(slug: string, options: { tokenId?: string; all?: boolean }): Promise<void> {
   const creds = loadCredentials()
-  if (!creds) throw new Error('Not logged in. Run: shine login')
+  if (!creds) throw new Error('Not logged in. Run: throughline login')
 
   const apiUrl = getApiUrl()
   const res = await fetch(`${apiUrl}/api/decks/${encodeURIComponent(slug)}/share`, {

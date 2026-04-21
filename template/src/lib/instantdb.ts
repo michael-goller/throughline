@@ -1,5 +1,5 @@
 /**
- * InstantDB configuration for Shine Decks
+ * InstantDB configuration for Throughline Decks
  *
  * Set VITE_INSTANTDB_APP_ID in your environment or .env file
  * Get your app ID from https://instantdb.com/dash

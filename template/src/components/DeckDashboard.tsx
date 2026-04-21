@@ -515,9 +515,9 @@ export default function DeckDashboard() {
             </div>
             <div>
               <h1 className="font-display text-text text-h3 font-bold tracking-tight leading-none">
-                Shine
+                Throughline
               </h1>
-              <p className="text-xs text-text-muted/60 mt-0.5">Beautiful slide decks made simple</p>
+              <p className="text-xs text-text-muted/60 mt-0.5">The dev-native way to make decks</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -708,7 +708,7 @@ export default function DeckDashboard() {
             <span className="mx-2">·</span>
             <span className="font-mono">?</span> help
           </div>
-          <div>Shine Presentations</div>
+          <div>Throughline Presentations</div>
         </div>
       </div>
 

@@ -1,8 +1,8 @@
 /**
- * Shine Agent Interface
+ * Throughline Agent Interface
  *
  * Provides everything needed for AI agents to create and modify
- * Shine presentation decks via structured tool calls.
+ * Throughline presentation decks via structured tool calls.
  *
  * @example
  * ```ts

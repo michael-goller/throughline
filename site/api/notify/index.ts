@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { put, list } from '@vercel/blob';
 
-const BLOB_KEY = 'shine-cloud-signups.json';
+const BLOB_KEY = 'throughline-cloud-signups.json';
 
 interface Signup {
   email: string;
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       allowOverwrite: true,
     });
 
-    return res.status(200).json({ message: "You're on the list! We'll notify you when Shine Cloud launches." });
+    return res.status(200).json({ message: "You're on the list! We'll notify you when Throughline Cloud launches." });
   } catch (err) {
     console.error('Notify signup error:', err);
     return res.status(500).json({ error: 'Something went wrong. Please try again.' });

@@ -211,7 +211,7 @@ function PasswordPrompt({ title, error, password, setPassword, submitting, onSub
           </button>
         </form>
 
-        <p className="text-center text-xs text-text-muted/40 mt-6">Powered by Shine</p>
+        <p className="text-center text-xs text-text-muted/40 mt-6">Powered by Throughline</p>
       </motion.div>
     </div>
   )

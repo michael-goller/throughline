@@ -1,16 +1,16 @@
 {
-  "name": "shine-deck",
+  "name": "throughline",
   "version": "0.2.0",
-  "description": "Beautiful slide decks made simple",
+  "description": "The dev-native way to make decks",
   "type": "module",
   "bin": {
-    "shine": "./bin/shine.js"
+    "throughline": "./bin/throughline.js"
   },
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node bin/shine.js"
+    "start": "node bin/throughline.js"
   },
   "files": [
     "bin",
@@ -18,10 +18,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/michael-goller/shine.git",
+    "url": "git+https://github.com/michael-goller/throughline.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/michael-goller/shine#readme",
+  "homepage": "https://github.com/michael-goller/throughline#readme",
   "keywords": [
     "slides",
     "presentation",

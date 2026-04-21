@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Pack Shine into a distributable tarball.
+# Pack Throughline into a distributable tarball.
 # Includes pre-built CLI (with node_modules) and template (without node_modules).
 #
 # Usage: ./scripts/pack-tarball.sh
-# Output: ./dist/shine-v<version>.tar.gz
+# Output: ./dist/throughline-v<version>.tar.gz
 
 set -euo pipefail
 
@@ -11,11 +11,11 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI_DIR="$REPO_ROOT/cli"
 TEMPLATE_DIR="$REPO_ROOT/template"
 VERSION="$(node -e "console.log(require('$CLI_DIR/package.json').version)")"
-TARBALL_NAME="shine-v${VERSION}.tar.gz"
+TARBALL_NAME="throughline-v${VERSION}.tar.gz"
 DIST_DIR="$REPO_ROOT/dist"
-STAGING_DIR="$DIST_DIR/.staging/shine"
+STAGING_DIR="$DIST_DIR/.staging/throughline"
 
-echo "==> Packing Shine v${VERSION}"
+echo "==> Packing Throughline v${VERSION}"
 
 # ── Clean staging area ──────────────────────────────────────────
 rm -rf "$DIST_DIR/.staging"
@@ -41,15 +41,15 @@ cd "$STAGING_DIR/cli"
 npm install --omit=dev --no-audit --no-fund --loglevel=error
 echo "    CLI copied with production deps."
 
-# ── Build and copy @shine/types ────────────────────────────────
-echo "==> Building @shine/types..."
+# ── Build and copy @throughline/types ────────────────────────────────
+echo "==> Building @throughline/types..."
 cd "$REPO_ROOT/packages/types"
 npm install --no-audit --no-fund --loglevel=error
 npm run build
 mkdir -p "$STAGING_DIR/packages/types"
 cp -r "$REPO_ROOT/packages/types/dist" "$STAGING_DIR/packages/types/"
 cp "$REPO_ROOT/packages/types/package.json" "$STAGING_DIR/packages/types/"
-echo "    @shine/types built and copied."
+echo "    @throughline/types built and copied."
 
 # ── Copy template (without node_modules, dist, .git) ───────────
 echo "==> Copying template..."
@@ -72,7 +72,7 @@ echo "$VERSION" > "$STAGING_DIR/VERSION"
 echo "==> Creating tarball..."
 mkdir -p "$DIST_DIR"
 cd "$DIST_DIR/.staging"
-tar -czf "$DIST_DIR/$TARBALL_NAME" shine/
+tar -czf "$DIST_DIR/$TARBALL_NAME" throughline/
 echo "    Created: $DIST_DIR/$TARBALL_NAME"
 
 # ── Cleanup staging ─────────────────────────────────────────────

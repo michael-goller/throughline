@@ -44,7 +44,7 @@ function detectVitePort(proc: ChildProcess, fallbackPort: number): Promise<numbe
 }
 
 // Marker file that identifies a thin deck folder
-const DECK_MARKER = '.shine-deck'
+const DECK_MARKER = '.throughline-deck'
 
 /**
  * Check if a path is a thin deck (just config + assets, no app code).
@@ -131,7 +131,7 @@ function createThinDeck(name: string, deckPath: string, templatePath: string): s
 
   // Create marker file
   const marker = join(deckPath, DECK_MARKER)
-  writeFileSync(marker, `# Shine thin deck\n# Created from template\nname: ${name}\n`)
+  writeFileSync(marker, `# Throughline thin deck\n# Created from template\nname: ${name}\n`)
 
   // Update title
   updateDeckTitle(destConfig, name)

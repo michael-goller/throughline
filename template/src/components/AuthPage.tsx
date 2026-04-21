@@ -8,7 +8,7 @@ interface AuthPageProps {
 }
 
 /**
- * Auth page styled to match the Shine landing page aesthetic:
+ * Auth page styled to match the Throughline landing page aesthetic:
  * dark bg (#0f0f13), indigo accent, Outfit + Nunito Sans fonts.
  */
 export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
@@ -95,7 +95,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               className="text-2xl font-bold"
               style={{ fontFamily: "'Outfit', system-ui, sans-serif", color: '#e8e8ed', letterSpacing: '-0.02em' }}
             >
-              Shine
+              Throughline
             </h1>
           </div>
           <p style={{ color: 'rgba(232, 232, 237, 0.5)', fontSize: '0.9rem' }}>

@@ -1,5 +1,5 @@
 /**
- * JSON Schema definitions for Shine slide deck configs.
+ * JSON Schema definitions for Throughline slide deck configs.
  *
  * These schemas enable AI agents to generate valid slide configs
  * as structured JSON output. All icon fields accept Lucide icon
@@ -841,7 +841,7 @@ const slideSchemas = {
 export const slideConfigSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   title: 'SlideConfig',
-  description: 'A single Shine slide configuration. The "type" field determines which properties are valid.',
+  description: 'A single Throughline slide configuration. The "type" field determines which properties are valid.',
   oneOf: Object.values(slideSchemas),
   $defs: { orgNode },
 }
@@ -851,7 +851,7 @@ export const slideConfigSchema = {
 export const deckConfigSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   title: 'DeckConfig',
-  description: 'A complete Shine slide deck configuration',
+  description: 'A complete Throughline slide deck configuration',
   type: 'object' as const,
   properties: {
     title: { type: 'string' as const, description: 'Deck title (for metadata / gallery display)' },

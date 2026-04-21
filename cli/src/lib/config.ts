@@ -1,5 +1,5 @@
 /**
- * Configuration management for Shine.
+ * Configuration management for Throughline.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
@@ -7,15 +7,15 @@ import { homedir } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
-// Get package directory (where shine-deck is installed)
+// Get package directory (where throughline is installed)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 export const PACKAGE_DIR = join(__dirname, '..', '..')
 
 // User config directory
-export const SHINE_DIR = join(homedir(), '.shine')
-export const CONFIG_FILE = join(SHINE_DIR, 'config.json')
-export const REGISTRY_FILE = join(SHINE_DIR, 'registry.json')
+export const THROUGHLINE_DIR = join(homedir(), '.throughline')
+export const CONFIG_FILE = join(THROUGHLINE_DIR, 'config.json')
+export const REGISTRY_FILE = join(THROUGHLINE_DIR, 'registry.json')
 
 export interface Config {
   decks_path: string
@@ -29,11 +29,11 @@ const DEFAULT_CONFIG: Config = {
 }
 
 /**
- * Ensure the .shine directory exists.
+ * Ensure the .throughline directory exists.
  */
-export function ensureShineDir(): void {
-  if (!existsSync(SHINE_DIR)) {
-    mkdirSync(SHINE_DIR, { recursive: true })
+export function ensureThroughlineDir(): void {
+  if (!existsSync(THROUGHLINE_DIR)) {
+    mkdirSync(THROUGHLINE_DIR, { recursive: true })
   }
 }
 
@@ -41,7 +41,7 @@ export function ensureShineDir(): void {
  * Load configuration from file, creating defaults if needed.
  */
 export function loadConfig(): Config {
-  ensureShineDir()
+  ensureThroughlineDir()
 
   if (!existsSync(CONFIG_FILE)) {
     saveConfig(DEFAULT_CONFIG)
@@ -56,7 +56,7 @@ export function loadConfig(): Config {
  * Save configuration to file.
  */
 export function saveConfig(config: Config): void {
-  ensureShineDir()
+  ensureThroughlineDir()
   writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2))
 }
 

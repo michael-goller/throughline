@@ -12,8 +12,8 @@ function extractDeckTitle(src: string, fallback: string): string {
   return fallback
 }
 
-/** Path to the Shine registry file */
-const REGISTRY_FILE = path.join(process.env.HOME || '', '.shine', 'registry.json')
+/** Path to the Throughline registry file */
+const REGISTRY_FILE = path.join(process.env.HOME || '', '.throughline', 'registry.json')
 
 /**
  * Load all known deck paths: merge registry entries with a directory scan of decksDir.
@@ -22,7 +22,7 @@ const REGISTRY_FILE = path.join(process.env.HOME || '', '.shine', 'registry.json
 function loadDeckPaths(decksDir: string): Map<string, string> {
   const decks = new Map<string, string>()
 
-  // 1. Read the CLI registry (~/.shine/registry.json) — source of truth for all decks
+  // 1. Read the CLI registry (~/.throughline/registry.json) — source of truth for all decks
   try {
     if (fs.existsSync(REGISTRY_FILE)) {
       const registry = JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf-8'))

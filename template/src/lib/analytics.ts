@@ -5,7 +5,7 @@
  * Optional: forwards events to Application Insights if VITE_APPINSIGHTS_KEY is set.
  */
 
-const STORAGE_PREFIX = 'shine-views-'
+const STORAGE_PREFIX = 'throughline-views-'
 
 export interface ViewEvent {
   deckId: string

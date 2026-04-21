@@ -7,7 +7,7 @@ const VALID_TOKENS = new Set([
 
 // The blob pathname in Vercel Blob storage.
 // Updated by upload-blob.mjs when a new version is published.
-const BLOB_PATHNAME = process.env.SHINE_BLOB_PATHNAME || "shine/shine-v0.2.0.tar.gz";
+const BLOB_PATHNAME = process.env.THROUGHLINE_BLOB_PATHNAME || "throughline/throughline-v0.2.0.tar.gz";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { token } = req.query;
@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     res.setHeader("Content-Type", "application/gzip");
-    res.setHeader("Content-Disposition", `attachment; filename="shine-latest.tar.gz"`);
+    res.setHeader("Content-Disposition", `attachment; filename="throughline-latest.tar.gz"`);
     res.setHeader("Cache-Control", "no-store");
 
     // Stream the response

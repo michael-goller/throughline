@@ -33,7 +33,7 @@ export function pickDeck(prompt: string): string | null {
     // Fallback: show numbered list
     console.log(`\n${prompt}:`)
     names.forEach((name, i) => console.log(`  ${i + 1}. ${name}`))
-    console.log('\nRun with deck name: shine <command> <name>')
+    console.log('\nRun with deck name: throughline <command> <name>')
     return null
   }
 

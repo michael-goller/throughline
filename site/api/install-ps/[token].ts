@@ -4,14 +4,14 @@ const VALID_TOKENS = new Set([
   "9b3998ea32f54ec9",
 ]);
 
-const SITE_URL = process.env.SHINE_SITE_URL || "https://shine-site-lemon.vercel.app";
+const SITE_URL = process.env.THROUGHLINE_SITE_URL || "https://shine-site-lemon.vercel.app";
 
 function buildPowerShellScript(siteUrl: string, token: string): string {
   // PowerShell backtick is the escape char — must be escaped in JS template literals
   const BT = '`';  // backtick helper to avoid breaking the template literal
 
   return `#Requires -Version 5.1
-# Shine installer for Windows (PowerShell)
+# Throughline installer for Windows (PowerShell)
 # irm ${siteUrl}/api/install-ps/${token} | iex
 
 ${"$"}ErrorActionPreference = "Stop"
@@ -31,7 +31,7 @@ function Show-Banner {
     Write-Host "   ___) | | | | | | | |  __/" -ForegroundColor Cyan
     Write-Host "  |____/|_| |_|_|_| |_|\\___|" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "  Beautiful slide decks made simple." -ForegroundColor DarkGray
+    Write-Host "  The dev-native way to make decks." -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -93,16 +93,16 @@ function Ensure-Node {
 }
 
 # -- Download and extract ---
-function Install-Shine {
-    ${"$"}shineHome = if (${"$"}env:SHINE_HOME) { ${"$"}env:SHINE_HOME } else { Join-Path ${"$"}env:USERPROFILE ".shine" }
-    ${"$"}installDir = Join-Path ${"$"}shineHome "install"
+function Install-Throughline {
+    ${"$"}throughlineHome = if (${"$"}env:THROUGHLINE_HOME) { ${"$"}env:THROUGHLINE_HOME } else { Join-Path ${"$"}env:USERPROFILE ".throughline" }
+    ${"$"}installDir = Join-Path ${"$"}throughlineHome "install"
     ${"$"}tarballUrl = "${siteUrl}/api/download/${token}"
 
-    New-Item -ItemType Directory -Path ${"$"}shineHome -Force | Out-Null
+    New-Item -ItemType Directory -Path ${"$"}throughlineHome -Force | Out-Null
 
-    ${"$"}tarball = Join-Path ${"$"}shineHome "shine-latest.tar.gz"
+    ${"$"}tarball = Join-Path ${"$"}throughlineHome "throughline-latest.tar.gz"
 
-    Write-Info "Downloading Shine..."
+    Write-Info "Downloading Throughline..."
     Invoke-WebRequest -Uri ${"$"}tarballUrl -OutFile ${"$"}tarball -UseBasicParsing
     Write-Ok "Downloaded tarball"
 
@@ -116,13 +116,13 @@ function Install-Shine {
     New-Item -ItemType Directory -Path ${"$"}installDir -Force | Out-Null
 
     # Use tar (available on Windows 10+)
-    & tar -xzf ${"$"}tarball -C ${"$"}shineHome 2>${"$"}null
+    & tar -xzf ${"$"}tarball -C ${"$"}throughlineHome 2>${"$"}null
     if (${"$"}LASTEXITCODE -ne 0) {
         Write-Fail "Extraction failed. Ensure Windows 10 1803+ or install tar/7-zip."
     }
 
-    # tarball extracts as shine/ -- move to install/
-    ${"$"}extracted = Join-Path ${"$"}shineHome "shine"
+    # tarball extracts as throughline/ -- move to install/
+    ${"$"}extracted = Join-Path ${"$"}throughlineHome "throughline"
     if ((Test-Path ${"$"}extracted) -and (${"$"}extracted -ne ${"$"}installDir)) {
         if (Test-Path ${"$"}installDir) { Remove-Item -Recurse -Force ${"$"}installDir }
         Rename-Item ${"$"}extracted ${"$"}installDir
@@ -138,24 +138,24 @@ function Install-Shine {
     Pop-Location
     Write-Ok "Template ready"
 
-    # Create shims for shine command
-    ${"$"}shimPath = Join-Path ${"$"}env:USERPROFILE ".shine" "bin"
+    # Create shims for throughline command
+    ${"$"}shimPath = Join-Path ${"$"}env:USERPROFILE ".throughline" "bin"
     New-Item -ItemType Directory -Path ${"$"}shimPath -Force | Out-Null
 
     # Create a .cmd shim
     ${"$"}cmdLines = @(
         '@echo off',
-        ('node "%~dp0..\\install\\cli\\bin\\shine.js" %*')
+        ('node "%~dp0..\\install\\cli\\bin\\throughline.js" %*')
     )
-    [System.IO.File]::WriteAllLines((Join-Path ${"$"}shimPath "shine.cmd"), ${"$"}cmdLines)
+    [System.IO.File]::WriteAllLines((Join-Path ${"$"}shimPath "throughline.cmd"), ${"$"}cmdLines)
 
     # Create a .ps1 shim
     ${"$"}ps1Lines = @(
-        '& node (Join-Path $PSScriptRoot "..\\install\\cli\\bin\\shine.js") @args'
+        '& node (Join-Path $PSScriptRoot "..\\install\\cli\\bin\\throughline.js") @args'
     )
-    [System.IO.File]::WriteAllLines((Join-Path ${"$"}shimPath "shine.ps1"), ${"$"}ps1Lines)
+    [System.IO.File]::WriteAllLines((Join-Path ${"$"}shimPath "throughline.ps1"), ${"$"}ps1Lines)
 
-    Write-Ok "Created shine command in ${"$"}shimPath"
+    Write-Ok "Created throughline command in ${"$"}shimPath"
 
     # Check if shimPath is in PATH
     ${"$"}userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
@@ -167,7 +167,7 @@ function Install-Shine {
     }
 
     # Write default config
-    ${"$"}configFile = Join-Path ${"$"}shineHome "config.json"
+    ${"$"}configFile = Join-Path ${"$"}throughlineHome "config.json"
     if (-not (Test-Path ${"$"}configFile)) {
         ${"$"}config = @{
             template_path = Join-Path ${"$"}installDir "template"
@@ -182,30 +182,30 @@ function Install-Shine {
 
     # Done
     Write-Host ""
-    Write-Host "  Shine is installed!" -ForegroundColor Green
+    Write-Host "  Throughline is installed!" -ForegroundColor Green
     Write-Host ""
     Write-Host "  Get started:" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    shine new my-deck      # Create a deck"
-    Write-Host "    shine serve my-deck    # Start dev server"
-    Write-Host "    shine open my-deck     # Open in browser"
+    Write-Host "    throughline new my-deck      # Create a deck"
+    Write-Host "    throughline serve my-deck    # Start dev server"
+    Write-Host "    throughline open my-deck     # Open in browser"
     Write-Host ""
     Write-Host "  Manage decks:" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    shine ls               # List all decks"
-    Write-Host "    shine publish my-deck  # Publish to cloud"
-    Write-Host "    shine export my-deck   # Export to PDF"
+    Write-Host "    throughline ls               # List all decks"
+    Write-Host "    throughline publish my-deck  # Publish to cloud"
+    Write-Host "    throughline export my-deck   # Export to PDF"
     Write-Host ""
     Write-Host "  Update anytime:" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    shine update           # Pull latest & rebuild"
+    Write-Host "    throughline update           # Pull latest & rebuild"
     Write-Host ""
 }
 
 # -- Main ---
 Show-Banner
 Ensure-Node
-Install-Shine
+Install-Throughline
 `;
 }
 

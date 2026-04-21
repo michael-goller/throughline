@@ -7,13 +7,13 @@ const VALID_TOKENS = new Set([
 ]);
 
 // Base URL of the site (where this function is deployed).
-const SITE_URL = process.env.SHINE_SITE_URL || "https://shine-site-lemon.vercel.app";
+const SITE_URL = process.env.THROUGHLINE_SITE_URL || "https://shine-site-lemon.vercel.app";
 
 // The install script served to valid token holders.
 // Downloads a pre-built tarball via the token-gated /api/download endpoint.
 function buildInstallScript(siteUrl: string, token: string): string {
   return `#!/usr/bin/env bash
-# Shine installer — private distribution
+# Throughline installer — private distribution
 # curl -fsSL https://shine-site-lemon.vercel.app/api/install/TOKEN | bash
 #
 # Downloads a pre-built tarball from Vercel Blob storage.
@@ -33,8 +33,8 @@ DIM='\\033[2m'
 RESET='\\033[0m'
 
 TARBALL_URL="${siteUrl}/api/download/${token}"
-SHINE_HOME="\${SHINE_HOME:-\$HOME/.shine}"
-SHINE_INSTALL_DIR="\$SHINE_HOME/install"
+THROUGHLINE_HOME="\${THROUGHLINE_HOME:-\$HOME/.throughline}"
+THROUGHLINE_INSTALL_DIR="\$THROUGHLINE_HOME/install"
 MIN_NODE_MAJOR=20
 
 # ── Helpers ──────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ banner() {
 
 ART
   printf "\${RESET}"
-  printf "  \${DIM}Beautiful slide decks made simple.\${RESET}\\n\\n"
+  printf "  \${DIM}The dev-native way to make decks.\${RESET}\\n\\n"
 }
 
 # ── Detect platform ─────────────────────────────────────────────
@@ -107,38 +107,38 @@ ensure_node() {
 }
 
 # ── Download and extract tarball ─────────────────────────────────
-download_shine() {
-  mkdir -p "\$SHINE_HOME"
+download_throughline() {
+  mkdir -p "\$THROUGHLINE_HOME"
 
-  local TMP_TARBALL="\$SHINE_HOME/shine-latest.tar.gz"
+  local TMP_TARBALL="\$THROUGHLINE_HOME/throughline-latest.tar.gz"
 
-  info "Downloading Shine..."
+  info "Downloading Throughline..."
   curl -fSL "\$TARBALL_URL" -o "\$TMP_TARBALL"
   ok "Downloaded tarball"
 
   # Remove old installation if present
-  if [ -d "\$SHINE_INSTALL_DIR" ]; then
+  if [ -d "\$THROUGHLINE_INSTALL_DIR" ]; then
     info "Removing previous installation..."
-    rm -rf "\$SHINE_INSTALL_DIR"
+    rm -rf "\$THROUGHLINE_INSTALL_DIR"
   fi
 
   info "Extracting..."
-  mkdir -p "\$SHINE_INSTALL_DIR"
-  tar -xzf "\$TMP_TARBALL" -C "\$SHINE_HOME"
-  # tarball extracts as shine/ — move contents to install/
-  if [ -d "\$SHINE_HOME/shine" ] && [ "\$SHINE_HOME/shine" != "\$SHINE_INSTALL_DIR" ]; then
-    rm -rf "\$SHINE_INSTALL_DIR"
-    mv "\$SHINE_HOME/shine" "\$SHINE_INSTALL_DIR"
+  mkdir -p "\$THROUGHLINE_INSTALL_DIR"
+  tar -xzf "\$TMP_TARBALL" -C "\$THROUGHLINE_HOME"
+  # tarball extracts as throughline/ — move contents to install/
+  if [ -d "\$THROUGHLINE_HOME/throughline" ] && [ "\$THROUGHLINE_HOME/throughline" != "\$THROUGHLINE_INSTALL_DIR" ]; then
+    rm -rf "\$THROUGHLINE_INSTALL_DIR"
+    mv "\$THROUGHLINE_HOME/throughline" "\$THROUGHLINE_INSTALL_DIR"
   fi
 
   rm -f "\$TMP_TARBALL"
-  ok "Extracted to \$SHINE_INSTALL_DIR"
+  ok "Extracted to \$THROUGHLINE_INSTALL_DIR"
 }
 
 # ── Install template dependencies ────────────────────────────────
 install_template_deps() {
   info "Installing template dependencies..."
-  cd "\$SHINE_INSTALL_DIR/template"
+  cd "\$THROUGHLINE_INSTALL_DIR/template"
   npm install --no-audit --no-fund --loglevel=error
   ok "Template ready"
   cd - >/dev/null
@@ -147,9 +147,9 @@ install_template_deps() {
 # ── Symlink into PATH ───────────────────────────────────────────
 link_binary() {
   local BIN_DIR=""
-  local SHINE_BIN="\$SHINE_INSTALL_DIR/cli/bin/shine.js"
+  local THROUGHLINE_BIN="\$THROUGHLINE_INSTALL_DIR/cli/bin/throughline.js"
 
-  chmod +x "\$SHINE_BIN"
+  chmod +x "\$THROUGHLINE_BIN"
 
   if [ -d "/opt/homebrew/bin" ] && echo "\$PATH" | grep -q "/opt/homebrew/bin"; then
     BIN_DIR="/opt/homebrew/bin"
@@ -160,9 +160,9 @@ link_binary() {
     mkdir -p "\$BIN_DIR"
   fi
 
-  rm -f "\$BIN_DIR/shine"
-  ln -sf "\$SHINE_BIN" "\$BIN_DIR/shine"
-  ok "Linked \${BOLD}shine\${RESET} -> \$BIN_DIR/shine"
+  rm -f "\$BIN_DIR/throughline"
+  ln -sf "\$THROUGHLINE_BIN" "\$BIN_DIR/throughline"
+  ok "Linked \${BOLD}throughline\${RESET} -> \$BIN_DIR/throughline"
 
   if ! echo "\$PATH" | tr ':' '\\n' | grep -qx "\$BIN_DIR"; then
     warn "\$BIN_DIR is not in your PATH"
@@ -176,11 +176,11 @@ link_binary() {
 
 # ── Write default config ─────────────────────────────────────────
 write_config() {
-  local CONFIG_FILE="\$SHINE_HOME/config.json"
+  local CONFIG_FILE="\$THROUGHLINE_HOME/config.json"
   if [ ! -f "\$CONFIG_FILE" ]; then
     cat > "\$CONFIG_FILE" << CONF
 {
-  "template_path": "\$SHINE_INSTALL_DIR/template",
+  "template_path": "\$THROUGHLINE_INSTALL_DIR/template",
   "decks_path": "\$HOME/decks",
   "port_range": [5173, 5199]
 }
@@ -194,23 +194,23 @@ CONF
 # ── Done ─────────────────────────────────────────────────────────
 finish() {
   echo ""
-  printf "  \${GREEN}\${BOLD}Shine is installed!\${RESET}\\n"
+  printf "  \${GREEN}\${BOLD}Throughline is installed!\${RESET}\\n"
   echo ""
   printf "  \${DIM}Get started:\${RESET}\\n"
   echo ""
-  echo "    shine new my-deck      # Create a deck"
-  echo "    shine serve my-deck    # Start dev server"
-  echo "    shine open my-deck     # Open in browser"
+  echo "    throughline new my-deck      # Create a deck"
+  echo "    throughline serve my-deck    # Start dev server"
+  echo "    throughline open my-deck     # Open in browser"
   echo ""
   printf "  \${DIM}Manage decks:\${RESET}\\n"
   echo ""
-  echo "    shine ls               # List all decks"
-  echo "    shine publish my-deck  # Publish to cloud"
-  echo "    shine export my-deck   # Export to PDF"
+  echo "    throughline ls               # List all decks"
+  echo "    throughline publish my-deck  # Publish to cloud"
+  echo "    throughline export my-deck   # Export to PDF"
   echo ""
   printf "  \${DIM}Update anytime:\${RESET}\\n"
   echo ""
-  echo "    shine update           # Pull latest & rebuild"
+  echo "    throughline update           # Pull latest & rebuild"
   echo ""
 }
 
@@ -219,7 +219,7 @@ main() {
   banner
   detect_platform
   ensure_node
-  download_shine
+  download_throughline
   install_template_deps
   link_binary
   write_config
