@@ -211,7 +211,14 @@ function PasswordPrompt({ title, error, password, setPassword, submitting, onSub
           </button>
         </form>
 
-        <p className="font-display text-center text-xs text-text-muted/40 mt-6 tracking-wide">Powered by Throughline</p>
+        <div className="flex items-center justify-end gap-1.5 mt-6 text-text-muted/40">
+          <svg width="11" height="11" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M10 5 L10 19.75" stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
+            <polygon points="10,19.75 12.25,22 10,24.25 7.75,22" fill="currentColor" />
+            <path d="M12.25 22 L26 22" stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
+          </svg>
+          <span className="font-mono text-[10px] tracking-wide lowercase">throughline</span>
+        </div>
       </motion.div>
     </div>
   )
@@ -449,8 +456,8 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           <motion.div
             className="absolute inset-y-0 left-0 right-0 origin-left"
             style={{
-              background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
-              boxShadow: '0 0 8px var(--brand-red)',
+              background: 'var(--accent-primary)',
+              boxShadow: '0 0 8px var(--accent-primary-30)',
             }}
             animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
             transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}

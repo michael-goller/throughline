@@ -568,7 +568,7 @@ program
       console.log(`Publishing '${name}'...`)
       const result = await cloudPublish(deck.path)
       updateDeckPublished(name, result.url)
-      console.log(chalk.green(`✓ Published!`))
+      console.log(chalk.green(`✓ Published`))
       console.log(`→ URL: ${result.url}`)
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
@@ -810,7 +810,7 @@ program
 
     console.log('')
     if (issues === 0) {
-      console.log(chalk.green('Everything looks good!'))
+      console.log(chalk.green('All checks passed.'))
     } else {
       console.log(chalk.yellow(`${issues} issue${issues > 1 ? 's' : ''} found — see fixes above.`))
     }

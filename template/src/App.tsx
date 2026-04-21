@@ -533,8 +533,8 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
             <motion.div
               className="absolute inset-y-0 left-0 right-0 origin-left"
               style={{
-                background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
-                boxShadow: '0 0 8px var(--brand-red)',
+                background: 'var(--accent-primary)',
+                boxShadow: '0 0 8px var(--accent-primary-30)',
               }}
               animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
               transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
@@ -579,8 +579,8 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
             <motion.div
               className="absolute inset-y-0 left-0 right-0 origin-left"
               style={{
-                background: 'linear-gradient(90deg, var(--brand-red-tint) 0%, var(--brand-red) 60%, var(--brand-red-dark) 100%)',
-                boxShadow: '0 0 8px var(--brand-red)',
+                background: 'var(--accent-primary)',
+                boxShadow: '0 0 8px var(--accent-primary-30)',
               }}
               animate={{ scaleX: currentSlide / Math.max(slides.length - 1, 1) }}
               transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
