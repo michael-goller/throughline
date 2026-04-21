@@ -5,18 +5,18 @@ Drop-in slash commands that run the **Shape** flow inside your terminal AI tool,
 ## Claude Code
 
 ```
-cp template/skills/claude/shape.md .claude/commands/shape.md
+throughline install claude-skills
 ```
 
-Invoke with `/shape` inside Claude Code. The command runs the four Shape questions, writes `.throughline-brief.json`, and runs `throughline new <name> --from-brief`.
+Installs `shape.md` into `~/.claude/commands/`. Idempotent — re-running skips existing files (`↷ skipped`). Pass `--force` to overwrite, `--dry-run` to preview. Invoke with `/shape` inside Claude Code.
 
 ## Gemini CLI
 
 ```
-cp template/skills/gemini/shape.toml .gemini/commands/shape.toml
+throughline install gemini-skills
 ```
 
-Invoke with `/shape` inside Gemini CLI.
+Installs `shape.toml` into `~/.gemini/commands/`. Same flags as above. Invoke with `/shape` inside Gemini CLI.
 
 ## What Shape does
 

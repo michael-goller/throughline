@@ -27,6 +27,7 @@ import { runShape, readBrief, resolveBriefPath, BRIEF_FILENAME } from './lib/sha
 import { createDeckFromBrief } from './lib/brief.js'
 import { checkDeck } from './lib/check.js'
 import { runOnboard } from './lib/onboard.js'
+import { installSkills, parseInstallTarget } from './lib/install.js'
 import { createInterface } from 'readline'
 
 // Terra cotta brand color — matches site/throughline-tokens.css (--accent-primary dark).
@@ -111,6 +112,48 @@ program
   .action(async (options: { here?: boolean; example?: string; name?: string }) => {
     try {
       await runOnboard({ here: options.here, autoExample: options.example, autoDeckName: options.name })
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// throughline install <claude-skills|gemini-skills>
+// ─────────────────────────────────────────────────────────────
+program
+  .command('install <target>')
+  .description('Install bundled agent skills (claude-skills | gemini-skills)')
+  .option('--force', 'Overwrite existing files of the same name')
+  .option('--dry-run', 'Print planned copies without touching disk')
+  .action((target: string, options: { force?: boolean; dryRun?: boolean }) => {
+    try {
+      const flavor = parseInstallTarget(target)
+      const result = installSkills(flavor, { force: options.force, dryRun: options.dryRun })
+
+      if (options.dryRun) {
+        console.log(chalk.bold(`Dry run — ${result.label} skills → ${formatPath(result.destDir)}`))
+        for (const filename of result.wouldCopy) {
+          console.log(`  → would copy ${filename}`)
+        }
+        console.log(chalk.dim('\nNo files were written. Re-run without --dry-run to install.'))
+        return
+      }
+
+      for (const filename of result.installed) {
+        console.log(chalk.green(`✓ installed ${filename}`))
+      }
+      for (const filename of result.skipped) {
+        console.log(chalk.dim(`↷ skipped ${filename} (exists — pass --force to overwrite)`))
+      }
+
+      console.log('')
+      if (result.installed.length > 0) {
+        console.log(chalk.green(`✓ ${result.label} skills installed to ${formatPath(result.destDir)}`))
+      } else {
+        console.log(`${result.label} skills already present at ${formatPath(result.destDir)}`)
+      }
+      console.log(`→ ${result.invocationHint}`)
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
