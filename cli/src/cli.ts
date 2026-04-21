@@ -25,10 +25,22 @@ import { addDeck, getDeck, getGalleryState, listDecks, removeDeck, renameDeck, u
 import { login as cloudLogin, clearCredentials, whoami as cloudWhoami, publish as cloudPublish, unpublish as cloudUnpublish, loadCredentials, getApiUrl, setApiUrl, createShare, listShares, deleteShare } from './lib/cloud.js'
 import { createInterface } from 'readline'
 
+// Terra cotta brand color — matches site/throughline-tokens.css (--accent-primary dark).
+const TERRA_COTTA = '#E2725B'
+const brand = (s: string) => (chalk.level > 0 ? chalk.hex(TERRA_COTTA)(s) : s)
+
+// Thread-motif banner: ──── throughline ────
+function banner(): string {
+  const thread = '────'
+  const mark = brand(`${thread} throughline ${thread}`)
+  return `\n${mark}\n${chalk.dim('the dev-native way to make decks')}\n`
+}
+
 program
   .name('throughline')
   .description('The dev-native way to make decks')
   .version('0.1.0')
+  .addHelpText('beforeAll', banner())
 
 // ─────────────────────────────────────────────────────────────
 // throughline new <name>

@@ -9,7 +9,7 @@ interface AuthPageProps {
 
 /**
  * Auth page styled to match the Throughline landing page aesthetic:
- * dark bg (#0f0f13), indigo accent, Outfit + Nunito Sans fonts.
+ * dark bg (#0f0f13), indigo accent, JetBrains Mono headings + Inter body.
  */
 export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -51,7 +51,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
       className="fixed inset-0 flex items-center justify-center"
       style={{
         backgroundColor: '#0f0f13',
-        fontFamily: "'Nunito Sans', system-ui, sans-serif",
+        fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
       {/* Subtle radial glow behind the card */}
@@ -93,7 +93,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             </svg>
             <h1
               className="text-2xl font-bold"
-              style={{ fontFamily: "'Outfit', system-ui, sans-serif", color: '#e8e8ed', letterSpacing: '-0.02em' }}
+              style={{ fontFamily: "'JetBrains Mono', 'SF Mono', monospace", color: '#e8e8ed', letterSpacing: '-0.02em' }}
             >
               Throughline
             </h1>

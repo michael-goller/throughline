@@ -708,7 +708,7 @@ export default function DeckDashboard() {
             <span className="mx-2">·</span>
             <span className="font-mono">?</span> help
           </div>
-          <div>Throughline Presentations</div>
+          <div className="font-display tracking-wide">Throughline Presentations</div>
         </div>
       </div>
 

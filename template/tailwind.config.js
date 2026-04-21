@@ -31,8 +31,9 @@ export default {
         'accent-indigo-hover': 'var(--accent-indigo-hover)',
       },
       fontFamily: {
-        sans: ['"Nunito Sans"', 'system-ui', 'sans-serif'],
-        display: ['"Outfit"', 'system-ui', 'sans-serif'],
+        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+        display: ['"JetBrains Mono"', '"SF Mono"', 'ui-monospace', 'monospace'],
+        mono: ['"JetBrains Mono"', '"SF Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
         'hero': ['72px', { lineHeight: '1.1' }],
