@@ -34,6 +34,8 @@ import { useAuth } from '../hooks/useAuth'
 import DeckAnalytics from './DeckAnalytics'
 import ShareDialog from './ShareDialog'
 import TemplateGallery from './TemplateGallery'
+import OnboardingOverlay from './OnboardingOverlay'
+import { useOnboarding } from '../hooks/useOnboarding'
 
 type SortMode = 'recent' | 'alpha' | 'slides' | 'views'
 
@@ -303,6 +305,9 @@ export default function DeckDashboard() {
   const [focusIndex, setFocusIndex] = useState(-1)
   const [showHelp, setShowHelp] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const newDeckBtnRef = useRef<HTMLButtonElement>(null)
+
+  const onboarding = useOnboarding({ context: 'dashboard', deckCount: decks.length })
 
   // Fetch view stats for all decks
   const deckStats = useMemo(() => getAllDeckStats(), [decks])
@@ -562,9 +567,10 @@ export default function DeckDashboard() {
               Templates
             </motion.button>
             <motion.button
+              ref={newDeckBtnRef}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-brand-red text-white rounded-lg text-caption font-semibold hover:bg-brand-red-dark transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 bg-brand-red text-white rounded-lg text-caption font-semibold hover:bg-brand-red-dark transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-red/30"
             >
               <Plus size={15} />
               New deck
@@ -707,6 +713,14 @@ export default function DeckDashboard() {
             <span className="font-mono">Enter</span> open
             <span className="mx-2">·</span>
             <span className="font-mono">?</span> help
+            <span className="mx-2">·</span>
+            <button
+              type="button"
+              onClick={onboarding.resumeFromStored}
+              className="underline-offset-4 hover:underline hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/30 rounded"
+            >
+              Guide
+            </button>
           </div>
           <div className="font-display tracking-wide">Throughline Presentations</div>
         </div>
@@ -772,6 +786,18 @@ export default function DeckDashboard() {
                   <span className="font-mono text-brand-red">?</span>
                   <span>Show this help</span>
                 </div>
+                <div className="border-t border-border my-2" />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowHelp(false)
+                    onboarding.replayFromStart()
+                  }}
+                  className="w-full text-left text-caption text-text-muted hover:text-text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/30 rounded"
+                >
+                  Replay guide from start
+                </button>
               </div>
               <p className="text-text-muted/60 text-sm mt-6">Press any key or click to close</p>
             </motion.div>
@@ -807,6 +833,13 @@ export default function DeckDashboard() {
           />
         )}
       </AnimatePresence>
+
+      {/* First-run / re-entry onboarding guide */}
+      <OnboardingOverlay
+        controller={onboarding}
+        context="dashboard"
+        returnFocusRef={newDeckBtnRef}
+      />
     </div>
   )
 }

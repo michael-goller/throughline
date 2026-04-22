@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
 import SlideRenderer from '../templates'
@@ -6,8 +6,10 @@ import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
 import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
+import OnboardingOverlay from './OnboardingOverlay'
 import { useSwipe } from '../hooks/useSwipe'
 import { useTheme } from '../hooks/useTheme'
+import { useOnboarding, type OnboardingContext } from '../hooks/useOnboarding'
 import { isInstantDBConfigured } from '../lib/instantdb'
 
 interface ViewerPageProps {
@@ -257,6 +259,25 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const lastKeyRef = useRef({ key: '', time: 0 })
   const { theme, toggleTheme } = useTheme()
+
+  // Viewer cold-land detection: a shared-link visitor who isn't also a
+  // presenter on this install sees the onboarding hero on desktop (1→2→4) or
+  // a single step-1 + "install on desktop" CTA on mobile. A presenter (i.e.,
+  // has a stored `throughline-identity`) is the build persona and skips it.
+  const viewerContext = useMemo<OnboardingContext | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      if (window.localStorage.getItem('throughline-identity')) return null
+    } catch {
+      // ignore storage errors — default to showing the guide
+    }
+    const isMobile = window.matchMedia('(max-width: 767px)').matches
+    return isMobile ? 'viewer-mobile' : 'viewer-desktop'
+  }, [])
+  const onboarding = useOnboarding({
+    context: viewerContext ?? 'viewer-desktop',
+    disabled: viewerContext === null,
+  })
 
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
@@ -508,6 +529,14 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           </motion.button>
         </div>
       </div>
+
+      {/* Viewer cold-land guide — mounts in the verified state so it never
+          fights with the password prompt. The useOnboarding hook gates on
+          localStorage flags so it doesn't reopen after the visitor finishes
+          or dismisses. */}
+      {viewerContext !== null && (
+        <OnboardingOverlay controller={onboarding} context={viewerContext} />
+      )}
     </div>
   )
 }
