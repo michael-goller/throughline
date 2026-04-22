@@ -29,6 +29,20 @@ export default {
         'nav-text': 'var(--nav-text)',
         'accent-indigo': 'var(--accent-indigo)',
         'accent-indigo-hover': 'var(--accent-indigo-hover)',
+        // Throughline chrome layer — app-chrome only, never slide content
+        'chrome-base': 'var(--bg-base)',
+        'chrome-surface': 'var(--chrome-surface)',
+        'chrome-card': 'var(--chrome-card)',
+        'chrome-card-hover': 'var(--chrome-card-hover)',
+        'chrome-ink': 'var(--chrome-ink)',
+        'chrome-ink-secondary': 'var(--chrome-ink-secondary)',
+        'chrome-ink-muted': 'var(--chrome-ink-muted)',
+        'chrome-border': 'var(--chrome-border)',
+        'chrome-border-hover': 'var(--chrome-border-hover)',
+        'chrome-nav-bg': 'var(--chrome-nav-bg)',
+        'chrome-nav-bg-hover': 'var(--chrome-nav-bg-hover)',
+        'accent-primary': 'var(--accent-primary)',
+        'accent-primary-hover': 'var(--accent-primary-hover)',
       },
       fontFamily: {
         // Slide-content faces — neutral defaults so existing deck templates

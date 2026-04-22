@@ -12,7 +12,6 @@ import {
   Moon,
   Loader2,
   AlertCircle,
-  LayoutGrid,
   ExternalLink,
   Copy,
   Download,
@@ -36,6 +35,7 @@ import ShareDialog from './ShareDialog'
 import TemplateGallery from './TemplateGallery'
 import OnboardingOverlay from './OnboardingOverlay'
 import { useOnboarding } from '../hooks/useOnboarding'
+import ThreadMark from './onboarding/ThreadMark'
 
 type SortMode = 'recent' | 'alpha' | 'slides' | 'views'
 
@@ -102,14 +102,14 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className={`group relative ${focused ? 'ring-2 ring-brand-red rounded-xl' : ''}`}
+      className={`group relative ${focused ? 'ring-2 ring-accent-primary rounded-xl' : ''}`}
     >
       <div
         onClick={handleOpen}
-        className="cursor-pointer rounded-xl border border-border bg-background-elevated overflow-hidden transition-all duration-200 hover:border-border-accent hover:shadow-lg hover:shadow-brand-red/5 hover:-translate-y-0.5"
+        className="cursor-pointer rounded-xl border border-chrome-border bg-chrome-card overflow-hidden transition-all duration-200 hover:border-chrome-border-hover hover:shadow-lg hover:shadow-accent-primary/10 hover:-translate-y-0.5"
       >
-        {/* Thumbnail area */}
-        <div className="relative aspect-video bg-background-accent overflow-hidden">
+        {/* Thumbnail area — diamond-anchored placeholder when no deck image */}
+        <div className="relative aspect-video bg-chrome-surface overflow-hidden">
           {deck.thumbnail ? (
             <img
               src={deck.thumbnail}
@@ -118,20 +118,20 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2 text-text-muted/40">
-                <Layers size={32} />
-                <span className="text-tiny font-medium">
-                  {deck.slideCount ? `${deck.slideCount} slides` : 'Deck'}
+              <div className="flex flex-col items-center gap-2 opacity-60">
+                <ThreadMark size={40} color="var(--accent-primary)" staticMark />
+                <span className="text-tiny font-mono tracking-wide text-chrome-ink-muted">
+                  {deck.slideCount ? `${deck.slideCount} slides` : 'deck'}
                 </span>
               </div>
             </div>
           )}
           {/* Hover overlay with quick actions */}
-          <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+          <div className="absolute inset-0 bg-chrome-base/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-red text-white rounded-lg text-caption font-medium shadow-md"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-primary text-white rounded-lg text-caption font-medium shadow-md"
               onClick={(e) => {
                 e.stopPropagation()
                 handleOpen()
@@ -145,15 +145,15 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
 
         {/* Card body */}
         <div className="p-4">
-          <h3 className="font-display text-text font-semibold text-body-sm truncate">
+          <h3 className="font-display text-chrome-ink font-semibold text-body-sm truncate">
             {deck.title}
           </h3>
           {deck.description && (
-            <p className="text-text-muted text-caption mt-1 line-clamp-2 leading-relaxed">
+            <p className="text-chrome-ink-muted text-caption mt-1 line-clamp-2 leading-relaxed">
               {deck.description}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-3 text-tiny text-text-muted">
+          <div className="flex items-center gap-3 mt-3 text-tiny text-chrome-ink-muted">
             {deck.author && (
               <span className="flex items-center gap-1">
                 <User size={11} />
@@ -178,7 +178,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                   e.stopPropagation()
                   onShare(deck.id, deck.title)
                 }}
-                className="flex items-center gap-1 hover:text-brand-red transition-colors"
+                className="flex items-center gap-1 hover:text-accent-primary transition-colors"
               >
                 <Share2 size={11} />
                 {shareCount}
@@ -192,7 +192,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
             )}
           </div>
           {deck.sourcePath && (
-            <div className="flex items-center gap-1 mt-1.5 text-tiny text-text-muted/60 truncate" title={deck.sourcePath}>
+            <div className="flex items-center gap-1 mt-1.5 text-tiny text-chrome-ink-muted/70 truncate" title={deck.sourcePath}>
               <FolderOpen size={10} className="flex-shrink-0" />
               <span className="truncate">{shortenPath(deck.sourcePath)}</span>
             </div>
@@ -207,7 +207,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
             e.stopPropagation()
             setShowMenu(!showMenu)
           }}
-          className="p-1.5 rounded-lg bg-background/70 backdrop-blur-sm text-text-muted opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background hover:text-text"
+          className="p-1.5 rounded-lg bg-chrome-base/70 backdrop-blur-sm text-chrome-ink-muted opacity-0 group-hover:opacity-100 transition-opacity hover:bg-chrome-base hover:text-chrome-ink"
         >
           <MoreVertical size={14} />
         </button>
@@ -226,14 +226,14 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -4 }}
                 transition={{ duration: 0.12 }}
-                className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-background-elevated border border-border shadow-xl py-1"
+                className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-chrome-card border border-chrome-border shadow-xl py-1"
               >
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleOpen()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 >
                   <ExternalLink size={13} />
                   Open
@@ -243,7 +243,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                     e.stopPropagation()
                     handleDuplicate()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 >
                   <Copy size={13} />
                   Copy link
@@ -253,7 +253,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                     e.stopPropagation()
                     handleExport()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 >
                   <Download size={13} />
                   Open in new tab
@@ -264,7 +264,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                     setShowMenu(false)
                     onShare(deck.id, deck.title)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 >
                   <Share2 size={13} />
                   Share…
@@ -275,7 +275,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                     setShowMenu(false)
                     onShowAnalytics(deck.id, deck.title)
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-text hover:bg-nav-bg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 >
                   <BarChart3 size={13} />
                   Analytics
@@ -510,19 +510,22 @@ export default function DeckDashboard() {
   }, [view, showHelp, filtered, focusIndex, getGridCols])
 
   return (
-    <div className="w-full h-full bg-background overflow-y-auto">
+    <div className="warp-surface w-full h-full overflow-y-auto text-chrome-ink">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
+        {/* Header — Throughline lockup: thread mark + mono wordmark */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand-red flex items-center justify-center">
-              <LayoutGrid size={16} className="text-white" />
-            </div>
-            <div>
-              <h1 className="font-display text-text text-h3 font-bold tracking-tight leading-none">
-                Throughline
-              </h1>
-              <p className="text-xs text-text-muted/60 mt-0.5">The dev-native way to make decks</p>
+            <ThreadMark size={28} color="var(--accent-primary)" />
+            <div className="flex flex-col">
+              <span
+                className="font-mono font-bold text-[20px] lowercase leading-none text-chrome-ink"
+                style={{ letterSpacing: '-0.01em' }}
+              >
+                throughline
+              </span>
+              <span className="text-tiny font-mono text-chrome-ink-muted mt-1 tracking-wide">
+                decks as code · argument as craft
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -531,7 +534,7 @@ export default function DeckDashboard() {
               whileTap={{ scale: 0.98 }}
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-nav-bg transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-chrome-ink-muted hover:text-chrome-ink hover:bg-chrome-nav-bg transition-colors disabled:opacity-50"
               aria-label="Refresh decks"
             >
               <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
@@ -540,7 +543,7 @@ export default function DeckDashboard() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-nav-bg transition-colors"
+              className="p-2 rounded-lg text-chrome-ink-muted hover:text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
@@ -550,7 +553,7 @@ export default function DeckDashboard() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => logout().then(() => window.location.reload())}
-                className="p-2 rounded-lg text-text-muted hover:text-text hover:bg-nav-bg transition-colors"
+                className="p-2 rounded-lg text-chrome-ink-muted hover:text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
                 aria-label="Sign out"
                 title={`Signed in as ${user.name}`}
               >
@@ -561,7 +564,7 @@ export default function DeckDashboard() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setView('templates')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-caption font-semibold border border-border text-text hover:bg-nav-bg transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-caption font-semibold border border-chrome-border text-chrome-ink hover:bg-chrome-nav-bg hover:border-chrome-border-hover transition-colors"
             >
               <BookTemplate size={15} />
               Templates
@@ -570,7 +573,7 @@ export default function DeckDashboard() {
               ref={newDeckBtnRef}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-brand-red text-white rounded-lg text-caption font-semibold hover:bg-brand-red-dark transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-red/30"
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent-primary text-white rounded-lg text-caption font-semibold hover:bg-accent-primary-hover transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent-primary/30"
             >
               <Plus size={15} />
               New deck
@@ -593,25 +596,25 @@ export default function DeckDashboard() {
         {/* Search & Sort bar */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-chrome-ink-muted" />
             <input
               ref={searchInputRef}
               type="text"
               placeholder="Search decks…  (press /)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg bg-background-accent border border-border text-text text-caption placeholder:text-text-muted/60 focus:outline-none focus:border-border-accent focus:ring-1 focus:ring-border-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 rounded-lg bg-chrome-surface border border-chrome-border text-chrome-ink text-caption placeholder:text-chrome-ink-muted/70 focus:outline-none focus:border-chrome-border-hover focus:ring-1 focus:ring-chrome-border-hover transition-colors"
             />
           </div>
-          <div className="flex items-center rounded-lg bg-background-accent border border-border overflow-hidden">
+          <div className="flex items-center rounded-lg bg-chrome-surface border border-chrome-border overflow-hidden">
             {sortOptions.map(({ mode, label, icon: Icon }) => (
               <button
                 key={mode}
                 onClick={() => setSort(mode)}
                 className={`flex items-center gap-1 px-3 py-2 text-tiny font-medium transition-colors ${
                   sort === mode
-                    ? 'bg-nav-bg text-text'
-                    : 'text-text-muted hover:text-text hover:bg-nav-bg/50'
+                    ? 'bg-chrome-nav-bg text-chrome-ink'
+                    : 'text-chrome-ink-muted hover:text-chrome-ink hover:bg-chrome-nav-bg/60'
                 }`}
               >
                 <Icon size={13} />
@@ -624,19 +627,19 @@ export default function DeckDashboard() {
         {/* Content */}
         {status === 'loading' && (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <Loader2 size={28} className="text-brand-red animate-spin" />
-            <p className="text-text-muted text-caption">Loading decks...</p>
+            <Loader2 size={28} className="text-accent-primary animate-spin" />
+            <p className="text-chrome-ink-muted text-caption">Loading decks...</p>
           </div>
         )}
 
         {status === 'error' && (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             <AlertCircle size={36} className="text-red-500" />
-            <p className="text-text text-body-sm font-semibold">Failed to load decks</p>
-            <p className="text-text-muted text-caption max-w-md text-center">{error}</p>
+            <p className="text-chrome-ink text-body-sm font-semibold">Failed to load decks</p>
+            <p className="text-chrome-ink-muted text-caption max-w-md text-center">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-2 px-4 py-2 bg-brand-red text-white rounded-lg text-caption hover:bg-brand-red-dark transition-colors"
+              className="mt-2 px-4 py-2 bg-accent-primary text-white rounded-lg text-caption hover:bg-accent-primary-hover transition-colors"
             >
               Retry
             </button>
@@ -647,24 +650,28 @@ export default function DeckDashboard() {
           <div className="flex flex-col items-center justify-center py-32 gap-4">
             {search ? (
               <>
-                <Search size={36} className="text-text-muted/40" />
-                <p className="text-text text-body-sm font-semibold">No decks match "{search}"</p>
+                <Search size={36} className="text-chrome-ink-muted/40" />
+                <p className="text-chrome-ink text-body-sm font-semibold">No decks match "{search}"</p>
                 <button
                   onClick={() => setSearch('')}
-                  className="text-brand-red text-caption hover:underline"
+                  className="text-accent-primary text-caption hover:underline"
                 >
                   Clear search
                 </button>
               </>
             ) : (
               <>
-                <Layers size={36} className="text-text-muted/40" />
-                <p className="text-text text-body-sm font-semibold">No decks yet</p>
-                <p className="text-text-muted text-caption">Create your first presentation to get started.</p>
+                <div className="opacity-70">
+                  <ThreadMark size={64} color="var(--accent-primary)" staticMark />
+                </div>
+                <p className="text-chrome-ink text-body-sm font-semibold mt-1">No decks yet</p>
+                <p className="text-chrome-ink-muted text-caption font-mono tracking-wide">
+                  run <span className="text-chrome-ink">throughline onboard</span> to make your first deck.
+                </p>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-brand-red text-white rounded-lg text-caption font-semibold hover:bg-brand-red-dark transition-colors"
+                  className="mt-2 flex items-center gap-1.5 px-4 py-2 bg-accent-primary text-white rounded-lg text-caption font-semibold hover:bg-accent-primary-hover transition-colors"
                 >
                   <Plus size={15} />
                   New deck
@@ -676,7 +683,7 @@ export default function DeckDashboard() {
 
         {status === 'ready' && filtered.length > 0 && (
           <>
-            <p className="text-text-muted text-tiny mb-4">
+            <p className="text-chrome-ink-muted text-tiny mb-4 font-mono">
               {filtered.length} {filtered.length === 1 ? 'deck' : 'decks'}
               {search && ` matching "${search}"`}
             </p>
@@ -704,7 +711,7 @@ export default function DeckDashboard() {
         </>}
 
         {/* Footer with keyboard hints */}
-        <div className="mt-16 pb-4 text-center text-tiny text-text-muted/40 space-y-1">
+        <div className="mt-16 pb-4 text-center text-tiny text-chrome-ink-muted/60 space-y-1">
           <div>
             <span className="font-mono">/</span> search
             <span className="mx-2">·</span>
@@ -717,12 +724,17 @@ export default function DeckDashboard() {
             <button
               type="button"
               onClick={onboarding.resumeFromStored}
-              className="underline-offset-4 hover:underline hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/30 rounded"
+              className="underline-offset-4 hover:underline hover:text-chrome-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/30 rounded"
             >
               Guide
             </button>
           </div>
-          <div className="font-mono tracking-wide">Throughline Presentations</div>
+          <div
+            className="font-mono tracking-wide lowercase text-chrome-ink-muted/80"
+            style={{ letterSpacing: '-0.01em' }}
+          >
+            throughline
+          </div>
         </div>
       </div>
 
@@ -733,7 +745,7 @@ export default function DeckDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-chrome-base/95 backdrop-blur-sm"
             onClick={() => setShowHelp(false)}
           >
             <motion.div
@@ -741,52 +753,52 @@ export default function DeckDashboard() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border"
+              className="bg-chrome-card rounded-xl p-8 shadow-2xl max-w-md border border-chrome-border"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="font-display text-text text-xl font-semibold mb-6">
-                Overview Shortcuts
+              <h2 className="font-mono text-chrome-ink text-xl font-bold lowercase mb-6" style={{ letterSpacing: '-0.01em' }}>
+                overview shortcuts
               </h2>
-              <div className="space-y-3 text-text-muted">
+              <div className="space-y-3 text-chrome-ink-secondary">
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">/</span>
+                  <span className="font-mono text-accent-primary">/</span>
                   <span>Focus search (fuzzy)</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">Escape</span>
+                  <span className="font-mono text-accent-primary">Escape</span>
                   <span>Clear search / unfocus</span>
                 </div>
-                <div className="border-t border-border my-2" />
+                <div className="border-t border-chrome-border my-2" />
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">j / k</span>
+                  <span className="font-mono text-accent-primary">j / k</span>
                   <span>Down / Up</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">h / l</span>
+                  <span className="font-mono text-accent-primary">h / l</span>
                   <span>Left / Right</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">&darr; &uarr; &larr; &rarr;</span>
+                  <span className="font-mono text-accent-primary">&darr; &uarr; &larr; &rarr;</span>
                   <span>Arrow navigation</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">gg</span>
+                  <span className="font-mono text-accent-primary">gg</span>
                   <span>First deck</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">G</span>
+                  <span className="font-mono text-accent-primary">G</span>
                   <span>Last deck</span>
                 </div>
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">Enter</span>
+                  <span className="font-mono text-accent-primary">Enter</span>
                   <span>Open selected deck</span>
                 </div>
-                <div className="border-t border-border my-2" />
+                <div className="border-t border-chrome-border my-2" />
                 <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">?</span>
+                  <span className="font-mono text-accent-primary">?</span>
                   <span>Show this help</span>
                 </div>
-                <div className="border-t border-border my-2" />
+                <div className="border-t border-chrome-border my-2" />
                 <button
                   type="button"
                   onClick={(e) => {
@@ -794,12 +806,12 @@ export default function DeckDashboard() {
                     setShowHelp(false)
                     onboarding.replayFromStart()
                   }}
-                  className="w-full text-left text-caption text-text-muted hover:text-text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/30 rounded"
+                  className="w-full text-left text-caption text-chrome-ink-muted hover:text-chrome-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/30 rounded"
                 >
                   Replay guide from start
                 </button>
               </div>
-              <p className="text-text-muted/60 text-sm mt-6">Press any key or click to close</p>
+              <p className="text-chrome-ink-muted/70 text-sm mt-6">Press any key or click to close</p>
             </motion.div>
           </motion.div>
         )}

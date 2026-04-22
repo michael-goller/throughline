@@ -1,10 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Nunito+Sans:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
+/*
+ * Token boundary:
+ *   `--brand-red*`, `--accent-blue/green/orange/indigo`, `--background*`,
+ *   `--text-primary/secondary/muted`, `--border*` — deck-content layer.
+ *   Consumed by `template/src/templates/*.tsx` and per-deck theming.
+ *   Colors stay Avery so slide rendering keeps its original voice.
+ *
+ *   `--bg-base`, `--bg-surface`, `--bg-elevated`, `--accent-primary`,
+ *   `--warp-pattern`, `--chrome-*` — app-chrome layer (Throughline system).
+ *   Consumed by DeckDashboard, ViewerPage chrome, editor UI.
+ *   Sourced from `site/throughline-tokens.css`; chrome-only extensions
+ *   (`--chrome-ink`, `--chrome-card`, `--chrome-border-hover`) are declared
+ *   below to avoid bleeding chrome tones into deck content.
+ *
+ * Chrome never reaches for `--brand-red*`; deck content never reaches for
+ * `--accent-primary`.
+ */
+@import "../../site/throughline-tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme (default) */
+/* Dark theme (default) — deck-content layer tokens */
 :root {
   --background: #1a1a1a;
   --background-elevated: #242424;
@@ -26,9 +45,21 @@
   --nav-text: #FFFFFF;
   --accent-indigo: #21215C;
   --accent-indigo-hover: #2d2d7a;
+
+  /* Chrome layer — warm platinum ink on warm charcoal */
+  --chrome-ink: #ECE8E4;
+  --chrome-ink-secondary: rgba(236, 232, 228, 0.70);
+  --chrome-ink-muted: #8F8A85;
+  --chrome-surface: #1D1B22;
+  --chrome-card: #26232C;
+  --chrome-card-hover: #2E2A35;
+  --chrome-border: rgba(236, 232, 228, 0.08);
+  --chrome-border-hover: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  --chrome-nav-bg: rgba(236, 232, 228, 0.06);
+  --chrome-nav-bg-hover: rgba(236, 232, 228, 0.12);
 }
 
-/* Light theme */
+/* Light theme — deck-content layer tokens */
 html.light {
   --background: #F5F5F5;
   --background-elevated: #FFFFFF;
@@ -50,6 +81,18 @@ html.light {
   --nav-text: #1a1a1a;
   --accent-indigo: #3b3b8f;
   --accent-indigo-hover: #4a4ab0;
+
+  /* Chrome layer — manuscript page: near-graphite ink on warm paper */
+  --chrome-ink: #1A1816;
+  --chrome-ink-secondary: rgba(26, 24, 22, 0.72);
+  --chrome-ink-muted: #6B635B;
+  --chrome-surface: #FFFFFF;
+  --chrome-card: #FFFFFF;
+  --chrome-card-hover: #FAF8F3;
+  --chrome-border: rgba(26, 24, 22, 0.09);
+  --chrome-border-hover: color-mix(in srgb, var(--accent-primary) 28%, transparent);
+  --chrome-nav-bg: rgba(26, 24, 22, 0.04);
+  --chrome-nav-bg-hover: rgba(26, 24, 22, 0.08);
 }
 
 * {
