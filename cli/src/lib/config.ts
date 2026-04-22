@@ -2,7 +2,7 @@
  * Configuration management for Throughline.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
@@ -16,6 +16,12 @@ export const PACKAGE_DIR = join(__dirname, '..', '..')
 export const THROUGHLINE_DIR = join(homedir(), '.throughline')
 export const CONFIG_FILE = join(THROUGHLINE_DIR, 'config.json')
 export const REGISTRY_FILE = join(THROUGHLINE_DIR, 'registry.json')
+
+// Pre-rename config dir. We migrate from this on first load so users who
+// upgraded across the Shine → Throughline rename keep their decks, login,
+// and config without re-creating them by hand.
+const LEGACY_SHINE_DIR = join(homedir(), '.shine')
+const SHINE_MIGRATION_MARKER = join(THROUGHLINE_DIR, '.migrated-from-shine')
 
 export interface Config {
   decks_path: string
@@ -35,6 +41,50 @@ export function ensureThroughlineDir(): void {
   if (!existsSync(THROUGHLINE_DIR)) {
     mkdirSync(THROUGHLINE_DIR, { recursive: true })
   }
+  migrateFromShineOnce()
+}
+
+/**
+ * One-shot migration from ~/.shine to ~/.throughline for users who upgraded
+ * across the rename. Idempotent — gated by a marker file so it runs at most
+ * once per machine. Throughline-side files always win on collision so a user
+ * who already started fresh in ~/.throughline doesn't get clobbered.
+ */
+function migrateFromShineOnce(): void {
+  if (existsSync(SHINE_MIGRATION_MARKER)) return
+  if (!existsSync(LEGACY_SHINE_DIR)) {
+    writeFileSync(SHINE_MIGRATION_MARKER, new Date().toISOString())
+    return
+  }
+
+  // config.json + credentials.json: only copy if no throughline-side file yet.
+  for (const fileName of ['config.json', 'credentials.json']) {
+    const src = join(LEGACY_SHINE_DIR, fileName)
+    const dst = join(THROUGHLINE_DIR, fileName)
+    if (existsSync(src) && !existsSync(dst)) {
+      try { copyFileSync(src, dst) } catch { /* best effort */ }
+    }
+  }
+
+  // registry.json: merge — throughline entries win, legacy fills in the rest.
+  const legacyRegistryPath = join(LEGACY_SHINE_DIR, 'registry.json')
+  if (existsSync(legacyRegistryPath)) {
+    try {
+      const legacy = JSON.parse(readFileSync(legacyRegistryPath, 'utf-8'))
+      let current: Record<string, unknown> = { decks: {} }
+      if (existsSync(REGISTRY_FILE)) {
+        current = JSON.parse(readFileSync(REGISTRY_FILE, 'utf-8'))
+      }
+      const merged: Record<string, unknown> = {
+        ...legacy,
+        ...current,
+        decks: { ...(legacy.decks ?? {}), ...((current.decks as Record<string, unknown>) ?? {}) },
+      }
+      writeFileSync(REGISTRY_FILE, JSON.stringify(merged, null, 2))
+    } catch { /* best effort — leave throughline registry as-is */ }
+  }
+
+  writeFileSync(SHINE_MIGRATION_MARKER, new Date().toISOString())
 }
 
 /**
