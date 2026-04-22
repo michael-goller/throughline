@@ -30,9 +30,9 @@ import { runOnboard } from './lib/onboard.js'
 import { installSkills, parseInstallTarget } from './lib/install.js'
 import { createInterface } from 'readline'
 
-// Terra cotta brand color — matches site/throughline-tokens.css (--accent-primary dark).
-const TERRA_COTTA = '#E2725B'
-const brand = (s: string) => (chalk.level > 0 ? chalk.hex(TERRA_COTTA)(s) : s)
+// Thread-red brand color — matches site/throughline-tokens.css (--accent-primary dark).
+const THREAD_RED = '#B91C1C'
+const brand = (s: string) => (chalk.level > 0 ? chalk.hex(THREAD_RED)(s) : s)
 
 // Thread-motif banner: ──── throughline ────
 function banner(): string {

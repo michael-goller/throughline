@@ -21,8 +21,8 @@ import {
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const TERRA_COTTA = '#E2725B'
-const brand = (s: string) => (chalk.level > 0 ? chalk.hex(TERRA_COTTA)(s) : s)
+const THREAD_RED = '#B91C1C'
+const brand = (s: string) => (chalk.level > 0 ? chalk.hex(THREAD_RED)(s) : s)
 
 export interface AgentDetection {
   kind: 'claude' | 'gemini' | 'none'

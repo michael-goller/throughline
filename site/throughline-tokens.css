@@ -21,9 +21,9 @@
   --text-secondary: rgba(236, 232, 228, 0.70);
   --text-muted: #8F8A85;
 
-  /* Terra cotta accent — the throughline color. Warm, earthy, considered. */
-  --accent-primary: #E2725B;
-  --accent-primary-hover: #C2553A;
+  /* Thread-red accent — the throughline color. Considered, not shouty. Tailwind red-700 territory. */
+  --accent-primary: #B91C1C;
+  --accent-primary-hover: #DC2626;
   --accent-muted: color-mix(in srgb, var(--accent-primary) 60%, transparent);
 
   /* Amber (non-primary action affordance — rarely used) */
@@ -97,9 +97,9 @@ html.light {
   --text-secondary: rgba(26, 24, 22, 0.70);
   --text-muted: #6B635B;
 
-  /* Deeper terra cotta on light — more earth, less fire */
-  --accent-primary: #C2553A;
-  --accent-primary-hover: #A8432C;
+  /* Deeper thread-red on light — counter-intuitive but cleaner */
+  --accent-primary: #991B1B;
+  --accent-primary-hover: #7F1D1D;
   --accent-muted: color-mix(in srgb, var(--accent-primary) 55%, transparent);
 
   --gold-highlight: #B7791F;

@@ -27,7 +27,7 @@ export const STEP2_COPY = {
   verify: [
     'After install, run',
     'throughline --help',
-    'to confirm. Expect the terra-cotta banner',
+    'to confirm. Expect the thread-red banner',
     '──── throughline ────',
   ],
   alreadyInstalled: 'Already installed? → Skip',

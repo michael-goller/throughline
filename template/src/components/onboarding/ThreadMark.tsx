@@ -7,7 +7,7 @@ interface ThreadMarkProps {
    * Color token for the mark. Defaults to `var(--brand-red)` for the original
    * onboarding / viewer-watermark callsites (deck-content surface). Pass
    * `var(--accent-primary)` on app chrome (dashboard, header, cards) so the
-   * mark picks up the Throughline terra-cotta instead of the Avery red.
+   * mark picks up the Throughline thread-red instead of the Avery red.
    */
   color?: string
   /**
