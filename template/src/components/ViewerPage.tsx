@@ -125,7 +125,7 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center max-w-sm">
           <AlertCircle size={48} className="mx-auto mb-4 text-yellow-500" />
-          <h1 className="font-display text-xl font-bold text-text mb-2">Link Expired</h1>
+          <h1 className="font-mono text-xl font-bold text-text mb-2">Link Expired</h1>
           <p className="text-text-muted">This share link has expired. Ask the presenter for a new link.</p>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center max-w-sm">
           <AlertCircle size={48} className="mx-auto mb-4 text-red-500" />
-          <h1 className="font-display text-xl font-bold text-text mb-2">Not Found</h1>
+          <h1 className="font-mono text-xl font-bold text-text mb-2">Not Found</h1>
           <p className="text-text-muted">{error}</p>
         </div>
       </div>
@@ -171,7 +171,7 @@ function PasswordPrompt({ title, error, password, setPassword, submitting, onSub
           <div className="w-12 h-12 rounded-xl bg-brand-red/10 flex items-center justify-center mx-auto mb-4">
             <Lock size={24} className="text-brand-red" />
           </div>
-          {title && <h1 className="font-display text-xl font-bold text-text mb-1">{title}</h1>}
+          {title && <h1 className="text-xl font-bold text-text mb-1">{title}</h1>}
           <p className="text-sm text-text-muted">Enter the password to view this presentation</p>
         </div>
 

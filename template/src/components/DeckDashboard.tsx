@@ -722,7 +722,7 @@ export default function DeckDashboard() {
               Guide
             </button>
           </div>
-          <div className="font-display tracking-wide">Throughline Presentations</div>
+          <div className="font-mono tracking-wide">Throughline Presentations</div>
         </div>
       </div>
 

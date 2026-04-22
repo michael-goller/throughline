@@ -31,8 +31,11 @@ export default {
         'accent-indigo-hover': 'var(--accent-indigo-hover)',
       },
       fontFamily: {
-        sans: ['"Inter"', 'system-ui', 'sans-serif'],
-        display: ['"JetBrains Mono"', '"SF Mono"', 'ui-monospace', 'monospace'],
+        // Slide-content faces — neutral defaults so existing deck templates
+        // render in their original Avery typography. App chrome that wants
+        // the Throughline brand voice opts in via `font-mono` explicitly.
+        sans: ['"Nunito Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Outfit"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"SF Mono"', 'ui-monospace', 'monospace'],
       },
       fontSize: {
