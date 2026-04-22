@@ -3,7 +3,7 @@ import { STEP3_COPY } from '../../lib/onboarding-copy'
 
 export default function Step3FirstDeck() {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 font-sans">
       <div className="space-y-1.5">
         <h2 className="font-display text-text-primary text-h4 font-bold tracking-tight">
           {STEP3_COPY.title}

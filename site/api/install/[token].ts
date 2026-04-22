@@ -2,8 +2,11 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 // Hard-to-guess tokens that grant access to the install script.
 // Rotate by replacing the token and redeploying.
+// "public" is a stable alias surfaced from the onboarding overlay (DIG-84)
+// so copy doesn't rot when the rotating token is cycled.
 const VALID_TOKENS = new Set([
   "9b3998ea32f54ec9",
+  "public",
 ]);
 
 // Base URL of the site (where this function is deployed).

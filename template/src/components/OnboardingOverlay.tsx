@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
 import Step1Intro from './onboarding/Step1Intro'
@@ -33,6 +33,19 @@ export default function OnboardingOverlay({ controller, context, returnFocusRef 
 
   const isMobileViewer = context === 'viewer-mobile'
   const showProgressAndCounter = !isMobileViewer && step !== 1
+
+  // Track narrow viewports so Step 2 can collapse its OS tabs into a <select>.
+  // Same 767px break the viewer cold-land routing uses.
+  const [isNarrow, setIsNarrow] = useState<boolean>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
+  )
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 767px)')
+    const onChange = (e: MediaQueryListEvent) => setIsNarrow(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   const onPrimary = useCallback(() => {
     if (isLast) {
@@ -203,6 +216,7 @@ export default function OnboardingOverlay({ controller, context, returnFocusRef 
                     os={os}
                     onOSChange={setOS}
                     onAlreadyInstalled={next}
+                    mobile={isNarrow}
                   />
                 ) : step === 3 ? (
                   <Step3FirstDeck />

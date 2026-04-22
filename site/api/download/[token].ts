@@ -1,8 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 // Same tokens as the install endpoint — rotate together.
+// "public" is a stable alias surfaced from the onboarding overlay (DIG-84)
+// so copy doesn't rot when the rotating token is cycled.
 const VALID_TOKENS = new Set([
   "9b3998ea32f54ec9",
+  "public",
 ]);
 
 // The blob pathname in Vercel Blob storage.

@@ -7,7 +7,7 @@ export default function Step4ConnectAgent() {
   const [expanded, setExpanded] = useState<string | null>(STEP4_COPY.cards[0].id)
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 font-sans">
       <div className="space-y-1.5">
         <h2 className="font-display text-text-primary text-h4 font-bold tracking-tight">
           {STEP4_COPY.title}

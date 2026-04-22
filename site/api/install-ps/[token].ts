@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+// "public" is a stable alias surfaced from the onboarding overlay (DIG-84)
+// so copy doesn't rot when the rotating token is cycled.
 const VALID_TOKENS = new Set([
   "9b3998ea32f54ec9",
+  "public",
 ]);
 
 const SITE_URL = process.env.THROUGHLINE_SITE_URL || "https://shine-site-lemon.vercel.app";

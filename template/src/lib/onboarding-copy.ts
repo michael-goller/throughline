@@ -20,9 +20,9 @@ export const STEP1_COPY = {
 export const STEP2_COPY = {
   title: 'Install the CLI',
   tabs: [
-    { os: 'macos' as const, label: 'macOS', command: 'brew install michael-goller/throughline/throughline' },
-    { os: 'linux' as const, label: 'Linux', command: 'curl -fsSL https://shine-site-lemon.vercel.app/install.sh | sh' },
-    { os: 'windows' as const, label: 'Windows', command: 'iwr https://shine-site-lemon.vercel.app/api/install-ps/public | iex' },
+    { os: 'macos' as const, label: 'macOS', command: 'curl -fsSL https://shine-site-lemon.vercel.app/api/install/public | bash' },
+    { os: 'linux' as const, label: 'Linux', command: 'curl -fsSL https://shine-site-lemon.vercel.app/api/install/public | bash' },
+    { os: 'windows' as const, label: 'Windows', command: 'irm https://shine-site-lemon.vercel.app/api/install-ps/public | iex' },
   ],
   verify: [
     'After install, run',
