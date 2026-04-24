@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus, Loader2, AlertCircle } from 'lucide-react';
+import ThroughlineCoalBackground from './ThroughlineCoalBackground';
 
 interface AuthPageProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -8,7 +9,7 @@ interface AuthPageProps {
 }
 
 const BG_BASE = '#16141A';
-const BG_SURFACE = '#1D1B22';
+const BG_SURFACE = 'rgba(29, 27, 34, 0.82)';
 const TEXT_PRIMARY = '#ECE8E4';
 const TEXT_SECONDARY = 'rgba(236, 232, 228, 0.70)';
 const TEXT_MUTED = 'rgba(236, 232, 228, 0.45)';
@@ -17,14 +18,6 @@ const ACCENT = '#B91C1C';
 const ACCENT_HOVER = '#DC2626';
 const INPUT_BG = 'rgba(236, 232, 228, 0.03)';
 const INPUT_BORDER = 'rgba(236, 232, 228, 0.09)';
-
-const WARP_PATTERN = `repeating-linear-gradient(
-  90deg,
-  transparent 0,
-  transparent calc(56px - 1px),
-  rgba(236, 232, 228, 0.028) calc(56px - 1px),
-  rgba(236, 232, 228, 0.028) 56px
-)`;
 
 const THREAD_EDGE = `linear-gradient(90deg,
   transparent 0%,
@@ -72,23 +65,10 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
       className="fixed inset-0 flex items-center justify-center overflow-hidden"
       style={{
         backgroundColor: BG_BASE,
-        backgroundImage: WARP_PATTERN,
         fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
-      {/* Animated horizontal throughline across the viewport */}
-      <motion.div
-        initial={{ scaleX: 0, opacity: 0.6 }}
-        animate={{ scaleX: 1, opacity: 1 }}
-        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-        className="absolute left-0 right-0 pointer-events-none"
-        style={{
-          top: '50%',
-          height: 1,
-          background: THREAD_EDGE,
-          transformOrigin: 'left center',
-        }}
-      />
+      <ThroughlineCoalBackground />
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -130,12 +110,14 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           </p>
         </div>
 
-        {/* Card with thread edge */}
+        {/* Card with thread edge — glass over the coal stack */}
         <div
           className="relative rounded-2xl p-8 overflow-hidden"
           style={{
             backgroundColor: BG_SURFACE,
             border: `1px solid ${BORDER_SUBTLE}`,
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
           }}
         >
           <motion.div
