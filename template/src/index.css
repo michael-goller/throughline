@@ -10,14 +10,15 @@
  *   `--bg-base`, `--bg-surface`, `--bg-elevated`, `--accent-primary`,
  *   `--warp-pattern`, `--chrome-*` — app-chrome layer (Throughline system).
  *   Consumed by DeckDashboard, ViewerPage chrome, editor UI.
- *   Sourced from `site/throughline-tokens.css`; chrome-only extensions
- *   (`--chrome-ink`, `--chrome-card`, `--chrome-border-hover`) are declared
- *   below to avoid bleeding chrome tones into deck content.
+ *   Sourced from `throughline-tokens.css` (vendored from throughline-site
+ *   repo); chrome-only extensions (`--chrome-ink`, `--chrome-card`,
+ *   `--chrome-border-hover`) are declared below to avoid bleeding chrome
+ *   tones into deck content.
  *
  * Chrome never reaches for `--brand-red*`; deck content never reaches for
  * `--accent-primary`.
  */
-@import "../../site/throughline-tokens.css";
+@import "./throughline-tokens.css";
 
 @tailwind base;
 @tailwind components;

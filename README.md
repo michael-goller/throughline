@@ -228,7 +228,6 @@ throughline/
 │   │   └── lib/        # Deck loader, analytics, InstantDB
 │   ├── api/            # Serverless API (auth, deck storage)
 │   └── vite.config.ts  # Custom plugin for thin deck resolution
-├── site/             # Landing page
 ├── Formula/          # Homebrew formula
 └── install.sh        # One-liner installer
 ```
