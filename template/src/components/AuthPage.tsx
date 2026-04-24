@@ -7,10 +7,31 @@ interface AuthPageProps {
   onSignup: (email: string, password: string, name: string) => Promise<void>;
 }
 
-/**
- * Auth page styled to match the Throughline landing page aesthetic:
- * dark bg (#0f0f13), indigo accent, JetBrains Mono headings + Inter body.
- */
+const BG_BASE = '#16141A';
+const BG_SURFACE = '#1D1B22';
+const TEXT_PRIMARY = '#ECE8E4';
+const TEXT_SECONDARY = 'rgba(236, 232, 228, 0.70)';
+const TEXT_MUTED = 'rgba(236, 232, 228, 0.45)';
+const BORDER_SUBTLE = 'rgba(236, 232, 228, 0.07)';
+const ACCENT = '#B91C1C';
+const ACCENT_HOVER = '#DC2626';
+const INPUT_BG = 'rgba(236, 232, 228, 0.03)';
+const INPUT_BORDER = 'rgba(236, 232, 228, 0.09)';
+
+const WARP_PATTERN = `repeating-linear-gradient(
+  90deg,
+  transparent 0,
+  transparent calc(56px - 1px),
+  rgba(236, 232, 228, 0.028) calc(56px - 1px),
+  rgba(236, 232, 228, 0.028) 56px
+)`;
+
+const THREAD_EDGE = `linear-gradient(90deg,
+  transparent 0%,
+  ${ACCENT} 15%,
+  ${ACCENT} 85%,
+  transparent 100%)`;
+
 export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -38,79 +59,117 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   }
 
   const inputStyle: React.CSSProperties = {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    color: '#e8e8ed',
+    backgroundColor: INPUT_BG,
+    border: `1px solid ${INPUT_BORDER}`,
+    color: TEXT_PRIMARY,
     outline: 'none',
   };
 
-  const inputFocusClass = 'focus-within:ring-1 focus-within:ring-[#6366f1]/50';
+  const inputFocusClass = 'focus-within:ring-1';
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center"
+      className="fixed inset-0 flex items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: '#0f0f13',
+        backgroundColor: BG_BASE,
+        backgroundImage: WARP_PATTERN,
         fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
-      {/* Subtle radial glow behind the card */}
-      <div
-        className="absolute pointer-events-none"
+      {/* Animated horizontal throughline across the viewport */}
+      <motion.div
+        initial={{ scaleX: 0, opacity: 0.6 }}
+        animate={{ scaleX: 1, opacity: 1 }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+        className="absolute left-0 right-0 pointer-events-none"
         style={{
-          top: '30%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 600,
-          height: 400,
-          background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%)',
+          top: '50%',
+          height: 1,
+          background: THREAD_EDGE,
+          transformOrigin: 'left center',
         }}
       />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
         className="w-full max-w-md px-6 relative z-10"
       >
-        {/* Logo + tagline */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2.5 mb-3">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-              <defs>
-                <linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#6366f1"/><stop offset="100%" stopColor="#8b5cf6"/></linearGradient>
-                <linearGradient id="k" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#f59e0b"/></linearGradient>
-              </defs>
-              <rect x="3" y="4" width="22" height="16" rx="2" fill="url(#s)" opacity="0.9"/>
-              <rect x="5" y="6" width="18" height="12" rx="1" fill="#1e1b4b" opacity="0.6"/>
-              <rect x="7" y="9" width="10" height="1.5" rx="0.75" fill="white" opacity="0.8"/>
-              <rect x="7" y="12" width="7" height="1.2" rx="0.6" fill="white" opacity="0.5"/>
-              <rect x="7" y="14.5" width="8" height="1.2" rx="0.6" fill="white" opacity="0.5"/>
-              <rect x="12" y="20" width="4" height="2" fill="url(#s)" opacity="0.7"/>
-              <rect x="9" y="22" width="10" height="1.5" rx="0.75" fill="url(#s)" opacity="0.6"/>
-              <path d="M26 4 L27.2 7.8 L31 9 L27.2 10.2 L26 14 L24.8 10.2 L21 9 L24.8 7.8 Z" fill="url(#k)"/>
-              <path d="M22 17 L22.6 18.8 L24.5 19.4 L22.6 20 L22 21.8 L21.4 20 L19.5 19.4 L21.4 18.8 Z" fill="url(#k)" opacity="0.7"/>
+        {/* Thread-mark + wordmark */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex items-center gap-2.5" style={{ color: ACCENT }}>
+            <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M10 5 L10 19.75" stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
+              <polygon points="10,19.75 12.25,22 10,24.25 7.75,22" fill="currentColor" />
+              <path d="M12.25 22 L26 22" stroke="currentColor" strokeWidth="3" strokeLinecap="butt" fill="none" />
             </svg>
-            <h1
-              className="text-2xl font-bold"
-              style={{ fontFamily: "'JetBrains Mono', 'SF Mono', monospace", color: '#e8e8ed', letterSpacing: '-0.02em' }}
+            <span
+              className="font-mono lowercase"
+              style={{
+                color: TEXT_PRIMARY,
+                fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+                fontSize: '1.25rem',
+                letterSpacing: '-0.01em',
+              }}
             >
-              Throughline
-            </h1>
+              throughline
+            </span>
           </div>
-          <p style={{ color: 'rgba(232, 232, 237, 0.5)', fontSize: '0.9rem' }}>
-            {mode === 'login' ? 'Sign in to your account' : 'Create a presenter account'}
+          <p
+            className="font-mono mt-5 text-center"
+            style={{
+              color: TEXT_MUTED,
+              fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+              fontSize: '0.7rem',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            one idea. one throughline. one deck.
           </p>
         </div>
 
-        {/* Card */}
+        {/* Card with thread edge */}
         <div
-          className="rounded-2xl p-8"
+          className="relative rounded-2xl p-8 overflow-hidden"
           style={{
-            backgroundColor: '#16161e',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            backgroundColor: BG_SURFACE,
+            border: `1px solid ${BORDER_SUBTLE}`,
           }}
         >
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.55 }}
+            className="absolute top-0 left-0 right-0 pointer-events-none"
+            style={{
+              height: 1,
+              background: THREAD_EDGE,
+              transformOrigin: 'left center',
+            }}
+          />
+
+          <h2
+            className="font-mono lowercase mb-1"
+            style={{
+              color: TEXT_PRIMARY,
+              fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+              fontSize: '0.95rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {mode === 'login' ? 'sign in' : 'create account'}
+          </h2>
+          <p
+            className="mb-6 text-sm"
+            style={{ color: TEXT_SECONDARY }}
+          >
+            {mode === 'login'
+              ? 'Continue to your decks.'
+              : 'Start shaping decks with a throughline.'}
+          </p>
+
           {error && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -118,8 +177,8 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               className="flex items-center gap-2 mb-4 p-3 rounded-lg text-sm"
               style={{
                 backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                color: '#f87171',
-                border: '1px solid rgba(239, 68, 68, 0.15)',
+                color: '#F87171',
+                border: '1px solid rgba(239, 68, 68, 0.18)',
               }}
             >
               <AlertCircle size={16} />
@@ -131,10 +190,15 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             {mode === 'signup' && (
               <div>
                 <label
-                  className="block text-sm font-medium mb-1.5"
-                  style={{ color: 'rgba(232, 232, 237, 0.65)' }}
+                  className="block font-mono lowercase mb-1.5"
+                  style={{
+                    color: TEXT_MUTED,
+                    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.08em',
+                  }}
                 >
-                  Name
+                  name
                 </label>
                 <input
                   type="text"
@@ -143,7 +207,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                   required
                   autoComplete="name"
                   className={`w-full px-4 py-2.5 rounded-lg text-sm transition-colors ${inputFocusClass}`}
-                  style={inputStyle}
+                  style={{ ...inputStyle, '--tw-ring-color': `${ACCENT}40` } as React.CSSProperties}
                   placeholder="Your name"
                 />
               </div>
@@ -151,10 +215,15 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
             <div>
               <label
-                className="block text-sm font-medium mb-1.5"
-                style={{ color: 'rgba(232, 232, 237, 0.65)' }}
+                className="block font-mono lowercase mb-1.5"
+                style={{
+                  color: TEXT_MUTED,
+                  fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.08em',
+                }}
               >
-                Email
+                email
               </label>
               <input
                 type="email"
@@ -163,17 +232,22 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                 required
                 autoComplete="email"
                 className={`w-full px-4 py-2.5 rounded-lg text-sm transition-colors ${inputFocusClass}`}
-                style={inputStyle}
+                style={{ ...inputStyle, '--tw-ring-color': `${ACCENT}40` } as React.CSSProperties}
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
               <label
-                className="block text-sm font-medium mb-1.5"
-                style={{ color: 'rgba(232, 232, 237, 0.65)' }}
+                className="block font-mono lowercase mb-1.5"
+                style={{
+                  color: TEXT_MUTED,
+                  fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.08em',
+                }}
               >
-                Password
+                password
               </label>
               <input
                 type="password"
@@ -183,7 +257,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
                 minLength={8}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 className={`w-full px-4 py-2.5 rounded-lg text-sm transition-colors ${inputFocusClass}`}
-                style={inputStyle}
+                style={{ ...inputStyle, '--tw-ring-color': `${ACCENT}40` } as React.CSSProperties}
                 placeholder={mode === 'signup' ? 'At least 8 characters' : 'Your password'}
               />
             </div>
@@ -191,25 +265,30 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all text-white"
+              onMouseEnter={(e) => {
+                if (!loading) e.currentTarget.style.backgroundColor = ACCENT_HOVER;
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) e.currentTarget.style.backgroundColor = ACCENT;
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors text-white mt-6"
               style={{
-                background: loading
-                  ? '#4f46e5'
-                  : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                opacity: loading ? 0.8 : 1,
+                backgroundColor: ACCENT,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'wait' : 'pointer',
               }}
             >
               {loading ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
               ) : mode === 'login' ? (
-                <LogIn size={18} />
+                <LogIn size={16} />
               ) : (
-                <UserPlus size={18} />
+                <UserPlus size={16} />
               )}
               {loading
                 ? mode === 'login'
-                  ? 'Signing in...'
-                  : 'Creating account...'
+                  ? 'Signing in…'
+                  : 'Creating account…'
                 : mode === 'login'
                   ? 'Sign in'
                   : 'Create account'}
@@ -219,26 +298,21 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
 
         <p
           className="text-center mt-6 text-sm"
-          style={{ color: 'rgba(232, 232, 237, 0.4)' }}
+          style={{ color: TEXT_SECONDARY }}
         >
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+          {mode === 'login' ? 'New here? ' : 'Already have an account? '}
           <button
             onClick={() => {
               setMode(mode === 'login' ? 'signup' : 'login');
               setError('');
             }}
-            className="font-medium underline underline-offset-2 transition-colors"
-            style={{ color: '#818cf8' }}
+            className="font-medium underline underline-offset-4 transition-colors"
+            style={{ color: ACCENT }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = ACCENT_HOVER)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = ACCENT)}
           >
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
+            {mode === 'login' ? 'Create an account' : 'Sign in'}
           </button>
-        </p>
-
-        <p
-          className="text-center mt-4 text-xs"
-          style={{ color: 'rgba(232, 232, 237, 0.25)' }}
-        >
-          Beautiful decks made simple
         </p>
       </motion.div>
     </div>
