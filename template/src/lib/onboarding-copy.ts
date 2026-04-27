@@ -20,9 +20,9 @@ export const STEP1_COPY = {
 export const STEP2_COPY = {
   title: 'Install the CLI',
   tabs: [
-    { os: 'macos' as const, label: 'macOS', command: 'curl -fsSL https://shine-site-lemon.vercel.app/api/install/public | bash' },
-    { os: 'linux' as const, label: 'Linux', command: 'curl -fsSL https://shine-site-lemon.vercel.app/api/install/public | bash' },
-    { os: 'windows' as const, label: 'Windows', command: 'irm https://shine-site-lemon.vercel.app/api/install-ps/public | iex' },
+    { os: 'macos' as const, label: 'macOS', command: 'curl -fsSL https://through-line.dev/api/install/public | bash' },
+    { os: 'linux' as const, label: 'Linux', command: 'curl -fsSL https://through-line.dev/api/install/public | bash' },
+    { os: 'windows' as const, label: 'Windows', command: 'irm https://through-line.dev/api/install-ps/public | iex' },
   ],
   verify: [
     'After install, run',
@@ -82,14 +82,14 @@ export const STEP4_COPY = {
   footer: {
     help: 'throughline --help',
     site: 'throughline.dev',
-    siteUrl: 'https://shine-site-lemon.vercel.app',
+    siteUrl: 'https://through-line.dev',
     channel: 'Join our channel (coming soon)',
   },
 }
 
 export const MOBILE_VIEWER_COPY = {
   cta: 'Install on desktop to build your own',
-  ctaHref: 'https://shine-site-lemon.vercel.app',
+  ctaHref: 'https://through-line.dev',
 }
 
 export const SKIP_LABEL = 'Skip for now'
