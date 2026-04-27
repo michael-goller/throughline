@@ -29,6 +29,8 @@ import './index.css'
 
 const IS_VERCEL = typeof window !== 'undefined' && (
   window.location.hostname.endsWith('.vercel.app') ||
+  window.location.hostname === 'through-line.dev' ||
+  window.location.hostname.endsWith('.through-line.dev') ||
   import.meta.env.VITE_REQUIRE_AUTH === 'true'
 )
 
