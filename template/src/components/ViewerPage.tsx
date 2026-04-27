@@ -7,9 +7,11 @@ import SlideOverview from './SlideOverview'
 import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
 import OnboardingOverlay from './OnboardingOverlay'
+import FollowPresenterIcon from './FollowPresenterIcon'
 import { useSwipe } from '../hooks/useSwipe'
 import { useTheme } from '../hooks/useTheme'
 import { useOnboarding, type OnboardingContext } from '../hooks/useOnboarding'
+import { useFollowPresenter } from '../hooks/useFollowPresenter'
 import { isInstantDBConfigured } from '../lib/instantdb'
 
 interface ViewerPageProps {
@@ -279,19 +281,38 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
     disabled: viewerContext === null,
   })
 
+  // Follow live presenter — when the deck owner toggles "go live", viewers can
+  // tap the radio-tower to mirror the presenter's slide cursor in real time.
+  const {
+    isFollowing,
+    presenterLive,
+    presenterStale,
+    presenterSlide,
+    toggleFollow,
+    breakFollow,
+  } = useFollowPresenter(deckId, {
+    onFollowSlideChange: (slideIndex) => {
+      if (slideIndex === currentSlide) return
+      setDirection(slideIndex > currentSlide ? 1 : -1)
+      setCurrentSlide(slideIndex)
+    },
+  })
+
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
+      breakFollow()
       setDirection(1)
       setCurrentSlide(currentSlide + 1)
     }
-  }, [currentSlide, slides.length])
+  }, [currentSlide, slides.length, breakFollow])
 
   const goPrev = useCallback(() => {
     if (currentSlide > 0) {
+      breakFollow()
       setDirection(-1)
       setCurrentSlide(currentSlide - 1)
     }
-  }, [currentSlide])
+  }, [currentSlide, breakFollow])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -516,6 +537,18 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           </motion.button>
 
           <div className="w-px h-3.5 bg-border mx-0.5" />
+
+          {/* Follow live presenter — only appears when a presenter is broadcasting */}
+          {isInstantDBConfigured && (
+            <FollowPresenterIcon
+              presenterLive={presenterLive}
+              presenterSlide={presenterSlide}
+              totalSlides={slides.length}
+              isFollowing={isFollowing}
+              presenterStale={presenterStale}
+              onToggleFollow={toggleFollow}
+            />
+          )}
 
           <motion.button
             animate={{ opacity: 0.6 }}

@@ -9,11 +9,14 @@ import SlideOverview from './components/SlideOverview'
 import FeedbackOverlay from './components/FeedbackOverlay'
 import LaserPointer from './components/LaserPointer'
 import PresenterView from './components/PresenterView'
+import GoLiveButton from './components/GoLiveButton'
 import SlideEditor from './editor/SlideEditor'
 import DeckDashboard from './components/DeckDashboard'
 import AuthPage from './components/AuthPage'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
+import { usePresenterBroadcast } from './hooks/usePresenterBroadcast'
+import { isInstantDBConfigured } from './lib/instantdb'
 import { useSlideState } from './hooks/useSlideState'
 import { useDeck } from './hooks/useDeck'
 import { useViewportScale } from './hooks/useViewportScale'
@@ -278,6 +281,14 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
     },
   })
 
+  // Live presenter broadcast — when toggled on, viewers with /view/<slug>/<token>
+  // can follow this presenter's slide cursor in real time via InstantDB.
+  const { isLive: isBroadcastLive, toggleBroadcast } = usePresenterBroadcast(
+    deckId,
+    currentSlide,
+    slides.length,
+  )
+
   // Show toast notification
   const showToast = useCallback((message: string, icon: 'star' | 'hide') => {
     setToast({ message, icon })
@@ -363,6 +374,9 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
       } else if (e.key === 'p') {
         e.preventDefault()
         setLaserActive((prev) => !prev)
+      } else if (e.key === 'l' && isInstantDBConfigured) {
+        e.preventDefault()
+        toggleBroadcast()
       } else if (e.key === 'o') {
         e.preventDefault()
         setShowOverview(true)
@@ -414,7 +428,7 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, showEditor, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast])
+  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, showEditor, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast, toggleBroadcast])
 
   const currentSlideConfig = slides[currentSlide]
 
@@ -650,6 +664,11 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
             {/* Divider */}
             <div className="w-px h-3.5 bg-border mx-0.5" />
 
+            {/* Go Live (broadcast presenter cursor to followers) */}
+            {isInstantDBConfigured && (
+              <GoLiveButton isLive={isBroadcastLive} onToggle={toggleBroadcast} />
+            )}
+
             {/* Theme Toggle */}
             <motion.button
               animate={{ opacity: 0.6 }}
@@ -789,6 +808,12 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
                   <span className="font-mono text-brand-red">p</span>
                   <span>Laser pointer</span>
                 </div>
+                {isInstantDBConfigured && (
+                  <div className="flex justify-between gap-8">
+                    <span className="font-mono text-brand-red">l</span>
+                    <span>Go live (broadcast to viewers)</span>
+                  </div>
+                )}
                 <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">?</span>
                   <span>Show this help</span>

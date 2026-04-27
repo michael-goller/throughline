@@ -41,6 +41,17 @@ export interface Comment {
   replies?: Reply[]
 }
 
+export interface PresenterSession {
+  id: string
+  deckId: string
+  presenterId: string
+  currentSlide: number
+  totalSlides: number
+  isLive: boolean
+  startedAt: number
+  updatedAt: number
+}
+
 // Initialize InstantDB
 const APP_ID = import.meta.env.VITE_INSTANTDB_APP_ID as string | undefined
 
