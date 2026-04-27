@@ -96,17 +96,41 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
               throughline
             </span>
           </div>
-          <p
-            className="font-mono mt-5 text-center"
+          <h1
+            className="mt-6 text-center"
             style={{
-              color: TEXT_MUTED,
+              color: TEXT_PRIMARY,
               fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
-              fontSize: '0.7rem',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
+              fontSize: '1.625rem',
+              fontWeight: 700,
+              lineHeight: 1.15,
+              letterSpacing: '-0.01em',
             }}
           >
-            one idea. one throughline. one deck.
+            Decks as code.
+            <br />
+            <span style={{ color: ACCENT }}>Argument as craft.</span>
+          </h1>
+          <p
+            className="mt-4 text-center"
+            style={{
+              color: TEXT_SECONDARY,
+              fontSize: '0.875rem',
+              lineHeight: 1.55,
+            }}
+          >
+            Your deck is a TypeScript file. Your editor is a conversation.
+            Your audience gets a shareable link — no account, no export, no friction.
+          </p>
+          <p
+            className="mt-3 text-center"
+            style={{
+              color: TEXT_MUTED,
+              fontSize: '0.8125rem',
+              fontStyle: 'italic',
+            }}
+          >
+            For people whose thinking deserves better than WYSIWYG.
           </p>
         </div>
 
