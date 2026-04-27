@@ -29,6 +29,10 @@ import { checkDeck } from './lib/check.js'
 import { runOnboard } from './lib/onboard.js'
 import { installSkills, parseInstallTarget } from './lib/install.js'
 import { createInterface } from 'readline'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const { version: CLI_VERSION } = require('../package.json') as { version: string }
 
 // Thread-red brand color — matches throughline-site repo's throughline-tokens.css (--accent-primary dark).
 const THREAD_RED = '#B91C1C'
@@ -44,7 +48,7 @@ function banner(): string {
 program
   .name('throughline')
   .description('The dev-native way to make decks')
-  .version('0.1.0')
+  .version(CLI_VERSION)
   .addHelpText('beforeAll', banner())
 
 // ─────────────────────────────────────────────────────────────
