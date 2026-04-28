@@ -67,10 +67,8 @@ export function useAuth() {
       try { msg = JSON.parse(text).error || msg; } catch { msg = text.slice(0, 200) || msg; }
       throw new Error(msg);
     }
-    const user = await res.json();
-    cachedUser = user;
-    setState({ user, loading: false });
-    return user;
+    const data = await res.json();
+    return data as { message: string };
   }, []);
 
   const logout = useCallback(async () => {

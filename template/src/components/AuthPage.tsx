@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LogIn, UserPlus, Loader2, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import ThroughlineCoalBackground from './ThroughlineCoalBackground';
 
 interface AuthPageProps {
   onLogin: (email: string, password: string) => Promise<void>;
-  onSignup: (email: string, password: string, name: string) => Promise<void>;
+  onSignup: (email: string, password: string, name: string) => Promise<{ message: string }>;
 }
 
 const BG_BASE = '#16141A';
@@ -31,18 +31,23 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
 
     try {
       if (mode === 'login') {
         await onLogin(email, password);
       } else {
-        await onSignup(email, password, name);
+        const { message } = await onSignup(email, password, name);
+        setNotice(message);
+        setMode('login');
+        setPassword('');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -192,6 +197,22 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             </motion.div>
           )}
 
+          {notice && !error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="flex items-start gap-2 mb-4 p-3 rounded-lg text-sm"
+              style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                color: '#86EFAC',
+                border: '1px solid rgba(34, 197, 94, 0.18)',
+              }}
+            >
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+              <span>{notice}</span>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
               <div>
@@ -311,6 +332,7 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
             onClick={() => {
               setMode(mode === 'login' ? 'signup' : 'login');
               setError('');
+              setNotice('');
             }}
             className="font-medium underline underline-offset-4 transition-colors"
             style={{ color: ACCENT }}
