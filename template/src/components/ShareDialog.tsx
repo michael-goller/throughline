@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -109,6 +109,11 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
 
   const apiBase = getApiBase()
 
+  const onShareCountChangeRef = useRef(onShareCountChange)
+  useEffect(() => {
+    onShareCountChangeRef.current = onShareCountChange
+  }, [onShareCountChange])
+
   const fetchShares = useCallback(async () => {
     setLoadingShares(true)
     try {
@@ -116,13 +121,13 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
       if (!res.ok) throw new Error('Failed to load shares')
       const data: ShareToken[] = await res.json()
       setShares(data)
-      onShareCountChange?.(data.length)
+      onShareCountChangeRef.current?.(data.length)
     } catch {
       // silently fail — shares list is supplementary
     } finally {
       setLoadingShares(false)
     }
-  }, [apiBase, slug, onShareCountChange])
+  }, [apiBase, slug])
 
   useEffect(() => {
     fetchShares()
