@@ -372,14 +372,14 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-30 bg-black/50"
+              className="fixed inset-0 z-30 bg-black/50 pointer-events-auto"
               onClick={closeModal}
             />
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="fixed z-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4"
+              className="fixed z-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 pointer-events-auto"
             >
               {/* Original message */}
               <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
