@@ -12,8 +12,8 @@ Your deck is a `slides.config.ts` file — a plain TypeScript array of slide obj
 ## Quick Start
 
 ```bash
-# Install
-curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
+# Install (Homebrew is the recommended path — see below)
+brew install michael-goller/tap/throughline
 
 # Create a deck
 throughline new quarterly-update
@@ -29,13 +29,7 @@ That's it. Three commands and a conversation.
 
 ## Install
 
-**One-liner** (macOS, Linux, WSL) — installs everything, including Node.js if you don't have it:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
-```
-
-**Homebrew:**
+**Homebrew** (recommended on macOS and Linux). Homebrew downloads through a vetted formula and verifies what it ships, so this is the path we recommend for everyone except CI:
 
 ```bash
 brew install michael-goller/tap/throughline
@@ -46,6 +40,38 @@ brew install michael-goller/tap/throughline
 ```bash
 npm install -g throughline
 ```
+
+**One-liner** (macOS, Linux, WSL) — installs everything, including Node.js if you don't have it. This pipes a remote shell script straight into `bash`, so we strongly recommend the verification flow below for any host you care about:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh | bash
+```
+
+### Verifying the install script
+
+The `curl | bash` pattern is convenient but trusts whatever bytes GitHub returns at request time. If you'd like a verifiable install:
+
+```bash
+# 1. Download (do not pipe to bash yet)
+curl -fsSL -o install.sh https://raw.githubusercontent.com/michael-goller/throughline/main/install.sh
+
+# 2. Verify the SHA256 against the published checksum.
+#    The current published value is in CHECKSUMS.txt at the same ref.
+shasum -a 256 install.sh
+# expected: 7dc693ca2045f0f67dfb6669fd2ad5f77ac9c490fc459d16cd801e08ac42d183  install.sh
+
+# 3. Read the script, then run it
+less install.sh
+bash install.sh
+```
+
+To pin the Throughline source itself to a known-good commit (rather than tracking `main`), export `THROUGHLINE_COMMIT` before running the installer or `throughline update`:
+
+```bash
+THROUGHLINE_COMMIT=<full-sha> bash install.sh
+```
+
+When `THROUGHLINE_COMMIT` is unset, the installer and `throughline update` still attempt `git verify-commit HEAD` and warn if HEAD is unsigned. The bundled nvm install step is already pinned to a specific upstream commit and refuses to execute if its SHA256 does not match.
 
 ## How It Works
 

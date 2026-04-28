@@ -903,12 +903,37 @@ program
 
     if (existsSync(join(installDir, '.git'))) {
       // Git-based install (from install.sh)
-      console.log('Pulling latest changes...')
-      try {
+      const pinnedCommit = process.env.THROUGHLINE_COMMIT?.trim()
+
+      if (pinnedCommit) {
+        console.log(`Fetching pinned commit ${pinnedCommit}...`)
+        execSync(`git fetch --depth 1 origin ${pinnedCommit}`, { cwd: installDir, stdio: 'inherit' })
+        execSync(`git checkout --detach ${pinnedCommit}`, { cwd: installDir, stdio: 'inherit' })
+      } else {
+        console.log('Pulling latest changes...')
+        // Strict fast-forward only — refuse to merge unrelated history that
+        // could be introduced by a redirected remote or compromised mirror.
         execSync('git pull --ff-only origin main', { cwd: installDir, stdio: 'inherit' })
+      }
+
+      // Verify the new HEAD before we run npm install / build on it.
+      const headSha = execSync('git rev-parse HEAD', { cwd: installDir }).toString().trim()
+      if (pinnedCommit && headSha !== pinnedCommit) {
+        console.log(chalk.red(`✗ HEAD (${headSha}) does not match THROUGHLINE_COMMIT (${pinnedCommit})`))
+        process.exit(1)
+      }
+      try {
+        execSync('git verify-commit HEAD', { cwd: installDir, stdio: 'pipe' })
+        console.log(chalk.green(`✓ HEAD ${headSha.slice(0, 12)} signature verified`))
       } catch {
-        console.log(chalk.yellow('Fast-forward failed, trying merge...'))
-        execSync('git pull origin main', { cwd: installDir, stdio: 'inherit' })
+        console.log(
+          chalk.yellow(
+            `⚠ HEAD ${headSha.slice(0, 12)} is not signed — relying on HTTPS + GitHub for integrity.`,
+          ),
+        )
+        console.log(
+          chalk.yellow('  For higher assurance, re-run with THROUGHLINE_COMMIT=<sha> to pin.'),
+        )
       }
 
       console.log('Rebuilding CLI...')

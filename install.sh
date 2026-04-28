@@ -22,6 +22,18 @@ THROUGHLINE_HOME="${THROUGHLINE_HOME:-$HOME/.throughline}"
 THROUGHLINE_INSTALL_DIR="$THROUGHLINE_HOME/install"
 MIN_NODE_MAJOR=20
 
+# Pinned third-party dependency versions.
+# nvm v0.40.1 → commit 179d45050be0a71fd57591b0ed8aedf9b177ba10
+# Pin to the commit (not the tag) so a future tag move on the upstream repo
+# cannot silently change what we execute.
+NVM_COMMIT="179d45050be0a71fd57591b0ed8aedf9b177ba10"
+NVM_INSTALL_SHA256="abdb525ee9f5b48b34d8ed9fc67c6013fb0f659712e401ecd88ab989b3af8f53"
+
+# Optional: pin Throughline to a specific git commit by exporting
+# THROUGHLINE_COMMIT=<sha> before piping to bash. When unset, we install the
+# tip of main and rely on `git verify-commit` if it succeeds.
+THROUGHLINE_COMMIT="${THROUGHLINE_COMMIT:-}"
+
 # ── Helpers ──────────────────────────────────────────────────────
 info()  { printf "${BLUE}ℹ${RESET}  %s\n" "$*"; }
 ok()    { printf "${GREEN}✓${RESET}  %s\n" "$*"; }
@@ -75,9 +87,41 @@ ensure_node() {
 
   info "Installing Node.js via nvm..."
 
-  # Install nvm if missing
+  # Install nvm if missing — fetch from a pinned commit and verify SHA256 before
+  # executing. Failing closed here (refuse to run unverified code) is
+  # intentional; updating NVM_COMMIT/NVM_INSTALL_SHA256 is a deliberate step.
   if ! command_exists nvm && [ ! -s "$HOME/.nvm/nvm.sh" ]; then
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+    local nvm_url="https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_COMMIT}/install.sh"
+    local nvm_tmp
+    nvm_tmp="$(mktemp -t throughline-nvm-install.XXXXXX)"
+    trap 'rm -f "$nvm_tmp"' EXIT
+
+    info "Fetching nvm install script (pinned to $NVM_COMMIT)..."
+    if ! curl -fsSL "$nvm_url" -o "$nvm_tmp"; then
+      fail "Failed to download pinned nvm install script from $nvm_url"
+    fi
+
+    local actual_sha
+    if command_exists sha256sum; then
+      actual_sha="$(sha256sum "$nvm_tmp" | awk '{print $1}')"
+    elif command_exists shasum; then
+      actual_sha="$(shasum -a 256 "$nvm_tmp" | awk '{print $1}')"
+    else
+      fail "Need sha256sum or shasum to verify nvm install. Install one and retry."
+    fi
+
+    if [ "$actual_sha" != "$NVM_INSTALL_SHA256" ]; then
+      fail "nvm install script SHA256 mismatch.
+  expected: $NVM_INSTALL_SHA256
+  actual:   $actual_sha
+  url:      $nvm_url
+Refusing to execute unverified code."
+    fi
+
+    ok "nvm install script verified ($NVM_INSTALL_SHA256)"
+    bash "$nvm_tmp"
+    rm -f "$nvm_tmp"
+    trap - EXIT
   fi
 
   # Source nvm
@@ -128,15 +172,52 @@ install_throughline() {
   if [ -d "$THROUGHLINE_INSTALL_DIR/.git" ]; then
     info "Updating existing installation..."
     cd "$THROUGHLINE_INSTALL_DIR"
-    git pull --ff-only origin main 2>/dev/null || git pull origin main
+    if [ -n "$THROUGHLINE_COMMIT" ]; then
+      git fetch --depth 1 origin "$THROUGHLINE_COMMIT"
+      git checkout --detach "$THROUGHLINE_COMMIT"
+    else
+      git pull --ff-only origin main 2>/dev/null || git pull origin main
+    fi
     cd - >/dev/null
   else
     info "Cloning Throughline..."
     rm -rf "$THROUGHLINE_INSTALL_DIR"
-    git clone --depth 1 "$THROUGHLINE_REPO" "$THROUGHLINE_INSTALL_DIR"
+    if [ -n "$THROUGHLINE_COMMIT" ]; then
+      git clone "$THROUGHLINE_REPO" "$THROUGHLINE_INSTALL_DIR"
+      cd "$THROUGHLINE_INSTALL_DIR"
+      git checkout --detach "$THROUGHLINE_COMMIT"
+      cd - >/dev/null
+    else
+      git clone --depth 1 "$THROUGHLINE_REPO" "$THROUGHLINE_INSTALL_DIR"
+    fi
   fi
 
+  verify_throughline_commit
   ok "Source downloaded to $THROUGHLINE_INSTALL_DIR"
+}
+
+# ── Verify Throughline commit ───────────────────────────────────
+# If THROUGHLINE_COMMIT is set, require HEAD to match that commit (fail-closed).
+# Otherwise try `git verify-commit` and warn — but do not fail — when commits
+# are unsigned, so the install still works on a hobby repo without GPG keys.
+verify_throughline_commit() {
+  local head_sha
+  head_sha="$(git -C "$THROUGHLINE_INSTALL_DIR" rev-parse HEAD)"
+
+  if [ -n "$THROUGHLINE_COMMIT" ]; then
+    if [ "$head_sha" != "$THROUGHLINE_COMMIT" ]; then
+      fail "HEAD ($head_sha) does not match pinned THROUGHLINE_COMMIT ($THROUGHLINE_COMMIT)"
+    fi
+    ok "HEAD pinned to $THROUGHLINE_COMMIT"
+    return
+  fi
+
+  if git -C "$THROUGHLINE_INSTALL_DIR" verify-commit HEAD >/dev/null 2>&1; then
+    ok "HEAD ($head_sha) verified by git signature"
+  else
+    warn "HEAD ($head_sha) is not signed — relying on HTTPS + GitHub for integrity."
+    warn "For higher assurance, re-run with THROUGHLINE_COMMIT=<sha> to pin."
+  fi
 }
 
 # ── Build CLI ────────────────────────────────────────────────────

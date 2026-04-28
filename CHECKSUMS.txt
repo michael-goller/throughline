@@ -1,0 +1,15 @@
+# Throughline release checksums
+#
+# Verify a downloaded artifact like this:
+#
+#   shasum -a 256 -c CHECKSUMS.txt --ignore-missing
+#
+# Update this file whenever the corresponding artifact changes. The
+# install.sh hash is also referenced from the README and from any release
+# announcement — do not let them drift.
+
+7dc693ca2045f0f67dfb6669fd2ad5f77ac9c490fc459d16cd801e08ac42d183  install.sh
+
+# Pinned third-party dependencies (verified by install.sh at runtime):
+#   nvm install.sh @ commit 179d45050be0a71fd57591b0ed8aedf9b177ba10 (v0.40.1)
+#     SHA256: abdb525ee9f5b48b34d8ed9fc67c6013fb0f659712e401ecd88ab989b3af8f53
