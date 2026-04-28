@@ -36,6 +36,7 @@ import TemplateGallery from './TemplateGallery'
 import OnboardingOverlay from './OnboardingOverlay'
 import { useOnboarding } from '../hooks/useOnboarding'
 import ThreadMark from './onboarding/ThreadMark'
+import ReportIssueLink from './ReportIssueLink'
 
 type SortMode = 'recent' | 'alpha' | 'slides' | 'views'
 
@@ -728,6 +729,12 @@ export default function DeckDashboard() {
             >
               Guide
             </button>
+            <span className="mx-2">·</span>
+            <ReportIssueLink
+              variant="inline"
+              className="hover:text-chrome-ink"
+              getContext={() => ({ context: 'dashboard' })}
+            />
           </div>
           <div
             className="font-mono tracking-wide lowercase text-chrome-ink-muted/80"

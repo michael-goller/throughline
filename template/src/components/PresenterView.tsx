@@ -39,6 +39,7 @@ import { useSlideState } from '../hooks/useSlideState'
 // import { useViewerPresence } from '../hooks/useViewerPresence'
 import SlideThumbnail from './SlideThumbnail'
 import SlideSearch from './SlideSearch'
+import ReportIssueLink from './ReportIssueLink'
 import { trackDeckOpened, trackSlideViewed } from '../lib/track'
 import type { SlideConfig } from '../types'
 import type { Comment } from '../lib/instantdb'
@@ -268,6 +269,16 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
             {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
             {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
+          <ReportIssueLink
+            variant="inline"
+            className="text-sm text-gray-300 hover:text-white"
+            getContext={() => ({
+              context: 'presenter',
+              deckSlug: deckId,
+              slideId: currentSlideConfig?.id,
+              slideIndex: currentSlide,
+            })}
+          />
         </div>
       </div>
 

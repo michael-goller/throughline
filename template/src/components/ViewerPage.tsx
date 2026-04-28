@@ -8,6 +8,7 @@ import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
 import OnboardingOverlay from './OnboardingOverlay'
 import FollowPresenterIcon from './FollowPresenterIcon'
+import ReportIssueLink from './ReportIssueLink'
 import { useSwipe } from '../hooks/useSwipe'
 import { useTheme } from '../hooks/useTheme'
 import { useOnboarding, type OnboardingContext } from '../hooks/useOnboarding'
@@ -573,6 +574,22 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
           </motion.button>
         </div>
+      </div>
+
+      {/* Report-an-issue affordance — mirror of bottom-left nav, sits at bottom-right */}
+      <div className="absolute bottom-4 right-4 z-10">
+        <ReportIssueLink
+          variant="pill"
+          getContext={() => {
+            const slide = slides[currentSlide]
+            return {
+              context: 'viewer',
+              deckSlug: deckId,
+              slideId: slide?.id,
+              slideIndex: currentSlide,
+            }
+          }}
+        />
       </div>
 
       {/* Viewer cold-land guide — mounts in the verified state so it never
