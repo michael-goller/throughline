@@ -7,6 +7,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { execSync } from 'child_process'
 import { THROUGHLINE_DIR, ensureThroughlineDir, getTemplatePath } from './config.js'
+import { requireDeckTrust, sandboxedEnv, type TrustOptions } from './trust.js'
 
 const CREDENTIALS_FILE = join(THROUGHLINE_DIR, 'credentials.json')
 
@@ -109,7 +110,7 @@ export async function whoami(): Promise<{ name: string; email: string } | null> 
   return data
 }
 
-export async function publish(deckDir: string): Promise<{ slug: string; url: string }> {
+export async function publish(deckDir: string, trustOpts: TrustOptions = {}): Promise<{ slug: string; url: string }> {
   const creds = loadCredentials()
   if (!creds) {
     throw new Error('Not logged in. Run: throughline login')
@@ -131,6 +132,8 @@ export async function publish(deckDir: string): Promise<{ slug: string; url: str
   if (!configFile) {
     throw new Error(`No slides.config.ts found in ${deckDir} (checked root, src/, template/)`)
   }
+
+  await requireDeckTrust(configFile, trustOpts)
 
   const slug = deckDir.split('/').pop()!
 
@@ -178,7 +181,7 @@ export async function publish(deckDir: string): Promise<{ slug: string; url: str
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 30000,
-      env: { ...process.env, NODE_PATH: nodeModulesPath },
+      env: { ...sandboxedEnv(), NODE_PATH: nodeModulesPath },
     }).trim()
 
     // Cleanup

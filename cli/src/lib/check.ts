@@ -11,6 +11,7 @@ import { existsSync, mkdtempSync, unlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { getTemplatePath } from './config.js'
+import { requireDeckTrust, sandboxedEnv, type TrustOptions } from './trust.js'
 
 export interface CheckIssue {
   severity: 'error' | 'warning'
@@ -77,7 +78,7 @@ function extractConfig(configFile: string): ExtractedConfig {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 30000,
-      env: { ...process.env, NODE_PATH: nodeModulesPath },
+      env: { ...sandboxedEnv(), NODE_PATH: nodeModulesPath },
     }).trim()
   } catch (err) {
     const e = err as { stderr?: string; message?: string }
@@ -93,7 +94,7 @@ function extractConfig(configFile: string): ExtractedConfig {
   return JSON.parse(stdout) as ExtractedConfig
 }
 
-export function checkDeck(deckDir: string): CheckResult {
+export async function checkDeck(deckDir: string, trustOpts: TrustOptions = {}): Promise<CheckResult> {
   const configFile = findConfigFile(deckDir)
   if (!configFile) {
     return {
@@ -112,6 +113,7 @@ export function checkDeck(deckDir: string): CheckResult {
     }
   }
 
+  await requireDeckTrust(configFile, trustOpts)
   const extracted = extractConfig(configFile)
   const issues: CheckIssue[] = []
 

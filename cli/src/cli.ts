@@ -191,7 +191,9 @@ program
   .command('check [name]')
   .description('Lint a deck — warns if the throughline statement is missing')
   .option('--path <dir>', 'Path to a deck directory (overrides [name])')
-  .action((name: string | undefined, options: { path?: string }) => {
+  .option('--trust', 'Trust this deck (and remember it) without prompting')
+  .option('--no-trust-prompt', 'Refuse to prompt for trust — fail unless deck is already trusted')
+  .action(async (name: string | undefined, options: { path?: string; trust?: boolean; trustPrompt?: boolean }) => {
     try {
       let deckDir: string
       let label: string
@@ -212,7 +214,10 @@ program
         label = formatPath(deckDir)
       }
 
-      const result = checkDeck(deckDir)
+      const result = await checkDeck(deckDir, {
+        trust: options.trust,
+        noPrompt: options.trustPrompt === false,
+      })
 
       console.log(chalk.bold(`\nthroughline check: ${label}`))
       console.log(`  config:     ${formatPath(result.configFile)}`)
@@ -722,7 +727,9 @@ program
 program
   .command('publish [name]')
   .description('Publish a deck to Throughline cloud')
-  .action(async (name?: string) => {
+  .option('--trust', 'Trust this deck (and remember it) without prompting')
+  .option('--no-trust-prompt', 'Refuse to prompt for trust — fail unless deck is already trusted')
+  .action(async (name: string | undefined, options: { trust?: boolean; trustPrompt?: boolean }) => {
     try {
       if (!name) {
         name = pickDeck('Publish deck') ?? undefined
@@ -736,7 +743,10 @@ program
       }
 
       console.log(`Publishing '${name}'...`)
-      const result = await cloudPublish(deck.path)
+      const result = await cloudPublish(deck.path, {
+        trust: options.trust,
+        noPrompt: options.trustPrompt === false,
+      })
       updateDeckPublished(name, result.url)
       console.log(chalk.green(`✓ Published`))
       console.log(`→ URL: ${result.url}`)
