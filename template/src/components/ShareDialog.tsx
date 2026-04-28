@@ -129,8 +129,8 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
   }, [fetchShares])
 
   const handleCreate = async () => {
-    if (password.length < 4) {
-      setErrorMsg('Password must be at least 4 characters')
+    if (password.length < 8) {
+      setErrorMsg('Password must be at least 8 characters')
       return
     }
     setView('creating')
@@ -358,7 +358,7 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
                         type="text"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        placeholder="Min 4 characters"
+                        placeholder="Min 8 characters"
                         className="flex-1 px-3 py-2 rounded-lg bg-background-accent border border-border text-text text-caption placeholder:text-text-muted/60 focus:outline-none focus:border-border-accent focus:ring-1 focus:ring-border-accent transition-colors font-mono"
                       />
                       <motion.button
@@ -416,7 +416,7 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleCreate}
-                    disabled={view === 'creating' || password.length < 4}
+                    disabled={view === 'creating' || password.length < 8}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-red text-white rounded-lg text-caption font-semibold hover:bg-brand-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {view === 'creating' ? (

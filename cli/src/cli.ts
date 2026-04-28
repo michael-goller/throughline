@@ -774,7 +774,7 @@ program
 program
   .command('share [name]')
   .description('Create a password-protected viewer link for a published deck')
-  .requiredOption('--password <password>', 'Viewer password (min 4 characters)')
+  .requiredOption('--password <password>', 'Viewer password (min 8 characters)')
   .option('--label <label>', 'Label for tracking (e.g. "Board meeting")')
   .option('--expires <duration>', 'Expiry (e.g. "7d", "24h", "2026-04-30")')
   .action(async (name: string | undefined, options: { password: string; label?: string; expires?: string }) => {
