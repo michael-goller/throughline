@@ -171,6 +171,10 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
       // Don't navigate if typing in reply field
       if (replyingTo) return
 
+      // Don't intercept keys while the user is typing in any input (search, feedback modal, share dialog, etc.)
+      const target = e.target as HTMLElement | null
+      if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable)) return
+
       if (e.key === '/') {
         e.preventDefault()
         setSearchInitialQuery('')

@@ -330,6 +330,11 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (showSearch) return
+
+      // Don't intercept keys while the user is typing in any input (feedback modal, share dialog, etc.)
+      const target = e.target as HTMLElement | null
+      if (target && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable)) return
+
       if (showOverview) {
         if (e.key === 'Escape') setShowOverview(false)
         return
