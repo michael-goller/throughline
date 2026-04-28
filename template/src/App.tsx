@@ -336,6 +336,12 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't hijack keys while typing in a text field (comment/reply forms, etc.)
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+
       // Search, overview, and editor handle their own keyboard events
       if (showSearch || showOverview || showEditor) {
         return

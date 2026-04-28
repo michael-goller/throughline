@@ -184,8 +184,9 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
 
   // Handle reply submission
   const handleReplySubmit = useCallback(() => {
-    if (replyingTo && replyText.trim() && identity) {
-      addReply(replyingTo, replyText.trim(), identity)
+    if (replyingTo && replyText.trim()) {
+      const author = identity ?? { name: 'Presenter', email: '' }
+      addReply(replyingTo, replyText.trim(), author)
       setReplyingTo(null)
       setReplyText('')
     }
@@ -457,7 +458,8 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                                 />
                                 <button
                                   onClick={handleReplySubmit}
-                                  className="p-1.5 bg-green-600 hover:bg-green-500 rounded transition-colors"
+                                  disabled={!replyText.trim()}
+                                  className="p-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
                                 >
                                   <Send size={14} />
                                 </button>
