@@ -70,7 +70,9 @@ export function setApiUrl(url: string): void {
 
 export async function login(email: string, password: string): Promise<{ name: string; email: string }> {
   const apiUrl = getApiUrl()
-  const res = await fetch(`${apiUrl}/api/auth/login`, {
+  // CLI uses /api/auth/token — returns JWT in body for Bearer auth, no cookie.
+  // /api/auth/login is browser-only (HttpOnly cookie, no token in body).
+  const res = await fetch(`${apiUrl}/api/auth/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
