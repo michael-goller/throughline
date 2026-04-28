@@ -6,7 +6,7 @@
  * - Shows aggregated reactions and comment/question markers
  */
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, HelpCircle, Send } from 'lucide-react'
 import { useReactions } from '../hooks/useReactions'
@@ -20,6 +20,7 @@ interface FeedbackOverlayProps {
   deckId: string
   slideId: string
   feedbackMode: boolean
+  onModalOpenChange?: (open: boolean) => void
 }
 
 interface ClickPosition {
@@ -31,7 +32,7 @@ interface ClickPosition {
 
 type ModalType = 'emoji' | 'context' | 'comment' | 'question' | 'reply' | null
 
-export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: FeedbackOverlayProps) {
+export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModalOpenChange }: FeedbackOverlayProps) {
   const { aggregatedReactions, addReaction, isConfigured } = useReactions(deckId, slideId)
   const { comments, questions, addComment, addQuestion, addReply } = useComments(deckId, slideId)
   const { identity, setIdentity } = useIdentity()
@@ -40,6 +41,24 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
   const [activeModal, setActiveModal] = useState<ModalType>(null)
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null)
   const [replyText, setReplyText] = useState('')
+
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const replyIdentityInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    onModalOpenChange?.(activeModal !== null)
+  }, [activeModal, onModalOpenChange])
+
+  // Focus the right reply field once the modal mounts (autoFocus can lose
+  // races with framer-motion + slide-change animations).
+  useEffect(() => {
+    if (activeModal !== 'reply') return
+    const id = requestAnimationFrame(() => {
+      const target = identity ? replyTextareaRef.current : replyIdentityInputRef.current
+      target?.focus()
+    })
+    return () => cancelAnimationFrame(id)
+  }, [activeModal, identity])
 
   // Left-click: open emoji picker
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -397,6 +416,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Enter your name to reply:</p>
                   <input
+                    ref={replyIdentityInputRef}
                     type="text"
                     placeholder="Your name"
                     className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo text-gray-900 dark:text-white placeholder:text-gray-400"
@@ -405,7 +425,6 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                         setIdentity({ name: e.currentTarget.value.trim(), email: '' })
                       }
                     }}
-                    autoFocus
                   />
                   <p className="text-xs text-gray-500">Press Enter to continue</p>
                 </div>
@@ -413,6 +432,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                 /* Reply input */
                 <div className="space-y-3">
                   <textarea
+                    ref={replyTextareaRef}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     onKeyDown={(e) => {
@@ -425,7 +445,6 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                     placeholder="Write your reply..."
                     className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo resize-none text-gray-900 dark:text-white placeholder:text-gray-400"
                     rows={3}
-                    autoFocus
                   />
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Replying as {identity.name}</span>

@@ -252,6 +252,7 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
   const [showSearch, setShowSearch] = useState(false)
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const [feedbackMode, setFeedbackMode] = useState(false)
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [animationsComplete, setAnimationsComplete] = useState(false)
   const [laserActive, setLaserActive] = useState(false)
   const [showOverview, setShowOverview] = useState(false)
@@ -343,7 +344,8 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
       }
 
       // Search, overview, and editor handle their own keyboard events
-      if (showSearch || showOverview || showEditor) {
+      // FeedbackOverlay's reply/comment/question modals also gate hotkeys.
+      if (showSearch || showOverview || showEditor || feedbackModalOpen) {
         return
       }
 
@@ -436,7 +438,7 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, showEditor, feedbackMode, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast, toggleBroadcast])
+  }, [paginate, goToFirst, goToLast, showHelp, showSearch, showOverview, showEditor, feedbackMode, feedbackModalOpen, currentSlide, slides, toggleStar, toggleHidden, isStarred, isHidden, showToast, toggleBroadcast])
 
   const currentSlideConfig = slides[currentSlide]
 
@@ -535,6 +537,7 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
           deckId={deckId}
           slideId={currentSlideConfig.id}
           feedbackMode={feedbackMode}
+          onModalOpenChange={setFeedbackModalOpen}
         />
       )}
 
