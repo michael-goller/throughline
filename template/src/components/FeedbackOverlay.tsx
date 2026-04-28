@@ -399,7 +399,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                   <input
                     type="text"
                     placeholder="Your name"
-                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo"
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo text-gray-900 dark:text-white placeholder:text-gray-400"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && e.currentTarget.value.trim()) {
                         setIdentity({ name: e.currentTarget.value.trim(), email: '' })
@@ -423,7 +423,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode }: Feedb
                       if (e.key === 'Escape') closeModal()
                     }}
                     placeholder="Write your reply..."
-                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo resize-none"
+                    className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-indigo resize-none text-gray-900 dark:text-white placeholder:text-gray-400"
                     rows={3}
                     autoFocus
                   />
