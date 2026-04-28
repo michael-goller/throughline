@@ -18,7 +18,6 @@ import {
   ChevronRight,
   MessageCircle,
   HelpCircle,
-  Trash2,
   Check,
   Clock,
   Play,
@@ -99,7 +98,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
 
   // Feedback hooks
   const { reactions } = useReactions(deckId)
-  const { comments, questions, addReply, resolveItem, deleteItem, clearSlide, clearAll } = useComments(deckId)
+  const { comments, questions, addReply, resolveItem } = useComments(deckId)
   const { identity } = useIdentity()
 
   // Viewer presence (disabled for now - needs InstantDB rooms setup)
@@ -355,22 +354,6 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
           {/* Feedback header */}
           <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
             <h2 className="font-medium">Live Feedback</h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => clearSlide(currentSlideConfig.id)}
-                className="text-xs px-2 py-1 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                title="Clear this slide"
-              >
-                Clear slide
-              </button>
-              <button
-                onClick={clearAll}
-                className="text-xs px-2 py-1 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                title="Clear all feedback"
-              >
-                Clear all
-              </button>
-            </div>
           </div>
 
           {/* Current slide feedback count */}
@@ -496,13 +479,6 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
                               <Check size={14} />
                             </button>
                           )}
-                          <button
-                            onClick={() => deleteItem(item.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       )}
                     </div>

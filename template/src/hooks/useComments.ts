@@ -1,5 +1,9 @@
 /**
  * Hook for managing comments and questions via InstantDB
+ *
+ * Note: bulk-delete operations were removed in DIG-120. The InstantDB perms
+ * file rejects client-side deletes outright. Re-add them as server-mediated
+ * moderation endpoints (with proper auth) when DIG-130 lands.
  */
 
 import { useMemo } from 'react'
@@ -15,9 +19,6 @@ interface UseCommentsResult {
   addQuestion: (slideId: string, text: string, x: number, y: number, author: Identity | null) => void
   addReply: (item: Comment, text: string, author: Identity) => void
   resolveItem: (itemId: string) => void
-  deleteItem: (itemId: string) => void
-  clearSlide: (slideId: string) => void
-  clearAll: () => void
   isConfigured: boolean
   isLoading: boolean
   error: { message: string } | null
@@ -119,28 +120,6 @@ export function useComments(deckId: string, slideId?: string): UseCommentsResult
     db.transact(tx.comments[itemId].update({ resolved: true }))
   }
 
-  const deleteItem = (itemId: string) => {
-    if (!db) return
-    db.transact(tx.comments[itemId].delete())
-  }
-
-  const clearSlide = (slideId: string) => {
-    if (!db) return
-    const slideItems = allItems.filter(item => item.slideId === slideId)
-    const transactions = slideItems.map(item => tx.comments[item.id].delete())
-    if (transactions.length > 0) {
-      db.transact(transactions)
-    }
-  }
-
-  const clearAll = () => {
-    if (!db) return
-    const transactions = allItems.map(item => tx.comments[item.id].delete())
-    if (transactions.length > 0) {
-      db.transact(transactions)
-    }
-  }
-
   return {
     comments,
     questions,
@@ -149,9 +128,6 @@ export function useComments(deckId: string, slideId?: string): UseCommentsResult
     addQuestion,
     addReply,
     resolveItem,
-    deleteItem,
-    clearSlide,
-    clearAll,
     isConfigured: isInstantDBConfigured,
     isLoading,
     error,
