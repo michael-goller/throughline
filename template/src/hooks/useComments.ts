@@ -10,6 +10,7 @@ import { useMemo } from 'react'
 import { id, tx } from '@instantdb/react'
 import { db, isInstantDBConfigured, type Comment, type Reply } from '../lib/instantdb'
 import type { Identity } from './useIdentity'
+import { trackCommentPosted, trackQuestionPosted } from '../lib/track'
 
 interface UseCommentsResult {
   comments: Comment[]
@@ -76,6 +77,7 @@ export function useComments(deckId: string, slideId?: string): UseCommentsResult
         resolved: false,
       })
     )
+    trackCommentPosted(deckId)
   }
 
   const addQuestion = (slideId: string, text: string, x: number, y: number, author: Identity | null) => {
@@ -98,6 +100,7 @@ export function useComments(deckId: string, slideId?: string): UseCommentsResult
         resolved: false,
       })
     )
+    trackQuestionPosted(deckId)
   }
 
   const addReply = (item: Comment, text: string, author: Identity) => {

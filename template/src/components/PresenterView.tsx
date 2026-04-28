@@ -39,6 +39,7 @@ import { useSlideState } from '../hooks/useSlideState'
 // import { useViewerPresence } from '../hooks/useViewerPresence'
 import SlideThumbnail from './SlideThumbnail'
 import SlideSearch from './SlideSearch'
+import { trackDeckOpened, trackSlideViewed } from '../lib/track'
 import type { SlideConfig } from '../types'
 import type { Comment } from '../lib/instantdb'
 
@@ -125,6 +126,14 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
   useEffect(() => {
     requestSync()
   }, [requestSync])
+
+  // Vercel Analytics: deck_opened once per session, slide_viewed on advance
+  useEffect(() => {
+    trackDeckOpened(deckId, 'presenter')
+  }, [deckId])
+  useEffect(() => {
+    if (currentSlideConfig) trackSlideViewed(deckId, currentSlideConfig.id, currentSlide)
+  }, [deckId, currentSlide, currentSlideConfig])
 
   // Timer
   useEffect(() => {

@@ -23,6 +23,7 @@ import { useViewportScale } from './hooks/useViewportScale'
 import { useSwipe } from './hooks/useSwipe'
 import { useAnalytics } from './hooks/useAnalytics'
 import { useAuth } from './hooks/useAuth'
+import { trackDeckOpened, trackSlideViewed } from './lib/track'
 import ViewerPage from './components/ViewerPage'
 // import { useViewerPresence } from './hooks/useViewerPresence'
 import './index.css'
@@ -300,6 +301,15 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
 
   // Track view analytics (who viewed, when, duration)
   useAnalytics(deckId)
+
+  // Vercel Analytics: deck_opened once per session, slide_viewed on advance
+  useEffect(() => {
+    trackDeckOpened(deckId, 'presenter')
+  }, [deckId])
+  useEffect(() => {
+    const slide = slides[currentSlide]
+    if (slide) trackSlideViewed(deckId, slide.id, currentSlide)
+  }, [deckId, currentSlide, slides])
 
   // Track viewer presence (disabled for now - needs InstantDB rooms setup)
   // useViewerPresence(deckId, false)

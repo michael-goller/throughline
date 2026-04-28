@@ -13,6 +13,7 @@ import { useTheme } from '../hooks/useTheme'
 import { useOnboarding, type OnboardingContext } from '../hooks/useOnboarding'
 import { useFollowPresenter } from '../hooks/useFollowPresenter'
 import { isInstantDBConfigured } from '../lib/instantdb'
+import { trackDeckOpened, trackSlideViewed } from '../lib/track'
 
 interface ViewerPageProps {
   slug: string
@@ -37,6 +38,11 @@ export default function ViewerPage({ slug, tokenId }: ViewerPageProps) {
   useEffect(() => {
     checkSession()
   }, [])
+
+  // Vercel Analytics: deck_opened once verified (after password gate)
+  useEffect(() => {
+    if (state === 'verified') trackDeckOpened(slug, 'viewer')
+  }, [state, slug])
 
   async function checkSession() {
     // First get metadata (public)
@@ -297,6 +303,12 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
       setCurrentSlide(slideIndex)
     },
   })
+
+  // Vercel Analytics: slide_viewed on advance
+  useEffect(() => {
+    const slide = slides[currentSlide]
+    if (slide) trackSlideViewed(deckId, slide.id, currentSlide)
+  }, [deckId, currentSlide, slides])
 
   const goNext = useCallback(() => {
     if (currentSlide < slides.length - 1) {
