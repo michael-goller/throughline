@@ -1,17 +1,19 @@
 /**
  * FeedbackOverlay - Display and add reactions, comments, and questions on slides
  *
- * - Left-click: Add reaction (emoji picker)
- * - Right-click: Context menu for reaction/comment/question
+ * - Left-click / tap: Add reaction (emoji picker)
+ * - Right-click / long-press: Context menu for reaction/comment/question
+ * - Tap the indicator banner (or press Esc) to exit feedback mode
  * - Shows aggregated reactions and comment/question markers
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, HelpCircle, Send } from 'lucide-react'
+import { MessageCircle, HelpCircle, Send, X } from 'lucide-react'
 import { useReactions } from '../hooks/useReactions'
 import { useComments } from '../hooks/useComments'
 import { useIdentity, type Identity } from '../hooks/useIdentity'
+import { useIsTouch } from '../hooks/useIsTouch'
 import { REACTION_EMOJIS, type ReactionEmoji, type Comment } from '../lib/instantdb'
 import ContextMenu from './ContextMenu'
 import FeedbackForm from './FeedbackForm'
@@ -21,7 +23,11 @@ interface FeedbackOverlayProps {
   slideId: string
   feedbackMode: boolean
   onModalOpenChange?: (open: boolean) => void
+  onExitFeedbackMode?: () => void
 }
+
+const LONG_PRESS_MS = 500
+const LONG_PRESS_MOVE_TOLERANCE = 10
 
 interface ClickPosition {
   x: number      // 0-1 relative
@@ -32,10 +38,11 @@ interface ClickPosition {
 
 type ModalType = 'emoji' | 'context' | 'comment' | 'question' | 'reply' | null
 
-export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModalOpenChange }: FeedbackOverlayProps) {
+export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModalOpenChange, onExitFeedbackMode }: FeedbackOverlayProps) {
   const { aggregatedReactions, addReaction, isConfigured } = useReactions(deckId, slideId)
   const { comments, questions, addComment, addQuestion, addReply } = useComments(deckId, slideId)
   const { identity, setIdentity } = useIdentity()
+  const isTouch = useIsTouch()
 
   const [clickPosition, setClickPosition] = useState<ClickPosition | null>(null)
   const [activeModal, setActiveModal] = useState<ModalType>(null)
@@ -44,6 +51,10 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
 
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null)
   const replyIdentityInputRef = useRef<HTMLInputElement>(null)
+
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressFiredRef = useRef(false)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     onModalOpenChange?.(activeModal !== null)
@@ -60,8 +71,13 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
     return () => cancelAnimationFrame(id)
   }, [activeModal, identity])
 
-  // Left-click: open emoji picker
+  // Left-click / tap: open emoji picker. Suppressed when a long-press just
+  // fired (touchend → synthetic click) so we don't double-trigger.
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false
+      return
+    }
     if (!feedbackMode) return
     if (activeModal) return
 
@@ -89,6 +105,63 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
     })
     setActiveModal('context')
   }, [feedbackMode])
+
+  // Touch long-press: open the same context menu as right-click. Short taps
+  // fall through to handleClick (emoji picker) via the synthetic click event.
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!feedbackMode) return
+    if (activeModal) return
+    if (e.touches.length !== 1) return
+
+    const touch = e.touches[0]
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickX = touch.clientX
+    const clickY = touch.clientY
+    touchStartRef.current = { x: clickX, y: clickY }
+    longPressFiredRef.current = false
+
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressFiredRef.current = true
+      setClickPosition({
+        x: (clickX - rect.left) / rect.width,
+        y: (clickY - rect.top) / rect.height,
+        clickX,
+        clickY,
+      })
+      setActiveModal('context')
+      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(20)
+      }
+    }, LONG_PRESS_MS)
+  }, [feedbackMode, activeModal])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (longPressTimerRef.current === null || !touchStartRef.current) return
+    const touch = e.touches[0]
+    if (!touch) return
+    const dx = Math.abs(touch.clientX - touchStartRef.current.x)
+    const dy = Math.abs(touch.clientY - touchStartRef.current.y)
+    if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    touchStartRef.current = null
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current !== null) {
+        window.clearTimeout(longPressTimerRef.current)
+      }
+    }
+  }, [])
 
   const closeModal = useCallback(() => {
     setActiveModal(null)
@@ -158,6 +231,11 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
       className={`absolute inset-0 z-20 ${feedbackMode ? 'cursor-crosshair' : 'pointer-events-none'}`}
       onClick={feedbackMode ? handleClick : undefined}
       onContextMenu={feedbackMode ? handleContextMenu : undefined}
+      onTouchStart={feedbackMode ? handleTouchStart : undefined}
+      onTouchMove={feedbackMode ? handleTouchMove : undefined}
+      onTouchEnd={feedbackMode ? handleTouchEnd : undefined}
+      onTouchCancel={feedbackMode ? handleTouchEnd : undefined}
+      style={feedbackMode ? { WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' } : undefined}
     >
       {/* Aggregated Reactions */}
       {aggregatedReactions.map((reaction, idx) => (
@@ -472,15 +550,32 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
         )}
       </AnimatePresence>
 
-      {/* Feedback Mode Indicator */}
+      {/* Feedback Mode Indicator — also the primary exit affordance. On touch
+          the nav cluster (z-10) sits behind this overlay (z-20) and isn't
+          tappable, so tapping the indicator is the only way to leave feedback
+          mode without a keyboard. */}
       {feedbackMode && !activeModal && (
-        <motion.div
+        <motion.button
+          type="button"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-4 left-1/2 -translate-x-1/2 bg-accent-indigo text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+          whileTap={{ scale: 0.97 }}
+          onClick={(e) => { e.stopPropagation(); onExitFeedbackMode?.() }}
+          aria-label="Exit feedback mode"
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-accent-indigo text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg pointer-events-auto"
         >
-          Feedback Mode • Click to react • Right-click for more • <kbd className="font-mono bg-white/20 px-1.5 py-0.5 rounded">Esc</kbd> to exit
-        </motion.div>
+          {isTouch ? (
+            <>
+              <span>Feedback Mode • Tap to react • Long-press for more</span>
+              <span className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-0.5">
+                <X size={12} />
+                <span className="text-xs">Exit</span>
+              </span>
+            </>
+          ) : (
+            <span>Feedback Mode • Click to react • Right-click for more • <kbd className="font-mono bg-white/20 px-1.5 py-0.5 rounded">Esc</kbd> to exit</span>
+          )}
+        </motion.button>
       )}
     </div>
   )

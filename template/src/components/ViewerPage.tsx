@@ -441,6 +441,7 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           deckId={deckId}
           slideId={slide.id}
           feedbackMode={feedbackMode}
+          onExitFeedbackMode={() => setFeedbackMode(false)}
         />
       )}
 
@@ -509,7 +510,15 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
                     </div>
                     <div className="flex justify-between gap-8">
                       <span className="font-mono text-brand-red">Comment icon</span>
-                      <span>Add reactions / comments</span>
+                      <span>Enter / exit feedback mode</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Tap slide</span>
+                      <span>Add reaction (in feedback mode)</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Long-press slide</span>
+                      <span>Comment or ask a question</span>
                     </div>
                     <div className="flex justify-between gap-8">
                       <span className="font-mono text-brand-red">Grid icon</span>
