@@ -13,6 +13,7 @@ import GoLiveButton from './components/GoLiveButton'
 import SlideEditor from './editor/SlideEditor'
 import DeckDashboard from './components/DeckDashboard'
 import AuthPage from './components/AuthPage'
+import LoaderWarp from './components/LoaderWarp'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { usePresenterBroadcast } from './hooks/usePresenterBroadcast'
@@ -198,15 +199,6 @@ function DynamicDeckLoader({ deckId, presenterMode }: { deckId: string; presente
     }
   }, [deck?.title])
 
-  if (status === 'loading') {
-    return (
-      <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-4">
-        <Loader2 size={32} className="text-brand-red animate-spin" />
-        <p className="text-text-muted text-sm">Loading deck...</p>
-      </div>
-    )
-  }
-
   if (status === 'not-found') {
     return (
       <div className="w-full h-full bg-background flex flex-col items-center justify-center gap-4">
@@ -238,11 +230,15 @@ function DynamicDeckLoader({ deckId, presenterMode }: { deckId: string; presente
     )
   }
 
-  if (presenterMode) {
-    return <PresenterView slides={slides} deckId={deckId} />
-  }
-
-  return <MainPresentation slides={slides} deckId={deckId} showGalleryLink />
+  return (
+    <>
+      {status === 'ready' && (presenterMode
+        ? <PresenterView slides={slides} deckId={deckId} />
+        : <MainPresentation slides={slides} deckId={deckId} showGalleryLink />
+      )}
+      <LoaderWarp visible={status === 'loading'} />
+    </>
+  )
 }
 
 function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = false }: { slides: SlideConfig[]; deckId: string; showGalleryLink?: boolean }) {
