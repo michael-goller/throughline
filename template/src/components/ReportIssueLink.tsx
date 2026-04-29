@@ -15,7 +15,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Loader2, X, Check } from 'lucide-react'
 
-export type ReportContext = 'viewer' | 'dashboard' | 'presenter' | 'unknown'
+export type ReportContext = 'viewer' | 'dashboard' | 'presenter' | 'stage' | 'unknown'
 
 export interface ReportIssueContextProvider {
   context: ReportContext

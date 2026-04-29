@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react'
+import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun, HelpCircle } from 'lucide-react'
 import SlideRenderer from '../templates'
 import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
@@ -477,7 +477,10 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             className="absolute inset-0 z-30 flex items-center justify-center bg-background/95 backdrop-blur-sm"
             onClick={() => setShowHelp(false)}
           >
-            <div className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border">
+            <div
+              className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="font-display text-text text-xl font-semibold mb-6">Keyboard Shortcuts</h2>
               <div className="space-y-3 text-text-muted">
                 <div className="flex justify-between gap-8">
@@ -515,6 +518,23 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
                 <div className="flex justify-between gap-8">
                   <span className="font-mono text-brand-red">?</span>
                   <span>Show this help</span>
+                </div>
+                <div className="border-t border-border my-2" />
+                <div className="flex items-center justify-between gap-8">
+                  <span className="text-sm">Found a bug or have feedback?</span>
+                  <ReportIssueLink
+                    variant="inline"
+                    className="text-sm text-brand-red"
+                    getContext={() => {
+                      const slide = slides[currentSlide]
+                      return {
+                        context: 'viewer',
+                        deckSlug: deckId,
+                        slideId: slide?.id,
+                        slideIndex: currentSlide,
+                      }
+                    }}
+                  />
                 </div>
               </div>
               <p className="text-text-muted/60 text-sm mt-6">Press any key to close</p>
@@ -591,23 +611,18 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           >
             {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
           </motion.button>
-        </div>
-      </div>
 
-      {/* Report-an-issue affordance — mirror of bottom-left nav, sits at bottom-right */}
-      <div className="absolute bottom-4 right-4 z-10">
-        <ReportIssueLink
-          variant="pill"
-          getContext={() => {
-            const slide = slides[currentSlide]
-            return {
-              context: 'viewer',
-              deckSlug: deckId,
-              slideId: slide?.id,
-              slideIndex: currentSlide,
-            }
-          }}
-        />
+          <motion.button
+            animate={{ opacity: 0.6 }}
+            whileHover={{ opacity: 1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowHelp(true)}
+            className="p-1 rounded text-nav-text"
+            aria-label="Show help and keyboard shortcuts"
+          >
+            <HelpCircle size={14} />
+          </motion.button>
+        </div>
       </div>
 
       {/* Viewer cold-land guide — mounts in the verified state so it never

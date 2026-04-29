@@ -94,6 +94,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
   const [replyText, setReplyText] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
+  const [showHelp, setShowHelp] = useState(false)
 
   const currentSlideConfig = slides[currentSlide]
   const nextSlideConfig = slides[currentSlide + 1]
@@ -165,6 +166,15 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Help modal eats Escape; any other key closes it
+      if (showHelp) {
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          setShowHelp(false)
+        }
+        return
+      }
+
       // Search handles its own keyboard events
       if (showSearch) return
 
@@ -183,6 +193,9 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
         e.preventDefault()
         setSearchInitialQuery(':')
         setShowSearch(true)
+      } else if (e.key === '?') {
+        e.preventDefault()
+        setShowHelp(true)
       } else if (e.key === 'ArrowRight' || e.key === 'j' || e.key === ' ') {
         e.preventDefault()
         nextSlide()
@@ -193,7 +206,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [nextSlide, prevSlide, replyingTo, showSearch])
+  }, [nextSlide, prevSlide, replyingTo, showSearch, showHelp])
 
   // Handle reply submission
   const handleReplySubmit = useCallback(() => {
@@ -273,16 +286,14 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
             {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
             {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
-          <ReportIssueLink
-            variant="inline"
-            className="text-sm text-gray-300 hover:text-white"
-            getContext={() => ({
-              context: 'presenter',
-              deckSlug: deckId,
-              slideId: currentSlideConfig?.id,
-              slideIndex: currentSlide,
-            })}
-          />
+          <button
+            onClick={() => setShowHelp(true)}
+            className="px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm font-mono transition-colors"
+            aria-label="Show help and keyboard shortcuts"
+            title="Help (?)"
+          >
+            ?
+          </button>
         </div>
       </div>
 
@@ -528,6 +539,70 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
             }}
             onClose={() => setShowSearch(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Help Modal */}
+      <AnimatePresence>
+        {showHelp && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setShowHelp(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Speaker View help"
+          >
+            <div
+              className="bg-gray-800 rounded-xl p-8 shadow-2xl max-w-md w-full border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-white text-xl font-semibold mb-6">Speaker View shortcuts</h2>
+              <div className="space-y-3 text-gray-300">
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">j / k</span>
+                  <span>Next / Previous slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">&rarr; / &larr;</span>
+                  <span>Next / Previous slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">space</span>
+                  <span>Next slide</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">/</span>
+                  <span>Search / Table of contents</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">:N</span>
+                  <span>Jump to slide N</span>
+                </div>
+                <div className="flex justify-between gap-8">
+                  <span className="font-mono text-amber-400">?</span>
+                  <span>Show this help</span>
+                </div>
+                <div className="border-t border-gray-700 my-2" />
+                <div className="flex items-center justify-between gap-8">
+                  <span className="text-sm">Found a bug or have feedback?</span>
+                  <ReportIssueLink
+                    variant="inline"
+                    className="text-sm text-amber-400 hover:text-amber-300"
+                    getContext={() => ({
+                      context: 'presenter',
+                      deckSlug: deckId,
+                      slideId: currentSlideConfig?.id,
+                      slideIndex: currentSlide,
+                    })}
+                  />
+                </div>
+              </div>
+              <p className="text-gray-500 text-sm mt-6">Press Escape or click outside to close</p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

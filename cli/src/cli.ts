@@ -28,6 +28,7 @@ import { createDeckFromBrief } from './lib/brief.js'
 import { checkDeck } from './lib/check.js'
 import { runOnboard } from './lib/onboard.js'
 import { installSkills, parseInstallTarget } from './lib/install.js'
+import { runFeedback } from './lib/feedback.js'
 import { createInterface } from 'readline'
 import { createRequire } from 'node:module'
 
@@ -158,6 +159,31 @@ program
         console.log(`${result.label} skills already present at ${formatPath(result.destDir)}`)
       }
       console.log(`→ ${result.invocationHint}`)
+    } catch (err) {
+      console.log(chalk.red(`✗ ${(err as Error).message}`))
+      process.exit(1)
+    }
+  })
+
+// ─────────────────────────────────────────────────────────────
+// throughline feedback
+// ─────────────────────────────────────────────────────────────
+program
+  .command('feedback')
+  .description('Send feedback or report a bug to the Throughline team')
+  .option('--message <text>', 'Skip the prompts and send this message non-interactively')
+  .option('--deck <name>', 'Attach a deck name (autocompletes to its slug if registered)')
+  .option('--kind <kind>', 'Skip the kind prompt: bug | suggestion | question')
+  .action(async (options: { message?: string; deck?: string; kind?: string }) => {
+    try {
+      let kind: 'bug' | 'suggestion' | 'question' | undefined
+      if (options.kind) {
+        if (options.kind !== 'bug' && options.kind !== 'suggestion' && options.kind !== 'question') {
+          throw new Error(`--kind must be bug | suggestion | question (got "${options.kind}")`)
+        }
+        kind = options.kind
+      }
+      await runFeedback({ message: options.message, deck: options.deck, kind })
     } catch (err) {
       console.log(chalk.red(`✗ ${(err as Error).message}`))
       process.exit(1)
