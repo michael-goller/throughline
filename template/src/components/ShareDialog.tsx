@@ -86,6 +86,16 @@ function getExpiryStatus(expiresAt: string | null): 'active' | 'expired' | 'neve
   return new Date(expiresAt) > new Date() ? 'active' : 'expired'
 }
 
+function formatExpiryForMessage(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 function getApiBase(): string {
   if (import.meta.env.VITE_DECK_API_URL) {
     return import.meta.env.VITE_DECK_API_URL as string
@@ -103,7 +113,7 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
   const [label, setLabel] = useState('')
   const [expiry, setExpiry] = useState<ExpiryPreset>('7d')
 
-  const [createdShare, setCreatedShare] = useState<{ viewUrl: string; password: string } | null>(null)
+  const [createdShare, setCreatedShare] = useState<{ viewUrl: string; password: string; expiresAt: string | null } | null>(null)
   const [copied, setCopied] = useState<'message' | 'link' | null>(null)
   const [revoking, setRevoking] = useState<string | null>(null)
 
@@ -156,7 +166,7 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
         throw new Error(data.error || 'Failed to create share')
       }
       const data = await res.json()
-      setCreatedShare({ viewUrl: data.viewUrl, password })
+      setCreatedShare({ viewUrl: data.viewUrl, password, expiresAt: data.expiresAt ?? null })
       setView('success')
       fetchShares()
     } catch (err) {
@@ -230,7 +240,9 @@ export default function ShareDialog({ slug, deckTitle, onClose, onShareCountChan
   }
 
   const inviteMessage = createdShare
-    ? `Hey, check out my slide deck:\n${createdShare.viewUrl}\nPassword: ${createdShare.password}`
+    ? createdShare.expiresAt
+      ? `Hey, check out my slide deck:\n${createdShare.viewUrl}\nPassword: ${createdShare.password}\nHeads up — the link winds down on ${formatExpiryForMessage(createdShare.expiresAt)}.`
+      : `Hey, check out my slide deck:\n${createdShare.viewUrl}\nPassword: ${createdShare.password}`
     : ''
 
   const resetForm = () => {
