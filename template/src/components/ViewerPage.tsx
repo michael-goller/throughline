@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun, HelpCircle } from 'lucide-react'
+import { Loader2, Lock, AlertCircle, ChevronLeft, ChevronRight, Moon, Sun, HelpCircle, MessageSquare, LayoutGrid, Search } from 'lucide-react'
 import SlideRenderer from '../templates'
 import type { SlideConfig } from '../types'
 import SlideOverview from './SlideOverview'
@@ -12,6 +12,7 @@ import RemoteLaserPointer from './RemoteLaserPointer'
 import ReportIssueLink from './ReportIssueLink'
 import { useSwipe } from '../hooks/useSwipe'
 import { useTheme } from '../hooks/useTheme'
+import { useIsTouch } from '../hooks/useIsTouch'
 import { useOnboarding, type OnboardingContext } from '../hooks/useOnboarding'
 import { useFollowPresenter } from '../hooks/useFollowPresenter'
 import { isInstantDBConfigured } from '../lib/instantdb'
@@ -268,6 +269,8 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
   const [showSearch, setShowSearch] = useState(false)
   const [searchInitialQuery, setSearchInitialQuery] = useState('')
   const lastKeyRef = useRef({ key: '', time: 0 })
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const isTouch = useIsTouch()
   const { theme, toggleTheme } = useTheme()
 
   // Viewer cold-land detection: a shared-link visitor who isn't also a
@@ -392,7 +395,9 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
     return () => window.removeEventListener('keydown', handleKey)
   }, [goNext, goPrev, showOverview, showSearch, showHelp, feedbackMode, slides.length])
 
-  useSwipe({ onSwipeLeft: goNext, onSwipeRight: goPrev })
+  useSwipe({ onSwipeLeft: goNext, onSwipeRight: goPrev, target: viewportRef })
+
+  const anyOverlayOpen = showOverview || showSearch || showHelp || feedbackMode
 
   const slide = slides[currentSlide]
   if (!slide) return null
@@ -412,7 +417,8 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
 
   return (
     <div
-      className="slide-viewport overflow-hidden"
+      ref={viewportRef}
+      className="slide-viewport overflow-hidden touch-pan-y"
       style={{ width: '100vw', height: '100vh' }}
     >
       <AnimatePresence mode="wait" custom={direction}>
@@ -478,47 +484,82 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             onClick={() => setShowHelp(false)}
           >
             <div
-              className="bg-background-elevated rounded-xl p-8 shadow-2xl max-w-md border border-border"
+              className="bg-background-elevated rounded-xl p-6 sm:p-8 shadow-2xl max-w-md mx-4 border border-border"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="font-display text-text text-xl font-semibold mb-6">Keyboard Shortcuts</h2>
+              <h2 className="font-display text-text text-xl font-semibold mb-6">{isTouch ? 'Gestures' : 'Keyboard Shortcuts'}</h2>
               <div className="space-y-3 text-text-muted">
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">j / k</span>
-                  <span>Next / Previous slide</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">&rarr; / &larr;</span>
-                  <span>Next / Previous slide</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">gg</span>
-                  <span>First slide</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">G</span>
-                  <span>Last slide</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">/</span>
-                  <span>Search / Table of contents</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">:N</span>
-                  <span>Jump to slide N</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">i</span>
-                  <span>Feedback mode (add reactions)</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">o</span>
-                  <span>Slide overview</span>
-                </div>
-                <div className="flex justify-between gap-8">
-                  <span className="font-mono text-brand-red">?</span>
-                  <span>Show this help</span>
-                </div>
+                {isTouch ? (
+                  <>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Swipe &larr;</span>
+                      <span>Next slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Swipe &rarr;</span>
+                      <span>Previous slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Tap left edge</span>
+                      <span>Previous slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Tap right edge</span>
+                      <span>Next slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Comment icon</span>
+                      <span>Add reactions / comments</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Grid icon</span>
+                      <span>Slide overview</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">Search icon</span>
+                      <span>Search / jump to slide</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">j / k</span>
+                      <span>Next / Previous slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">&rarr; / &larr;</span>
+                      <span>Next / Previous slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">gg</span>
+                      <span>First slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">G</span>
+                      <span>Last slide</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">/</span>
+                      <span>Search / Table of contents</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">:N</span>
+                      <span>Jump to slide N</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">i</span>
+                      <span>Feedback mode (add reactions)</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">o</span>
+                      <span>Slide overview</span>
+                    </div>
+                    <div className="flex justify-between gap-8">
+                      <span className="font-mono text-brand-red">?</span>
+                      <span>Show this help</span>
+                    </div>
+                  </>
+                )}
                 <div className="border-t border-border my-2" />
                 <div className="flex items-center justify-between gap-8">
                   <span className="text-sm">Found a bug or have feedback?</span>
@@ -537,15 +578,41 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
                   />
                 </div>
               </div>
-              <p className="text-text-muted/60 text-sm mt-6">Press any key to close</p>
+              <p className="text-text-muted/60 text-sm mt-6">{isTouch ? 'Tap outside to close' : 'Press any key to close'}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Navigation controls */}
-      <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg">
-        <div className="relative h-1 w-full bg-border/50">
+      {/* Edge tap zones — touch-only, hidden when any overlay is open so they
+          don't fight modals or feedback-mode reactions. Sit at z-[5] so the
+          nav cluster (z-10) and FeedbackOverlay (z-20) always win. */}
+      {isTouch && !anyOverlayOpen && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={currentSlide === 0}
+            aria-label="Previous slide (tap left edge)"
+            className="absolute left-0 top-0 z-[5] w-[28%] bg-transparent disabled:cursor-not-allowed"
+            style={{ bottom: '5rem' }}
+          />
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={currentSlide === slides.length - 1}
+            aria-label="Next slide (tap right edge)"
+            className="absolute right-0 top-0 z-[5] w-[28%] bg-transparent disabled:cursor-not-allowed"
+            style={{ bottom: '5rem' }}
+          />
+        </>
+      )}
+
+      {/* Navigation controls — desktop sits bottom-left; touch devices get a
+          bottom-center cluster with bigger tap targets and extra buttons for
+          the keyboard-only actions (feedback / overview / search). */}
+      <div className={`absolute bottom-4 z-10 flex flex-col gap-0 rounded-lg overflow-hidden bg-nav-bg/80 backdrop-blur-md border border-border shadow-lg ${isTouch ? 'left-1/2 -translate-x-1/2' : 'left-4'}`}>
+        <div className={`relative w-full bg-border/50 ${isTouch ? 'h-1.5' : 'h-1'}`}>
           <motion.div
             className="absolute inset-y-0 left-0 right-0 origin-left"
             style={{
@@ -556,20 +623,20 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
           />
         </div>
-        <div className="flex items-center gap-1 px-1.5 py-1">
+        <div className={`flex items-center ${isTouch ? 'gap-1.5 px-2 py-1.5' : 'gap-1 px-1.5 py-1'}`}>
           <motion.button
             animate={{ opacity: currentSlide > 0 ? 0.6 : 0.2 }}
             whileHover={currentSlide > 0 ? { opacity: 1 } : {}}
             whileTap={currentSlide > 0 ? { scale: 0.9 } : {}}
             onClick={goPrev}
             disabled={currentSlide === 0}
-            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            className={`rounded text-nav-text disabled:cursor-not-allowed ${isTouch ? 'p-2.5' : 'p-1'}`}
             aria-label="Previous slide"
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={isTouch ? 22 : 14} />
           </motion.button>
 
-          <div className="text-nav-text text-tiny font-medium px-1.5 flex items-center gap-1 select-none tabular-nums">
+          <div className={`text-nav-text font-medium flex items-center gap-1 select-none tabular-nums ${isTouch ? 'text-sm px-2' : 'text-tiny px-1.5'}`}>
             <span className="inline-flex">
               <span className="inline-block w-[1.1em] text-right">{currentSlide + 1}</span><span className="text-text-muted">/{slides.length}</span>
             </span>
@@ -581,13 +648,13 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             whileTap={currentSlide < slides.length - 1 ? { scale: 0.9 } : {}}
             onClick={goNext}
             disabled={currentSlide === slides.length - 1}
-            className="p-1 rounded text-nav-text disabled:cursor-not-allowed"
+            className={`rounded text-nav-text disabled:cursor-not-allowed ${isTouch ? 'p-2.5' : 'p-1'}`}
             aria-label="Next slide"
           >
-            <ChevronRight size={14} />
+            <ChevronRight size={isTouch ? 22 : 14} />
           </motion.button>
 
-          <div className="w-px h-3.5 bg-border mx-0.5" />
+          <div className={`w-px bg-border mx-0.5 ${isTouch ? 'h-6' : 'h-3.5'}`} />
 
           {/* Follow live presenter — only appears when a presenter is broadcasting */}
           {isInstantDBConfigured && (
@@ -601,15 +668,54 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             />
           )}
 
+          {/* Touch-only: feedback / overview / search buttons surface the
+              keyboard-only actions (i / o / /) without requiring a keyboard. */}
+          {isTouch && isInstantDBConfigured && (
+            <motion.button
+              animate={{ opacity: feedbackMode ? 1 : 0.6 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setFeedbackMode(!feedbackMode)}
+              className={`rounded p-2.5 ${feedbackMode ? 'text-brand-red' : 'text-nav-text'}`}
+              aria-label={feedbackMode ? 'Exit feedback mode' : 'Enter feedback mode'}
+              aria-pressed={feedbackMode}
+            >
+              <MessageSquare size={22} />
+            </motion.button>
+          )}
+
+          {isTouch && (
+            <motion.button
+              animate={{ opacity: 0.6 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowOverview(true)}
+              className="p-2.5 rounded text-nav-text"
+              aria-label="Show slide overview"
+            >
+              <LayoutGrid size={22} />
+            </motion.button>
+          )}
+
+          {isTouch && (
+            <motion.button
+              animate={{ opacity: 0.6 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => { setSearchInitialQuery(''); setShowSearch(true) }}
+              className="p-2.5 rounded text-nav-text"
+              aria-label="Search slides or jump to slide number"
+            >
+              <Search size={22} />
+            </motion.button>
+          )}
+
           <motion.button
             animate={{ opacity: 0.6 }}
             whileHover={{ opacity: 1 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleTheme}
-            className="p-1 rounded text-nav-text"
+            className={`rounded text-nav-text ${isTouch ? 'p-2.5' : 'p-1'}`}
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
-            {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
+            {theme === 'dark' ? <Moon size={isTouch ? 22 : 14} /> : <Sun size={isTouch ? 22 : 14} />}
           </motion.button>
 
           <motion.button
@@ -617,10 +723,10 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
             whileHover={{ opacity: 1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowHelp(true)}
-            className="p-1 rounded text-nav-text"
-            aria-label="Show help and keyboard shortcuts"
+            className={`rounded text-nav-text ${isTouch ? 'p-2.5' : 'p-1'}`}
+            aria-label={isTouch ? 'Show gestures' : 'Show help and keyboard shortcuts'}
           >
-            <HelpCircle size={14} />
+            <HelpCircle size={isTouch ? 22 : 14} />
           </motion.button>
         </div>
       </div>
