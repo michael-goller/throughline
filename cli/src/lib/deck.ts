@@ -363,7 +363,7 @@ export async function startGallery(port?: number): Promise<{ pid: number; port: 
 
   if (state.pid && pidExists(state.pid)) {
     throw new Error(
-      `Gallery is already running on http://localhost:${state.port} (PID: ${state.pid})`
+      `Library is already running on http://localhost:${state.port} (PID: ${state.pid})`
     )
   }
 

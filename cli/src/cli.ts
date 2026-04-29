@@ -378,13 +378,13 @@ program
   .command('serve [name]')
   .description("Start a deck's dev server (no name = pick from list)")
   .option('-p, --port <port>', 'Port number to use', parseInt)
-  .option('--gallery', 'Start the gallery server instead of a single deck')
+  .option('--gallery', 'Start the Library server instead of a single deck')
   .action(async (name?: string, options?: { port?: number; gallery?: boolean }) => {
     try {
       if (options?.gallery) {
-        // Explicit --gallery flag — start the gallery server
+        // Explicit --gallery flag — start the Library server
         const { pid, port } = await startGallery(options?.port)
-        console.log(chalk.green(`✓ Started gallery on http://localhost:${port}`))
+        console.log(chalk.green(`✓ Started Library on http://localhost:${port}`))
         console.log(`→ PID: ${pid}`)
         console.log(`→ Stop with: throughline stop --gallery`)
         return
@@ -416,14 +416,14 @@ program
 program
   .command('stop [name]')
   .description("Stop a deck's dev server")
-  .option('--all', 'Stop all running decks (including gallery)')
-  .option('--gallery', 'Stop the gallery server')
+  .option('--all', 'Stop all running decks (including Library)')
+  .option('--gallery', 'Stop the Library server')
   .action((name?: string, options?: { all?: boolean; gallery?: boolean }) => {
     if (options?.all) {
       const stopped = stopAllDecks()
       const galleryWasRunning = stopGallery()
       if (galleryWasRunning) {
-        console.log(chalk.green(`✓ Stopped gallery`))
+        console.log(chalk.green(`✓ Stopped Library`))
       }
       if (stopped.length > 0) {
         stopped.forEach((n) => console.log(chalk.green(`✓ Stopped '${n}'`)))
@@ -436,9 +436,9 @@ program
 
     if (options?.gallery) {
       if (stopGallery()) {
-        console.log(chalk.green(`✓ Stopped gallery`))
+        console.log(chalk.green(`✓ Stopped Library`))
       } else {
-        console.log('Gallery was not running')
+        console.log('Library was not running')
       }
       return
     }
@@ -469,10 +469,10 @@ program
   .action(() => {
     const decks = listDecks()
 
-    // Show gallery status if running
+    // Show Library status if running
     if (isGalleryRunning()) {
       const state = getGalleryState()
-      console.log(chalk.green(`▶︎ Gallery running → http://localhost:${state.port}`))
+      console.log(chalk.green(`▶︎ Library running → http://localhost:${state.port}`))
       console.log()
     }
 
@@ -503,15 +503,15 @@ program
 // ─────────────────────────────────────────────────────────────
 program
   .command('open [name]')
-  .description('Open a deck in the browser (no name = gallery; starts server if needed)')
+  .description('Open a deck in the browser (no name = Library; starts server if needed)')
   .action(async (name?: string) => {
     try {
       if (!name) {
-        // No deck specified — open the gallery
+        // No deck specified — open the Library
         if (!isGalleryRunning()) {
-          console.log('Starting gallery...')
+          console.log('Starting Library...')
           const { port } = await startGallery()
-          console.log(chalk.green(`✓ Started gallery on http://localhost:${port}`))
+          console.log(chalk.green(`✓ Started Library on http://localhost:${port}`))
           await new Promise((r) => setTimeout(r, 1000))
         }
 

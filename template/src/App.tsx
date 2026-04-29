@@ -641,7 +641,7 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
                   whileTap={{ scale: 0.9 }}
                   onClick={() => { window.location.href = '/' }}
                   className="p-1 rounded text-nav-text"
-                  aria-label="Back to gallery"
+                  aria-label="Back to Library"
                 >
                   <Home size={14} />
                 </motion.button>

@@ -782,7 +782,7 @@ export default function DeckDashboard() {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="font-mono text-chrome-ink text-xl font-bold lowercase mb-6" style={{ letterSpacing: '-0.01em' }}>
-                overview shortcuts
+                library shortcuts
               </h2>
               <div className="space-y-3 text-chrome-ink-secondary">
                 <div className="flex justify-between gap-8">

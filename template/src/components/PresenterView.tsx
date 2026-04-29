@@ -241,7 +241,7 @@ export default function PresenterView({ slides, deckId, initialSlide = 0 }: Pres
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-700 flex-shrink-0">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold">Presenter View</h1>
+          <h1 className="text-lg font-semibold">Speaker View</h1>
           <span className="text-gray-400">
             Slide {currentSlide + 1} of {slides.length}
           </span>
