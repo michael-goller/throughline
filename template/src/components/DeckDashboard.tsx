@@ -25,6 +25,7 @@ import {
   FolderOpen,
   LogOut,
   Share2,
+  Presentation,
 } from 'lucide-react'
 import { fetchDeckManifest, type DeckManifestEntry } from '../lib/deckLoader'
 import { getAllDeckStats } from '../lib/analytics'
@@ -96,6 +97,11 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
     setShowMenu(false)
     // Open deck in new tab (for now — full export would need the export script)
     window.open(`/decks/${encodeURIComponent(deck.id)}`, '_blank')
+  }, [deck.id])
+
+  const handleOpenSpeakerView = useCallback(() => {
+    setShowMenu(false)
+    window.open(`/decks/${encodeURIComponent(deck.id)}/presenter`, '_blank', 'noopener,noreferrer')
   }, [deck.id])
 
   return (
@@ -260,6 +266,16 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
                 >
                   <Download size={13} />
                   Open in new tab
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleOpenSpeakerView()
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-caption text-chrome-ink hover:bg-chrome-nav-bg transition-colors"
+                >
+                  <Presentation size={13} />
+                  Speaker View
                 </button>
                 <button
                   onClick={(e) => {

@@ -853,6 +853,19 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
                 </div>
                 <div className="border-t border-border my-2" />
                 <div className="flex items-center justify-between gap-8">
+                  <span className="text-sm">Open Speaker View</span>
+                  <a
+                    href={showGalleryLink ? `/decks/${encodeURIComponent(deckId)}/presenter` : `${window.location.pathname}?presenter`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm text-brand-red hover:underline"
+                  >
+                    Open in new window
+                  </a>
+                </div>
+                <div className="border-t border-border my-2" />
+                <div className="flex items-center justify-between gap-8">
                   <span className="text-sm">Found a bug or have feedback?</span>
                   <ReportIssueLink
                     variant="inline"
