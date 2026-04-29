@@ -50,6 +50,11 @@ export interface PresenterSession {
   isLive: boolean
   startedAt: number
   updatedAt: number
+  cursorActive?: boolean
+  cursorX?: number
+  cursorY?: number
+  cursorTs?: number
+  cursorClickTs?: number
 }
 
 // Initialize InstantDB

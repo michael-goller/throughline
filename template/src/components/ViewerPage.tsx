@@ -8,6 +8,7 @@ import SlideSearch from './SlideSearch'
 import FeedbackOverlay from './FeedbackOverlay'
 import OnboardingOverlay from './OnboardingOverlay'
 import FollowPresenterIcon from './FollowPresenterIcon'
+import RemoteLaserPointer from './RemoteLaserPointer'
 import ReportIssueLink from './ReportIssueLink'
 import { useSwipe } from '../hooks/useSwipe'
 import { useTheme } from '../hooks/useTheme'
@@ -295,6 +296,7 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
     presenterLive,
     presenterStale,
     presenterSlide,
+    activeSession,
     toggleFollow,
     breakFollow,
   } = useFollowPresenter(deckId, {
@@ -433,6 +435,17 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
           deckId={deckId}
           slideId={slide.id}
           feedbackMode={feedbackMode}
+        />
+      )}
+
+      {/* Remote laser pointer — mirror of the presenter's cursor when following */}
+      {isInstantDBConfigured && (
+        <RemoteLaserPointer
+          active={isFollowing && !!activeSession?.cursorActive}
+          normX={activeSession?.cursorX ?? null}
+          normY={activeSession?.cursorY ?? null}
+          cursorTs={activeSession?.cursorTs ?? null}
+          cursorClickTs={activeSession?.cursorClickTs ?? null}
         />
       )}
 

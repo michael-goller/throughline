@@ -31,6 +31,11 @@ const _schema = i.schema({
       isLive: i.boolean().indexed(),
       startedAt: i.number(),
       updatedAt: i.number(),
+      cursorActive: i.boolean().optional(),
+      cursorX: i.number().optional(),
+      cursorY: i.number().optional(),
+      cursorTs: i.number().optional(),
+      cursorClickTs: i.number().optional(),
     }),
   },
 })

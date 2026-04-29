@@ -4,11 +4,24 @@ import { useLaserPointer, TRAIL_LIFETIME, FLASH_DURATION } from '../hooks/useLas
 interface LaserPointerProps {
   active: boolean
   onDeactivate: () => void
+  onCursorMove?: (normX: number, normY: number) => void
+  onCursorClick?: (normX: number, normY: number) => void
 }
 
-export default function LaserPointer({ active, onDeactivate }: LaserPointerProps) {
+export default function LaserPointer({
+  active,
+  onDeactivate,
+  onCursorMove,
+  onCursorClick,
+}: LaserPointerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
+  const onCursorMoveRef = useRef(onCursorMove)
+  const onCursorClickRef = useRef(onCursorClick)
+  useEffect(() => {
+    onCursorMoveRef.current = onCursorMove
+    onCursorClickRef.current = onCursorClick
+  }, [onCursorMove, onCursorClick])
   const {
     active: hookActive,
     activate,
@@ -34,12 +47,36 @@ export default function LaserPointer({ active, onDeactivate }: LaserPointerProps
   useEffect(() => {
     if (!active) return
 
+    const stageBounds = (): { left: number; top: number; width: number; height: number } | null => {
+      const stage = canvasRef.current?.parentElement
+      if (!stage) return null
+      const rect = stage.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) return null
+      return { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+    }
+
+    const normalize = (clientX: number, clientY: number): [number, number] | null => {
+      const b = stageBounds()
+      if (!b) return null
+      const nx = Math.min(1, Math.max(0, (clientX - b.left) / b.width))
+      const ny = Math.min(1, Math.max(0, (clientY - b.top) / b.height))
+      return [nx, ny]
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
       onMouseMove(e.clientX, e.clientY)
+      const cb = onCursorMoveRef.current
+      if (!cb) return
+      const norm = normalize(e.clientX, e.clientY)
+      if (norm) cb(norm[0], norm[1])
     }
 
     const handleClick = (e: MouseEvent) => {
       onClick(e.clientX, e.clientY)
+      const cb = onCursorClickRef.current
+      if (!cb) return
+      const norm = normalize(e.clientX, e.clientY)
+      if (norm) cb(norm[0], norm[1])
     }
 
     document.addEventListener('mousemove', handleMouseMove)

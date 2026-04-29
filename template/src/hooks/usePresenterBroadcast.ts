@@ -43,17 +43,31 @@ export function usePresenterBroadcast(
     const now = Date.now()
     const startedAt = startedAtRef.current ?? now
 
-    db.transact(
-      tx.presenterSessions[sessionId].update({
-        deckId,
-        presenterId: presenterIdRef.current,
-        currentSlide: currentSlideRef.current,
-        totalSlides: totalSlidesRef.current,
-        isLive: live,
-        startedAt,
-        updatedAt: now,
-      })
-    )
+    // When broadcast goes down we also clear the remote cursor in the same
+    // transact, so any follower's RemoteLaserPointer disappears within a
+    // single round-trip instead of waiting on a separate write.
+    const payload = live
+      ? {
+          deckId,
+          presenterId: presenterIdRef.current,
+          currentSlide: currentSlideRef.current,
+          totalSlides: totalSlidesRef.current,
+          isLive: true,
+          startedAt,
+          updatedAt: now,
+        }
+      : {
+          deckId,
+          presenterId: presenterIdRef.current,
+          currentSlide: currentSlideRef.current,
+          totalSlides: totalSlidesRef.current,
+          isLive: false,
+          startedAt,
+          updatedAt: now,
+          cursorActive: false,
+        }
+
+    db.transact(tx.presenterSessions[sessionId].update(payload))
   }, [deckId, sessionId])
 
   useEffect(() => {

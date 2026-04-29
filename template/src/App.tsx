@@ -16,6 +16,7 @@ import AuthPage from './components/AuthPage'
 import { useTheme } from './hooks/useTheme'
 import { usePresenterSync } from './hooks/usePresenterSync'
 import { usePresenterBroadcast } from './hooks/usePresenterBroadcast'
+import { usePresenterCursorBroadcast } from './hooks/usePresenterCursorBroadcast'
 import { isInstantDBConfigured } from './lib/instantdb'
 import { useSlideState } from './hooks/useSlideState'
 import { useDeck } from './hooks/useDeck'
@@ -287,11 +288,16 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
 
   // Live presenter broadcast — when toggled on, viewers with /view/<slug>/<token>
   // can follow this presenter's slide cursor in real time via InstantDB.
-  const { isLive: isBroadcastLive, toggleBroadcast } = usePresenterBroadcast(
-    deckId,
-    currentSlide,
-    slides.length,
-  )
+  const {
+    sessionId: broadcastSessionId,
+    isLive: isBroadcastLive,
+    toggleBroadcast,
+  } = usePresenterBroadcast(deckId, currentSlide, slides.length)
+
+  // Mirror the laser pointer onto the same presenter session row so followers
+  // see the dot/trail/clicks in real time. Gated on isLive && laserActive.
+  const { reportMove: reportLaserMove, reportClick: reportLaserClick } =
+    usePresenterCursorBroadcast(broadcastSessionId, isBroadcastLive && laserActive)
 
   // Show toast notification
   const showToast = useCallback((message: string, icon: 'star' | 'hide') => {
@@ -556,6 +562,8 @@ function MainPresentation({ slides: initialSlides, deckId, showGalleryLink = fal
         <LaserPointer
           active={laserActive}
           onDeactivate={() => setLaserActive(false)}
+          onCursorMove={reportLaserMove}
+          onCursorClick={reportLaserClick}
         />
       )}
 
