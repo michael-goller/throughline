@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { fetchDeckManifest, type DeckManifestEntry } from '../lib/deckLoader'
 import { getAllDeckStats } from '../lib/analytics'
+import { prefetchDeck } from '../lib/prefetch'
 import { useTheme } from '../hooks/useTheme'
 import { useAuth } from '../hooks/useAuth'
 import DeckAnalytics from './DeckAnalytics'
@@ -107,6 +108,7 @@ function DeckCard({ deck, index, viewCount, lastViewedAt, focused, shareCount, o
     >
       <div
         onClick={handleOpen}
+        onPointerEnter={() => prefetchDeck(deck.id)}
         className="cursor-pointer rounded-xl border border-chrome-border bg-chrome-card overflow-hidden transition-all duration-200 hover:border-chrome-border-hover hover:shadow-lg hover:shadow-accent-primary/10 hover:-translate-y-0.5"
       >
         {/* Thumbnail area — diamond-anchored placeholder when no deck image */}
