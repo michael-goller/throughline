@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { SlideConfig } from '../types'
 import {
   fetchDeck,
+  validateDeckConfig,
   DeckNotFoundError,
   DeckLoadError,
   type DeckConfig,
 } from '../lib/deckLoader'
+import { peekDeckPrefetch, clearDeckPrefetch } from '../lib/prefetch'
 
 export type DeckStatus = 'loading' | 'ready' | 'not-found' | 'error'
 
@@ -21,18 +23,39 @@ export interface DeckState {
  *
  * Returns loading/error/ready states and the loaded slides.
  * Pass `null` to skip loading (e.g., when using compile-time slides).
+ *
+ * If a hover-prefetch (see lib/prefetch.ts) populated sessionStorage for
+ * this deckId, the initial state is already `ready` — no spinner paints
+ * and the network fetch is skipped.
  */
 export function useDeck(deckId: string | null): DeckState {
-  const [state, setState] = useState<DeckState>({
-    status: deckId ? 'loading' : 'ready',
-    slides: [],
-    deck: null,
-    error: null,
+  const [state, setState] = useState<DeckState>(() => {
+    if (!deckId) return { status: 'ready', slides: [], deck: null, error: null }
+    const cached = peekDeckPrefetch(deckId)
+    if (cached) {
+      try {
+        const deck = validateDeckConfig(cached, deckId)
+        return { status: 'ready', slides: deck.slides, deck, error: null }
+      } catch {
+        // Cached payload was invalid — fall through to a normal network fetch
+      }
+    }
+    return { status: 'loading', slides: [], deck: null, error: null }
   })
+
+  // True iff the initial render came from a prefetch hit. The first effect
+  // pass clears it so any later deckId change still triggers a real fetch.
+  const skipNextFetchRef = useRef(state.status === 'ready' && deckId !== null)
 
   useEffect(() => {
     if (!deckId) {
       setState({ status: 'ready', slides: [], deck: null, error: null })
+      return
+    }
+
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false
+      clearDeckPrefetch(deckId)
       return
     }
 

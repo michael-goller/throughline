@@ -149,7 +149,7 @@ export async function fetchDeckManifest(): Promise<DeckManifest> {
 }
 
 /** Basic validation that a loaded JSON object looks like a DeckConfig */
-function validateDeckConfig(data: unknown, deckId: string): DeckConfig {
+export function validateDeckConfig(data: unknown, deckId: string): DeckConfig {
   if (!data || typeof data !== 'object') {
     throw new DeckLoadError(deckId, 'Response is not a JSON object')
   }
