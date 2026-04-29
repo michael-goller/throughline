@@ -1,10 +1,18 @@
 /**
  * FeedbackOverlay - Display and add reactions, comments, and questions on slides
  *
- * - Left-click / tap: Add reaction (emoji picker)
- * - Right-click / long-press: Context menu for reaction/comment/question
- * - Tap the indicator banner (or press Esc) to exit feedback mode
- * - Shows aggregated reactions and comment/question markers
+ * Desktop:
+ * - Left-click: Add reaction (emoji picker)
+ * - Right-click: Context menu for reaction / comment / question
+ *
+ * Touch:
+ * - Tap: Add reaction (emoji picker)
+ * - Comments and questions are intentionally not creatable on touch — the
+ *   form-modal-on-top-of-feedback-mode UX is too cramped on a phone. Existing
+ *   comment / question markers are still tappable to read what others wrote
+ *   (reply input is hidden on touch).
+ *
+ * Tap the indicator banner (or press Esc) to exit feedback mode.
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react'
@@ -25,9 +33,6 @@ interface FeedbackOverlayProps {
   onModalOpenChange?: (open: boolean) => void
   onExitFeedbackMode?: () => void
 }
-
-const LONG_PRESS_MS = 500
-const LONG_PRESS_MOVE_TOLERANCE = 10
 
 interface ClickPosition {
   x: number      // 0-1 relative
@@ -52,10 +57,6 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
   const replyTextareaRef = useRef<HTMLTextAreaElement>(null)
   const replyIdentityInputRef = useRef<HTMLInputElement>(null)
 
-  const longPressTimerRef = useRef<number | null>(null)
-  const longPressFiredRef = useRef(false)
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
-
   useEffect(() => {
     onModalOpenChange?.(activeModal !== null)
   }, [activeModal, onModalOpenChange])
@@ -71,13 +72,8 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
     return () => cancelAnimationFrame(id)
   }, [activeModal, identity])
 
-  // Left-click / tap: open emoji picker. Suppressed when a long-press just
-  // fired (touchend → synthetic click) so we don't double-trigger.
+  // Left-click / tap: open emoji picker.
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (longPressFiredRef.current) {
-      longPressFiredRef.current = false
-      return
-    }
     if (!feedbackMode) return
     if (activeModal) return
 
@@ -91,10 +87,12 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
     setActiveModal('emoji')
   }, [feedbackMode, activeModal])
 
-  // Right-click: open context menu
+  // Right-click: open context menu (desktop only — no touch equivalent on
+  // purpose; see file header).
   const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
     if (!feedbackMode) return
+    if (isTouch) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     setClickPosition({
@@ -104,64 +102,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
       clickY: e.clientY,
     })
     setActiveModal('context')
-  }, [feedbackMode])
-
-  // Touch long-press: open the same context menu as right-click. Short taps
-  // fall through to handleClick (emoji picker) via the synthetic click event.
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (!feedbackMode) return
-    if (activeModal) return
-    if (e.touches.length !== 1) return
-
-    const touch = e.touches[0]
-    const rect = e.currentTarget.getBoundingClientRect()
-    const clickX = touch.clientX
-    const clickY = touch.clientY
-    touchStartRef.current = { x: clickX, y: clickY }
-    longPressFiredRef.current = false
-
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressFiredRef.current = true
-      setClickPosition({
-        x: (clickX - rect.left) / rect.width,
-        y: (clickY - rect.top) / rect.height,
-        clickX,
-        clickY,
-      })
-      setActiveModal('context')
-      if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-        navigator.vibrate(20)
-      }
-    }, LONG_PRESS_MS)
-  }, [feedbackMode, activeModal])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (longPressTimerRef.current === null || !touchStartRef.current) return
-    const touch = e.touches[0]
-    if (!touch) return
-    const dx = Math.abs(touch.clientX - touchStartRef.current.x)
-    const dy = Math.abs(touch.clientY - touchStartRef.current.y)
-    if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
-      window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }, [])
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-    touchStartRef.current = null
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (longPressTimerRef.current !== null) {
-        window.clearTimeout(longPressTimerRef.current)
-      }
-    }
-  }, [])
+  }, [feedbackMode, isTouch])
 
   const closeModal = useCallback(() => {
     setActiveModal(null)
@@ -231,10 +172,6 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
       className={`absolute inset-0 z-20 ${feedbackMode ? 'cursor-crosshair' : 'pointer-events-none'}`}
       onClick={feedbackMode ? handleClick : undefined}
       onContextMenu={feedbackMode ? handleContextMenu : undefined}
-      onTouchStart={feedbackMode ? handleTouchStart : undefined}
-      onTouchMove={feedbackMode ? handleTouchMove : undefined}
-      onTouchEnd={feedbackMode ? handleTouchEnd : undefined}
-      onTouchCancel={feedbackMode ? handleTouchEnd : undefined}
       style={feedbackMode ? { WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' } : undefined}
     >
       {/* Aggregated Reactions */}
@@ -457,8 +394,19 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="fixed z-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 pointer-events-auto"
+              className="fixed z-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(24rem,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 pointer-events-auto"
             >
+              {isTouch && (
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  aria-label="Close"
+                  className="absolute top-2 right-2 p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <X size={18} />
+                </button>
+              )}
+
               {/* Original message */}
               <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -489,8 +437,14 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
                 </div>
               )}
 
-              {/* Identity form if not set */}
-              {!identity ? (
+              {/* On touch the reply UX (form modal layered over feedback mode)
+                  is too cramped, so we render replies read-only. Tap the
+                  backdrop or the X to close. */}
+              {isTouch ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400 italic mt-2">
+                  Open this deck on desktop to reply.
+                </p>
+              ) : !identity ? (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600 dark:text-gray-400">Enter your name to reply:</p>
                   <input
@@ -566,7 +520,7 @@ export default function FeedbackOverlay({ deckId, slideId, feedbackMode, onModal
         >
           {isTouch ? (
             <>
-              <span>Feedback Mode • Tap to react • Long-press for more</span>
+              <span>Feedback Mode • Tap to react</span>
               <span className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-0.5">
                 <X size={12} />
                 <span className="text-xs">Exit</span>

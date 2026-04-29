@@ -517,10 +517,6 @@ function ViewerPresentation({ slides, currentSlide, setCurrentSlide, showOvervie
                       <span>Add reaction (in feedback mode)</span>
                     </div>
                     <div className="flex justify-between gap-8">
-                      <span className="font-mono text-brand-red">Long-press slide</span>
-                      <span>Comment or ask a question</span>
-                    </div>
-                    <div className="flex justify-between gap-8">
                       <span className="font-mono text-brand-red">Grid icon</span>
                       <span>Slide overview</span>
                     </div>
