@@ -4,6 +4,12 @@ import { ClassificationMark, SlideBackground } from '../components'
 import { containerVariants, itemFadeUpVariants, itemSlideLeftVariants, accentBarAnimation } from '../utils/animations'
 import { resolveIcon } from '../utils/iconResolver'
 
+const STEP_STATUS_COLORS: Record<'green' | 'amber' | 'red', { bg: string; ring: string; dot: string; label: string }> = {
+  green: { bg: 'bg-emerald-500/10', ring: 'ring-emerald-500/40', dot: '#22c55e', label: 'On track' },
+  amber: { bg: 'bg-amber-500/10',   ring: 'ring-amber-500/40',   dot: '#eab308', label: 'At risk' },
+  red:   { bg: 'bg-red-500/10',     ring: 'ring-red-500/40',     dot: '#ef4444', label: 'Blocked' },
+}
+
 interface Props {
   slide: StepsSlideConfig
 }
@@ -76,6 +82,21 @@ export default function StepsSlide({ slide }: Props) {
                     {step.description}
                   </p>
                 </div>
+
+                {/* Status pill (optional) */}
+                {step.status && (
+                  <div
+                    className={`flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full ring-1 ${STEP_STATUS_COLORS[step.status].bg} ${STEP_STATUS_COLORS[step.status].ring}`}
+                  >
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: STEP_STATUS_COLORS[step.status].dot }}
+                    />
+                    <span className="text-tiny font-semibold uppercase tracking-wider text-text-primary">
+                      {STEP_STATUS_COLORS[step.status].label}
+                    </span>
+                  </div>
+                )}
               </motion.div>
             )
           })}

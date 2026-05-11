@@ -31,6 +31,8 @@ import BarometerGridSlide from './BarometerGridSlide'
 import ScorecardSlide from './ScorecardSlide'
 import StatusTableSlide from './StatusTableSlide'
 import RiskCardSlide from './RiskCardSlide'
+import ProjectStatusSlide from './ProjectStatusSlide'
+import LinkOutSlide from './LinkOutSlide'
 
 interface SlideRendererProps {
   slide: SlideConfig
@@ -102,6 +104,10 @@ export default function SlideRenderer({ slide }: SlideRendererProps) {
       return <StatusTableSlide slide={slide} />
     case 'risk-card':
       return <RiskCardSlide slide={slide} />
+    case 'project-status':
+      return <ProjectStatusSlide slide={slide} />
+    case 'link-out':
+      return <LinkOutSlide slide={slide} />
     default:
       return (
         <div className="flex items-center justify-center h-full text-text-muted">
@@ -144,4 +150,6 @@ export {
   ScorecardSlide,
   StatusTableSlide,
   RiskCardSlide,
+  ProjectStatusSlide,
+  LinkOutSlide,
 }

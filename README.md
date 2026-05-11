@@ -113,7 +113,7 @@ const slides: SlideConfig[] = [
 export default slides;
 ```
 
-## 33 Built-in Slide Types
+## 34 Built-in Slide Types
 
 No need to design anything from scratch.
 
@@ -124,7 +124,7 @@ No need to design anything from scratch.
 | **Data & Metrics** | `stats`, `gantt`, `timeline`, `sparkline-grid`, `barometer-grid` |
 | **Analysis** | `comparison`, `matrix`, `fishbone`, `force-field`, `feature-grid` |
 | **Organization** | `org-chart`, `team-objectives`, `okr-score`, `operating-loop`, `icon-grid`, `steps` |
-| **Special** | `pricing`, `name-reveal`, `risk-card`, `scorecard`, `status-table` |
+| **Special** | `pricing`, `name-reveal`, `risk-card`, `scorecard`, `status-table`, `project-status` |
 
 Every slide type supports dark and light themes, smooth Framer Motion animations, and responsive layouts.
 

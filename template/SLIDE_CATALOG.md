@@ -531,6 +531,56 @@ Large "Q+A" text on red background.
 
 ---
 
+## project-status
+
+Executive single-page snapshot for one project / workstream / initiative.
+Header + Today→Tomorrow change matrix + Cost/Capability/Strategic-fit impact +
+Status with risks/decision + Next 30/60/90 days.
+
+```typescript
+{
+  id: 'ws-software',
+  type: 'project-status',
+  title: 'Software Team — strategic in-sourcing',
+  thesis: 'Reduce CME dependency by in-sourcing SWE + Support and accelerating the Subway exit.',
+  status: 'amber',          // 'green' | 'amber' | 'red'
+  phase: 'Decide',          // 'Diagnose' | 'Decide' | 'Execute' | 'Stabilize'
+  targetDate: 'Q3 2026',
+  changeRows: [
+    { label: 'Structure', today: 'SWE + Support via Subway', tomorrow: 'In-house under DS Eng' },
+    { label: 'People',    today: 'Prod 14 + Eng 79',         tomorrow: '~[TBD] FTE' },
+    { label: 'Cost',      today: 'Part of $14.8m P&E',       tomorrow: '$[TBD]m run-rate' },
+    { label: 'Bet',       today: 'External SWE capacity',    tomorrow: 'Roadmap control' },
+  ],
+  impact: [
+    { heading: 'Cost',           bullets: ['Run-rate –$X/yr', 'One-time $Y'] },
+    { heading: 'Capability',     bullets: ['Gain: roadmap control', 'Lose: surge capacity'] },
+    { heading: 'Strategic fit',  bullets: ['Unblocks Support consolidation'] },
+  ],
+  confidence: 'Medium',
+  confidenceReason: 'gated on Subway terms',
+  topRisks: [
+    'Knowledge loss if Subway exits before transfer',
+    'Aisla GA slip pushes transition window',
+  ],
+  decisionNeeded: 'Subway exit terms and timing.',
+  decisionOwner: 'Francisco',
+  decisionBy: 'by 10 Jul',
+  nextSteps: [
+    { horizon: '30d', action: 'Finalize transition scope', owner: '[Owner]', by: '10 Jun' },
+    { horizon: '60d', action: 'Sign-off on exit plan',     owner: '[Owner]', by: '10 Jul' },
+    { horizon: '90d', action: 'Begin Aisla onboarding',    owner: '[Owner]', by: '10 Aug' },
+  ],
+  dependencies: 'Subway negotiation, Aisla GA',
+}
+```
+
+**Status colors** (header chip): `green` (On track) / `amber` (At risk) / `red` (Blocked)
+**Phase** renders as a progress strip: Diagnose → Decide → Execute → Stabilize
+**Recommended limits**: 4 change rows, 3 impact blocks, 3 risks (max), 3 next-step horizons.
+
+---
+
 ## closing
 
 Closing slide with tagline, contact info, and social links.

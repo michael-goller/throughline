@@ -33,6 +33,8 @@ export interface StepItem {
   title: string
   duration?: string
   description: string
+  /** Optional RAG indicator rendered as a small pill on the right of the step. */
+  status?: 'green' | 'amber' | 'red'
 }
 
 export interface StepsSlideConfig extends BaseSlide {
@@ -165,6 +167,10 @@ export interface GanttTask {
   progress?: number
   section?: string
   status?: 'done' | 'active' | 'crit' | 'milestone'
+  /** Suppress the "→ continuation" indicator even if the bar extends past viewWindowEnd. */
+  hideContinuation?: boolean
+  /** Override the auto-formatted continuation label (e.g. "2029" instead of "Q2 2029"). */
+  continuationLabel?: string
 }
 
 export interface GanttSlideConfig extends BaseSlide {
@@ -173,6 +179,10 @@ export interface GanttSlideConfig extends BaseSlide {
   tasks?: GanttTask[]
   source?: string
   dateFormat?: 'month' | 'quarter' | 'week' | 'relative-month'
+  /** Optional fixed window start (ISO date YYYY-MM-DD). Bars before are clipped at the left edge. */
+  viewWindowStart?: string
+  /** Optional fixed window end (ISO date YYYY-MM-DD). Bars extending beyond get a "→" continuation indicator. */
+  viewWindowEnd?: string
 }
 
 export interface MatrixItem {
@@ -430,6 +440,84 @@ export interface RiskCardSlideConfig extends BaseSlide {
   risks: RiskItem[]
 }
 
+// ─── project-status ──────────────────────────────────────────────
+//
+// Single-slide snapshot for a discrete project / workstream / initiative.
+// Designed for executive review: in one frame, the audience sees the
+// transformation (today → tomorrow), the cost/capability/strategy impact,
+// current health, and the next 90 days.
+
+export type ProjectPhase = 'Diagnose' | 'Decide' | 'Execute' | 'Stabilize'
+export type ProjectRAG = 'green' | 'amber' | 'red'
+export type ProjectConfidence = 'High' | 'Medium' | 'Low'
+export type ProjectHorizon = '30d' | '60d' | '90d'
+
+export interface ProjectChangeRow {
+  label: string
+  today: string
+  tomorrow: string
+}
+
+export interface ProjectImpactBlock {
+  /** Short heading, e.g. "Cost", "Capability", "Strategic fit". */
+  heading: string
+  bullets: string[]
+}
+
+export interface ProjectNextStep {
+  horizon: ProjectHorizon
+  action: string
+  owner?: string
+  by?: string
+}
+
+// ─── link-out ────────────────────────────────────────────────────
+//
+// Placeholder / hand-off slide that points to another deck or document.
+// Renders a centered card with a large icon + clickable link. Useful for
+// "see the dedicated deck for X" hand-offs without duplicating content.
+
+export interface LinkOutSlideConfig extends BaseSlide {
+  type: 'link-out'
+  title: string
+  subtitle?: string
+  body?: string
+  /** Lucide icon name. Defaults to 'Presentation'. */
+  icon?: IconRef
+  url: string
+  /** CTA label rendered next to the arrow. Defaults to "Open deck". */
+  linkText?: string
+}
+
+export interface ProjectStatusSlideConfig extends BaseSlide {
+  type: 'project-status'
+  /** Workstream / project name. Renders as the slide H2. */
+  title: string
+  /** One-sentence thesis — what this project does and why. */
+  thesis: string
+  /** Top-right chips. */
+  status: ProjectRAG
+  phase: ProjectPhase
+  targetDate: string
+  /** Today → Tomorrow matrix rows. 3–5 recommended. */
+  changeRows: ProjectChangeRow[]
+  /** Right-side impact blocks. 2–3 recommended (Cost / Capability / Strategic fit). */
+  impact: ProjectImpactBlock[]
+  /** Bottom-left status block. */
+  confidence: ProjectConfidence
+  confidenceReason?: string
+  /** Positive / neutral status notes — renders above topRisks with a green check icon. */
+  statusNotes?: string[]
+  topRisks: string[]
+  decisionNeeded?: string
+  decisionOwner?: string
+  decisionBy?: string
+  /** Bottom-right next-steps timeline. 3 recommended (one per horizon). */
+  nextSteps: ProjectNextStep[]
+  /** Optional one-line dependency summary shown below the next-steps list. */
+  dependencies?: string
+}
+
 export type SlideConfig =
   | TitleSlideConfig
   | TitleSlideDigitalConfig
@@ -463,6 +551,8 @@ export type SlideConfig =
   | ScorecardSlideConfig
   | StatusTableSlideConfig
   | RiskCardSlideConfig
+  | ProjectStatusSlideConfig
+  | LinkOutSlideConfig
 
 /**
  * Top-level deck configuration. May be the default export of a deck's

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { ChevronRight } from 'lucide-react'
 import type { GanttSlideConfig, GanttTask } from '../types'
 import { ClassificationMark } from '../components'
 import { useMermaidGantt } from '../hooks/useMermaidGantt'
@@ -57,9 +58,13 @@ function getStatusColor(status?: GanttTask['status']): string {
     case 'milestone':
       return 'bg-accent-blue'
     default:
-      return 'bg-text-secondary'
+      return 'bg-text-secondary/60'
   }
 }
+
+const ROW_HEIGHT = 32
+const SECTION_GAP = 18
+const SECTION_HEADER_HEIGHT = 30
 
 export default function GanttSlide({ slide }: Props) {
   // Load tasks from file if source is provided
@@ -70,39 +75,42 @@ export default function GanttSlide({ slide }: Props) {
   const dateFormat = slide.dateFormat || 'month'
 
   // Calculate timeline bounds and positions
-  const { timeLabels, taskPositions } = useMemo(() => {
+  const { timeLabels, taskPositions, totalChartHeight, sectionLayout } = useMemo(() => {
     if (!tasks.length) {
-      return { timeLabels: [], taskPositions: [] }
+      return { timeLabels: [], taskPositions: [], totalChartHeight: 0, sectionLayout: [] }
     }
 
-    let min = parseDate(tasks[0].start)
-    let max = parseDate(tasks[0].end)
-
-    tasks.forEach(task => {
-      const start = parseDate(task.start)
-      const end = parseDate(task.end)
-      if (start < min) min = start
-      if (end > max) max = end
-    })
-
-    // Add padding to timeline
-    const paddingDays = 7
-    min = new Date(min.getTime() - paddingDays * 24 * 60 * 60 * 1000)
-    max = new Date(max.getTime() + paddingDays * 24 * 60 * 60 * 1000)
+    // Determine timeline bounds
+    let min: Date
+    let max: Date
+    if (slide.viewWindowStart && slide.viewWindowEnd) {
+      min = parseDate(slide.viewWindowStart)
+      max = parseDate(slide.viewWindowEnd)
+    } else {
+      min = parseDate(tasks[0].start)
+      max = parseDate(tasks[0].end)
+      tasks.forEach(task => {
+        const start = parseDate(task.start)
+        const end = parseDate(task.end)
+        if (start < min) min = start
+        if (end > max) max = end
+      })
+      // Add padding to timeline (only when auto-computed)
+      const paddingDays = 7
+      min = new Date(min.getTime() - paddingDays * 24 * 60 * 60 * 1000)
+      max = new Date(max.getTime() + paddingDays * 24 * 60 * 60 * 1000)
+    }
 
     const totalMs = max.getTime() - min.getTime()
 
-    // Generate time labels
+    // Generate time labels (snap to start of period)
     const labels: { label: string; position: number }[] = []
     const labelDate = new Date(min)
-
-    // Round to start of month
     labelDate.setDate(1)
     if (dateFormat === 'quarter') {
       labelDate.setMonth(Math.floor(labelDate.getMonth() / 3) * 3)
     }
 
-    // For relative-month, track the origin as the first visible label
     let originDate: Date | undefined = undefined
 
     while (labelDate <= max) {
@@ -117,7 +125,6 @@ export default function GanttSlide({ slide }: Props) {
         })
       }
 
-      // Increment based on format
       switch (dateFormat) {
         case 'quarter':
           labelDate.setMonth(labelDate.getMonth() + 3)
@@ -132,50 +139,66 @@ export default function GanttSlide({ slide }: Props) {
       }
     }
 
-    // Calculate task positions
+    // Calculate task positions with clipping detection
     const positions = tasks.map(task => {
       const start = parseDate(task.start)
       const end = parseDate(task.end)
-      const left = ((start.getTime() - min.getTime()) / totalMs) * 100
-      const width = ((end.getTime() - start.getTime()) / totalMs) * 100
-      return { left, width }
+      const rawLeft = ((start.getTime() - min.getTime()) / totalMs) * 100
+      const rawRight = ((end.getTime() - min.getTime()) / totalMs) * 100
+      const clipLeft = rawLeft < 0
+      const clipRight = rawRight > 100
+      const left = Math.max(0, rawLeft)
+      const right = Math.min(100, rawRight)
+      const width = Math.max(0.5, right - left)
+      return { left, width, clipLeft, clipRight, end }
     })
 
-    return { timeLabels: labels, taskPositions: positions }
-  }, [tasks, dateFormat])
-
-  // Group tasks by section
-  const groupedTasks = useMemo(() => {
-    const groups: { section: string | undefined; tasks: { task: GanttTask; index: number }[] }[] = []
-    let currentSection: string | undefined
+    // Group tasks by section and pre-compute Y offsets with section gaps
+    const layout: {
+      section?: string
+      sectionTop?: number
+      taskTops: number[]
+      taskIndices: number[]
+    }[] = []
+    let cumulativeY = 0
     let currentGroup: { task: GanttTask; index: number }[] = []
+    let currentSection: string | undefined = undefined
 
+    const flush = (isFirst: boolean) => {
+      if (currentGroup.length === 0 && !currentSection) return
+      const group: typeof layout[number] = { section: currentSection, taskTops: [], taskIndices: [] }
+      if (!isFirst) cumulativeY += SECTION_GAP
+      if (currentSection) {
+        group.sectionTop = cumulativeY
+        cumulativeY += SECTION_HEADER_HEIGHT
+      }
+      currentGroup.forEach(({ index }) => {
+        group.taskTops.push(cumulativeY)
+        group.taskIndices.push(index)
+        cumulativeY += ROW_HEIGHT
+      })
+      layout.push(group)
+    }
+
+    let isFirst = true
     tasks.forEach((task, index) => {
       if (task.section !== currentSection) {
-        if (currentGroup.length > 0) {
-          groups.push({ section: currentSection, tasks: currentGroup })
-        }
+        flush(isFirst)
+        isFirst = layout.length === 0
         currentSection = task.section
         currentGroup = []
       }
       currentGroup.push({ task, index })
     })
+    flush(isFirst)
 
-    if (currentGroup.length > 0) {
-      groups.push({ section: currentSection, tasks: currentGroup })
+    return {
+      timeLabels: labels,
+      taskPositions: positions,
+      totalChartHeight: cumulativeY,
+      sectionLayout: layout,
     }
-
-    return groups
-  }, [tasks])
-
-  // Calculate dynamic row height based on task count
-  const totalRows = useMemo(() => {
-    return groupedTasks.reduce((acc, g) => acc + g.tasks.length + (g.section ? 1 : 0), 0)
-  }, [groupedTasks])
-
-  // Scale row height: 40px for few tasks, down to 28px for many
-  const rowHeight = Math.max(28, Math.min(40, 400 / Math.max(totalRows, 1)))
-  const barHeight = Math.max(16, rowHeight - 14)
+  }, [tasks, dateFormat, slide.viewWindowStart, slide.viewWindowEnd])
 
   if (loading) {
     return (
@@ -207,6 +230,9 @@ export default function GanttSlide({ slide }: Props) {
     )
   }
 
+  const barHeight = 18
+  const barOffset = (ROW_HEIGHT - barHeight) / 2
+
   return (
     <div className="relative w-full h-full flex items-center justify-center bg-background overflow-hidden">
       {/* Red accent bar at top */}
@@ -215,7 +241,6 @@ export default function GanttSlide({ slide }: Props) {
         className="absolute top-0 left-0 right-0 h-1 bg-brand-red origin-left"
       />
 
-      {/* Content */}
       <motion.div
         variants={containerFastVariants}
         initial="hidden"
@@ -234,30 +259,31 @@ export default function GanttSlide({ slide }: Props) {
 
         {/* Gantt Chart Container */}
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Chart Area */}
           <div className="flex flex-1 min-h-0">
             {/* Task Names Column */}
-            <div className="w-48 flex-shrink-0 pr-4">
-              <div className="h-8" /> {/* Spacer for alignment with timeline header */}
-              {groupedTasks.map((group, groupIndex) => (
+            <div className="w-56 flex-shrink-0 pr-4 relative" style={{ height: totalChartHeight + 40 }}>
+              <div className="h-10" /> {/* Spacer for timeline header alignment */}
+              {sectionLayout.map((group, groupIndex) => (
                 <div key={groupIndex}>
-                  {group.section && (
+                  {group.section && group.sectionTop !== undefined && (
                     <motion.div
                       variants={itemFadeUpVariants}
-                      className="text-text-secondary text-caption font-semibold uppercase tracking-wide border-t border-border mt-1 first:mt-0 first:border-t-0 flex items-center"
-                      style={{ height: rowHeight }}
+                      className="absolute left-0 right-0 pr-4 flex items-center"
+                      style={{ top: group.sectionTop + 40, height: SECTION_HEADER_HEIGHT }}
                     >
-                      {group.section}
+                      <span className="font-display text-brand-red text-caption font-bold uppercase tracking-wider">
+                        {group.section}
+                      </span>
                     </motion.div>
                   )}
-                  {group.tasks.map(({ task }, taskIndex) => (
+                  {group.taskIndices.map((taskIndex, i) => (
                     <motion.div
-                      key={taskIndex}
+                      key={i}
                       variants={itemFadeUpVariants}
-                      className="flex items-center text-text-primary text-body-sm truncate"
-                      style={{ height: rowHeight }}
+                      className="absolute left-0 right-0 pr-4 pl-3 flex items-center text-text-primary text-body-sm truncate"
+                      style={{ top: group.taskTops[i] + 40, height: ROW_HEIGHT }}
                     >
-                      {task.name}
+                      {tasks[taskIndex].name}
                     </motion.div>
                   ))}
                 </div>
@@ -267,12 +293,12 @@ export default function GanttSlide({ slide }: Props) {
             {/* Chart Area */}
             <div className="flex-1 min-w-0 flex flex-col">
               {/* Timeline Header */}
-              <div className="h-8 relative border-b border-border">
+              <div className="h-10 relative border-b border-border">
                 {timeLabels.map((label, index) => (
                   <motion.span
                     key={index}
                     variants={itemFadeUpVariants}
-                    className="absolute text-text-muted text-caption whitespace-nowrap -translate-x-1/2"
+                    className="absolute top-2 text-text-muted text-caption font-medium whitespace-nowrap -translate-x-1/2"
                     style={{ left: `${label.position}%` }}
                   >
                     {label.label}
@@ -281,8 +307,8 @@ export default function GanttSlide({ slide }: Props) {
               </div>
 
               {/* Bars Area */}
-              <div className="flex-1 relative">
-                {/* Grid lines */}
+              <div className="relative" style={{ height: totalChartHeight }}>
+                {/* Vertical grid lines */}
                 {timeLabels.map((label, index) => (
                   <div
                     key={index}
@@ -291,86 +317,128 @@ export default function GanttSlide({ slide }: Props) {
                   />
                 ))}
 
+                {/* Section divider lines */}
+                {sectionLayout.map((group, groupIndex) =>
+                  group.sectionTop !== undefined && groupIndex > 0 ? (
+                    <div
+                      key={`sd-${groupIndex}`}
+                      className="absolute left-0 right-0 h-px bg-border/60"
+                      style={{ top: group.sectionTop - SECTION_GAP / 2 }}
+                    />
+                  ) : null
+                )}
+
                 {/* Task bars */}
-                {groupedTasks.map((group, groupIndex) => {
-                  let rowOffset = groupedTasks
-                    .slice(0, groupIndex)
-                    .reduce((acc, g) => acc + g.tasks.length + (g.section ? 1 : 0), 0)
-                  if (group.section) rowOffset += 1
-
-                  return group.tasks.map(({ task, index: taskIndex }, localIndex) => {
+                {sectionLayout.map((group, groupIndex) =>
+                  group.taskIndices.map((taskIndex, i) => {
                     const pos = taskPositions[taskIndex]
+                    const task = tasks[taskIndex]
                     if (!pos) return null
+                    const top = group.taskTops[i] + barOffset
 
-                    const rowTop = (rowOffset + localIndex) * rowHeight + (group.section ? 8 : 0)
-                    const barOffset = (rowHeight - barHeight) / 2
+                    if (task.status === 'milestone') {
+                      return (
+                        <motion.div
+                          key={`${groupIndex}-${i}`}
+                          variants={barVariants}
+                          className="absolute origin-left"
+                          style={{
+                            left: `${pos.left}%`,
+                            top,
+                            width: barHeight,
+                            height: barHeight,
+                          }}
+                        >
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-3.5 h-3.5 bg-accent-blue rotate-45" />
+                          </div>
+                        </motion.div>
+                      )
+                    }
 
                     return (
                       <motion.div
-                        key={`${groupIndex}-${localIndex}`}
+                        key={`${groupIndex}-${i}`}
                         variants={barVariants}
                         className={`absolute rounded ${getStatusColor(task.status)} origin-left`}
                         style={{
                           left: `${pos.left}%`,
-                          width: `${Math.max(pos.width, 1)}%`,
-                          top: rowTop + barOffset,
+                          width: `${pos.width}%`,
+                          top,
                           height: barHeight,
                         }}
                       >
-                        {/* Progress indicator */}
-                        {task.progress !== undefined && task.progress < 100 && (
-                          <div
-                            className="absolute inset-0 bg-black/30 rounded"
-                            style={{ left: `${task.progress}%` }}
-                          />
-                        )}
-
-                        {/* Milestone diamond */}
-                        {task.status === 'milestone' && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-3 h-3 bg-accent-blue rotate-45" />
+                        {/* Right-edge continuation indicator */}
+                        {pos.clipRight && !task.hideContinuation && (
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full flex items-center pl-1.5 whitespace-nowrap">
+                            <ChevronRight className="w-3.5 h-3.5 text-text-muted" strokeWidth={3} />
+                            <span className="text-tiny text-text-muted font-semibold ml-0.5">
+                              {task.continuationLabel ?? formatDateLabel(pos.end, dateFormat)}
+                            </span>
                           </div>
                         )}
                       </motion.div>
                     )
                   })
-                })}
+                )}
               </div>
             </div>
           </div>
 
           {/* Legend — only show when multiple statuses are used */}
           {(() => {
-            const usedStatuses = new Set(tasks.map(t => t.status).filter(Boolean))
-            if (usedStatuses.size < 2) return null
+            const usedStatuses = new Set(tasks.map(t => t.status))
+            const hasMultiple = usedStatuses.size >= 2
+            if (!hasMultiple) return null
+            const showDone = usedStatuses.has('done')
+            const showActive = usedStatuses.has('active')
+            const showCrit = usedStatuses.has('crit')
+            const showMilestone = usedStatuses.has('milestone')
+            const hasContinuation = tasks.some((t, i) => {
+              const p = taskPositions[i]
+              return p?.clipRight && !t.hideContinuation
+            })
             return (
               <motion.div
                 variants={itemFadeUpVariants}
                 className="flex justify-center gap-6 mt-6 pt-4 border-t border-border"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-3 rounded bg-accent-green" />
-                  <span className="text-text-muted text-caption">Done</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-3 rounded bg-brand-red" />
-                  <span className="text-text-muted text-caption">Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-3 rounded bg-accent-orange" />
-                  <span className="text-text-muted text-caption">Critical</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rotate-45 bg-accent-blue" />
-                  <span className="text-text-muted text-caption">Milestone</span>
-                </div>
+                {showDone && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 rounded bg-accent-green" />
+                    <span className="text-text-muted text-caption">Done</span>
+                  </div>
+                )}
+                {showActive && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 rounded bg-brand-red" />
+                    <span className="text-text-muted text-caption">Active</span>
+                  </div>
+                )}
+                {showCrit && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-3 rounded bg-accent-orange" />
+                    <span className="text-text-muted text-caption">Critical</span>
+                  </div>
+                )}
+                {showMilestone && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rotate-45 bg-accent-blue" />
+                    <span className="text-text-muted text-caption">Decision</span>
+                  </div>
+                )}
+                {hasContinuation && (
+                  <div className="flex items-center gap-2">
+                    <ChevronRight className="w-3.5 h-3.5 text-text-muted" strokeWidth={3} />
+                    <span className="text-text-muted text-caption">Continues beyond window</span>
+                  </div>
+                )}
               </motion.div>
             )
           })()}
         </div>
       </motion.div>
 
-      {/* Classification mark */}
       <ClassificationMark />
     </div>
   )
